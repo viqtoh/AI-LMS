@@ -3,11 +3,21 @@ import "../styles/home.css"; // Make sure to create and import the corresponding
 import { css } from "aphrodite";
 
 const Home = () => {
+  const handleLogin = () => {
+    window.location.href = "/dashboard";
+  };
+
   return (
     <div className="limiter">
       <div className="container-login100">
         <div className="wrap-login100">
-          <form className="login100-form">
+          <form
+            className="login100-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleLogin();
+            }}
+          >
             <span className="login100-form-title">Welcome</span>
             <span className="login100-form-avatar">
               <img src="images/avatar-01.jpg" alt="AVATAR" />
@@ -24,7 +34,9 @@ const Home = () => {
             </div>
 
             <div className="container-login100-form-btn">
-              <button className="login100-form-btn">Login</button>
+              <button className="login100-form-btn" type="submit">
+                Login
+              </button>
             </div>
 
             <ul className="login-more">
