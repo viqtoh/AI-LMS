@@ -1,14 +1,72 @@
-import React from "react";
+import React, { useState } from "react";
 import "../styles/home.css"; // Make sure to create and import the corresponding CSS file
 import { css } from "aphrodite";
+import { API_URL } from "../constants";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Toast from "../components/Toast";
 
 const Home = () => {
-  const handleLogin = () => {
-    window.location.href = "/dashboard";
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSuccess, setIsSuccess] = React.useState(true);
+  const [toast, setToast] = useState(null);
+  const showToast = (message, success = true) => {
+    setToast(message);
+    setIsSuccess(success);
+    console.log(isSuccess);
+    setTimeout(() => setToast(null), 5000); // Hide after 5s
+  };
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleLogin = async () => {
+    setIsLoading(true);
+
+    // Basic validation
+    if (!formData.email || !formData.password) {
+      showToast("All fields are required!", false);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.error && data.token) {
+        localStorage.setItem("token", data.token);
+        showToast("Login successful!", true);
+        // Redirect to login page
+        window.location.href = "/dashboard";
+      } else {
+        showToast(data.error || "Something went wrong", false);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      showToast("Server error, please try again later.", false);
+    }
+
+    setIsLoading(false);
   };
 
   return (
     <div className="limiter">
+      {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
       <div className="container-login100">
         <div className="wrap-login100">
           <form
@@ -24,36 +82,48 @@ const Home = () => {
             </span>
 
             <div className="wrap-input100 validate-input" data-validate="Enter eail">
-              <input className="input100" type="text" name="email" />
+              <input
+                className="input100"
+                type="text"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+              />
               <span className="focus-input100" data-placeholder="Email"></span>
             </div>
 
             <div className="wrap-input100 validate-input" data-validate="Enter password">
-              <input className="input100" type="password" name="pass" />
+              <input
+                className="input100"
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+              />
               <span className="focus-input100" data-placeholder="Password"></span>
             </div>
 
             <div className="container-login100-form-btn">
-              <button className="login100-form-btn" type="submit">
-                Login
+              <button className="login100-form-btn" type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <div className="spinner-border text-light" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                ) : (
+                  "Login"
+                )}
               </button>
             </div>
 
-            <ul className="login-more">
-              <li className="m-b-8">
-                <span className="txt1">Forgot</span>
-                <a href="#" className="txt2">
-                  Password?
-                </a>
-              </li>
+            <a href="#" className="txt2">
+              Forgot Password?
+            </a>
+            <br />
 
-              <li>
-                <span className="txt1">Don’t have an account?</span>
-                <a href="/register" className="txt2">
-                  Sign up
-                </a>
-              </li>
-            </ul>
+            <span className="txt1 me-2">Don’t have an account?</span>
+            <a href="/register" className="txt2">
+              Sign up
+            </a>
           </form>
         </div>
       </div>

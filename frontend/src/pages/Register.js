@@ -3,6 +3,7 @@ import "../styles/home.css"; // Make sure to create and import the corresponding
 import { css } from "aphrodite";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
+import { API_URL } from "../constants";
 
 const Register = () => {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -44,7 +45,7 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/register", {
+      const response = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -162,7 +163,7 @@ const Register = () => {
             </div>
 
             <span className="txt1  pe-2 inline-block">Already have an account?</span>
-            <a href="/login" className="txt2">
+            <a href="/" className="txt2">
               Login
             </a>
           </form>
