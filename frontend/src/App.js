@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
 import Achievements from "./pages/Achievements";
 import Live from "./pages/Live";
+import Register from "./pages/Register";
 
 function App() {
   const [message, setMessage] = useState("");
@@ -29,6 +30,14 @@ function App() {
           element={
             <div style={{ padding: "20px" }}>
               <Home />
+            </div>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <div style={{ padding: "20px" }}>
+              <Register />
             </div>
           }
         />

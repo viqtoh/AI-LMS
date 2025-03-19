@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const authenticateToken = require("./middleware/auth");
 const pool = require("./db");
+const { User } = require("./models");
 
 require("dotenv").config();
 
@@ -17,12 +18,19 @@ app.post("/register", async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await pool.query(
-      "INSERT INTO users (email, password, first_name, last_name) VALUES ($1, $2, $3, $4)",
-      [email, hashedPassword, first_name, last_name]
-    );
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email is already registered" });
+    }
 
-    res.json({ message: "User registered successfully" });
+    const newUser = await User.create({
+      email,
+      password: hashedPassword,
+      first_name,
+      last_name
+    });
+
+    res.json({ ok: true, message: "User registered successfully", user: newUser });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

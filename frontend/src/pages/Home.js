@@ -23,9 +23,9 @@ const Home = () => {
               <img src="images/avatar-01.jpg" alt="AVATAR" />
             </span>
 
-            <div className="wrap-input100 validate-input" data-validate="Enter username">
-              <input className="input100" type="text" name="username" />
-              <span className="focus-input100" data-placeholder="Username"></span>
+            <div className="wrap-input100 validate-input" data-validate="Enter eail">
+              <input className="input100" type="text" name="email" />
+              <span className="focus-input100" data-placeholder="Email"></span>
             </div>
 
             <div className="wrap-input100 validate-input" data-validate="Enter password">
@@ -43,13 +43,13 @@ const Home = () => {
               <li className="m-b-8">
                 <span className="txt1">Forgot</span>
                 <a href="#" className="txt2">
-                  Username / Password?
+                  Password?
                 </a>
               </li>
 
               <li>
                 <span className="txt1">Don’t have an account?</span>
-                <a href="#" className="txt2">
+                <a href="/register" className="txt2">
                   Sign up
                 </a>
               </li>

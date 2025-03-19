@@ -179,6 +179,9 @@ iframe {
 .limiter {
   width: 100%;
   margin: 0 auto;
+  align-items: center;
+  justify-content: center;
+  display: flex;
 }
 
 .container-login100 {
@@ -214,6 +217,10 @@ iframe {
   color: #333333;
   line-height: 1.2;
   text-align: center;
+}
+
+.ftitle2 {
+  font-size: 20px;
 }
 
 .login100-form-avatar {
@@ -450,4 +457,30 @@ iframe {
   -o-transform: translateY(-50%);
   transform: translateY(-50%);
   left: 0;
+}
+
+.toast-message {
+  position: fixed;
+  top: 20px;
+  transform: translateX(-50%);
+  background: #28a745;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 5px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  font-weight: bold;
+}
+
+.toast-message2 {
+  position: fixed;
+  top: 20px;
+  transform: translateX(-50%);
+  background: #a72845;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 5px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  font-weight: bold;
 }
