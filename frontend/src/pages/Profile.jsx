@@ -8,7 +8,6 @@ const Profile = () => {
     <div>
       <div className="navHeader">
         <NavBar title="Profile" />
-        <h3>Profile</h3>
       </div>
     </div>
   );

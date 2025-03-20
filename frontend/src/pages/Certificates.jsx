@@ -6,7 +6,6 @@ const Certificates = () => {
     <div>
       <div className="navHeader">
         <NavBar title="Certificates" />
-        <h3> Certificates </h3>
       </div>
     </div>
   );

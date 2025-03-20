@@ -6,7 +6,6 @@ const Library = () => {
     <div>
       <div className="navHeader">
         <NavBar title="Course Journey" />
-        <h3> Course Journey </h3>
       </div>
     </div>
   );

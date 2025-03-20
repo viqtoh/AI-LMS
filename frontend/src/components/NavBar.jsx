@@ -1,7 +1,15 @@
 import React, { useState } from "react";
 import "../styles/navbar.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCog, faHouseChimneyWindow, faSpinner, faRoute } from "@fortawesome/free-solid-svg-icons";
+import { faBell } from "@fortawesome/free-regular-svg-icons";
+
+import {
+  faCog,
+  faHouseChimneyWindow,
+  faSpinner,
+  faAngleDown,
+  faRoute
+} from "@fortawesome/free-solid-svg-icons";
 
 const NavBar = ({ title = "Dashboard" }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +28,7 @@ const NavBar = ({ title = "Dashboard" }) => {
         <ul>
           <li className={`${title == "Dashboard" ? "active" : ""}`}>
             <a href="/dashboard">
-              <FontAwesomeIcon icon={faHouseChimneyWindow} /> Home
+              <FontAwesomeIcon icon={faHouseChimneyWindow} /> Dashboard
             </a>
           </li>
           <li className={`${title == "Course Journey" ? "active" : ""}`}>
@@ -44,7 +52,7 @@ const NavBar = ({ title = "Dashboard" }) => {
         <ul>
           <li className={`${title == "Dashboard" ? "active" : ""}`}>
             <a href="/dashboard">
-              <FontAwesomeIcon icon={faHouseChimneyWindow} /> Home
+              <FontAwesomeIcon icon={faHouseChimneyWindow} /> Dashboard
             </a>
           </li>
           <li className={`${title == "Course Journey" ? "active" : ""}`}>
@@ -63,6 +71,27 @@ const NavBar = ({ title = "Dashboard" }) => {
             </a>
           </li>
         </ul>
+      </div>
+      <div class="preNav">
+        <div className="NavBar">
+          <div></div>
+          <div className="nav-right">
+            <a href="#" className="nav-noti">
+              <FontAwesomeIcon icon={faBell} />
+            </a>
+            <div className="nav-divider">
+              <span className="vertical-line"></span>
+            </div>
+            <span>Hi, John Kuy</span>
+            <a href="/account/settings" className="nav-profile">
+              <img src="https://i.pravatar.cc/150?img=1" alt="Profile" />
+            </a>
+            <FontAwesomeIcon icon={faAngleDown} />
+          </div>
+        </div>
+        <div className="navbar-title">
+          <h3>{title}</h3>
+        </div>
       </div>
       {/* Overlay when Sidebar is Open */}
       {isOpen && <div className="overlay" onClick={() => setIsOpen(false)} />}
