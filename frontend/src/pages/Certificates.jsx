@@ -1,15 +1,15 @@
 import React from "react";
 import NavBar from "../components/NavBar";
 
-const Live = () => {
+const Certificates = () => {
   return (
     <div>
       <div className="navHeader">
-        <NavBar />
-        <h3>Live Sessions</h3>
+        <NavBar title="Certificates" />
+        <h3> Certificates </h3>
       </div>
     </div>
   );
 };
 
-export default Live;
+export default Certificates;

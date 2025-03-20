@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import NavBar from "./components/NavBar";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
-import Achievements from "./pages/Achievements";
-import Live from "./pages/Live";
+import Certificates from "./pages/Certificates";
 import Register from "./pages/Register";
+import Profile from "./pages/Profile";
 
 function App() {
   const [message, setMessage] = useState("");
@@ -25,54 +24,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <div style={{ padding: "20px" }}>
-              <Home />
-            </div>
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            <div style={{ padding: "20px" }}>
-              <Register />
-            </div>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <div style={{ padding: "20px" }}>
-              <Dashboard />
-            </div>
-          }
-        />
-        <Route
-          path="/content-library"
-          element={
-            <div style={{ padding: "20px" }}>
-              <Library />
-            </div>
-          }
-        />
-        <Route
-          path="/achievements"
-          element={
-            <div style={{ padding: "20px" }}>
-              <Achievements />
-            </div>
-          }
-        />
-        <Route
-          path="/live-sessions"
-          element={
-            <div style={{ padding: "20px" }}>
-              <Live />
-            </div>
-          }
-        />
+        <Route path="/" element={<Home />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/content-library" element={<Library />} />
+        <Route path="/certificates" element={<Certificates />} />
+        <Route path="/account/settings" element={<Profile />} />
       </Routes>
     </Router>
   );

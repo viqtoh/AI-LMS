@@ -7,7 +7,7 @@
   /* Initially hidden */
   width: 250px;
   height: 100%;
-  background: #333;
+  background: #fff;
   color: white;
   transition: left 0.3s ease-in-out;
   padding-top: 60px;
@@ -33,12 +33,18 @@
 }
 
 .sidebar ul li {
-  padding: 15px;
-  text-align: center;
+  padding: 10px 15px;
+  margin-left: 10px;
+  margin-right: 10px;
+  text-align: left;
+}
+
+li svg {
+  margin-right: 10px;
 }
 
 .sidebar ul li a {
-  color: white;
+  color: #333;
   text-decoration: none;
   display: block;
 }
@@ -55,7 +61,11 @@
   z-index: 1100;
   background-color: #333;
   padding: 0px 8px 0px;
-  margin-right: 10px;
+  margin: 20px 10px 0px 20px;
+}
+
+.navHeader h3 {
+  margin: 20px 0px 0px 0px;
 }
 
 /* Close Button */
@@ -81,4 +91,58 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
+}
+
+.desktop-sidebar {
+  display: none;
+}
+
+.active {
+  background-color: #0057ff;
+  border-radius: 10px;
+}
+
+.active a {
+  color: white !important;
+}
+
+@media screen and (min-width: 769px) {
+  .sidebar {
+    display: none;
+  }
+  .hamburger {
+    display: none;
+  }
+  .desktop-sidebar {
+    position: relative;
+    width: 250px;
+    height: 100vh;
+    background: #fff;
+    color: white;
+    transition: left 0.3s ease-in-out;
+    padding-top: 60px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: block;
+  }
+  .navHeader h3 {
+    margin: 20px 0px 0px 20px;
+  }
+  .desktop-sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  .desktop-sidebar ul li {
+    padding: 10px 15px;
+    text-align: left;
+    margin: 10px 0px;
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+  .desktop-sidebar ul li a {
+    color: #333;
+    text-decoration: none;
+    display: block;
+    font-size: 15px;
+  }
 }
