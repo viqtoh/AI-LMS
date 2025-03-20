@@ -32,7 +32,6 @@ const Home = () => {
       setIsLoading(false);
       return;
     }
-
     try {
       const response = await fetch(`${API_URL}/api/login`, {
         method: "POST",

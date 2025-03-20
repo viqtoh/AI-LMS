@@ -51,6 +51,5 @@
     "postcss": "^8.5.3",
     "prettier": "^3.5.3"
   },
-  "proxy": "http://localhost:5000",
   "homepage": "."
 }
