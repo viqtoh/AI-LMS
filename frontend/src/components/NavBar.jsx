@@ -26,22 +26,22 @@ const NavBar = ({ title = "Dashboard" }) => {
           ×
         </button>
         <ul>
-          <li className={`${title == "Dashboard" ? "active" : ""}`}>
+          <li className={`${title === "Dashboard" ? "active" : ""}`}>
             <a href="/dashboard">
               <FontAwesomeIcon icon={faHouseChimneyWindow} /> Dashboard
             </a>
           </li>
-          <li className={`${title == "Course Journey" ? "active" : ""}`}>
+          <li className={`${title === "Course Journey" ? "active" : ""}`}>
             <a href="/content-library">
               <FontAwesomeIcon icon={faRoute} /> Course Journey
             </a>
           </li>
-          <li className={`${title == "Certificates" ? "active" : ""}`}>
+          <li className={`${title === "Certificates" ? "active" : ""}`}>
             <a href="/certificates">
               <FontAwesomeIcon icon={faSpinner} /> Progress & Certificates
             </a>
           </li>
-          <li className={`${title == "Profile" ? "active" : ""}`}>
+          <li className={`${title === "Profile" ? "active" : ""}`}>
             <a href="/account/settings">
               <FontAwesomeIcon icon={faCog} /> Profile
             </a>
@@ -50,22 +50,22 @@ const NavBar = ({ title = "Dashboard" }) => {
       </div>
       <div className={`desktop-sidebar`}>
         <ul>
-          <li className={`${title == "Dashboard" ? "active" : ""}`}>
+          <li className={`${title === "Dashboard" ? "active" : ""}`}>
             <a href="/dashboard">
               <FontAwesomeIcon icon={faHouseChimneyWindow} /> Dashboard
             </a>
           </li>
-          <li className={`${title == "Course Journey" ? "active" : ""}`}>
+          <li className={`${title === "Course Journey" ? "active" : ""}`}>
             <a href="/content-library">
               <FontAwesomeIcon icon={faRoute} /> Course Journey
             </a>
           </li>
-          <li className={`${title == "Certificates" ? "active" : ""}`}>
+          <li className={`${title === "Certificates" ? "active" : ""}`}>
             <a href="/certificates">
               <FontAwesomeIcon icon={faSpinner} /> Progress & Certificates
             </a>
           </li>
-          <li className={`${title == "Profile" ? "active" : ""}`}>
+          <li className={`${title === "Profile" ? "active" : ""}`}>
             <a href="/account/settings">
               <FontAwesomeIcon icon={faCog} /> Profile
             </a>
@@ -76,7 +76,7 @@ const NavBar = ({ title = "Dashboard" }) => {
         <div className="NavBar">
           <div></div>
           <div className="nav-right">
-            <a href="#" className="nav-noti">
+            <a href="/" className="nav-noti">
               <FontAwesomeIcon icon={faBell} />
             </a>
             <div className="nav-divider">
