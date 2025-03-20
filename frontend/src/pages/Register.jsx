@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import "../styles/home.css"; // Make sure to create and import the corresponding CSS file
-import { css } from "aphrodite";
+import "../styles/home.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
 import { API_URL } from "../constants";
