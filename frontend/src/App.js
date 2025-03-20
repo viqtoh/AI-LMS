@@ -9,18 +9,6 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 
 function App() {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    axios
-      .get("/")
-      .then((response) => setMessage(response.data))
-      .catch((error) => console.error("Error fetching data:", error));
-  }, []);
-
-  const About = () => <h2>About Page</h2>;
-  const Contact = () => <h2>Contact Page</h2>;
-
   return (
     <Router>
       <Routes>

@@ -115,7 +115,7 @@ const Home = () => {
               </button>
             </div>
 
-            <a href="#" className="txt2">
+            <a href="/" className="txt2">
               Forgot Password?
             </a>
             <br />
