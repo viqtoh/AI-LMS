@@ -31,7 +31,5 @@ FROM socialengine/nginx-spa:latest
 # Copy built frontend to Nginx web server directory
 COPY --from=frontend-build /app/frontend/build /app
 
+# Change root folder's permission
 RUN chmod -R 777 /app
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
