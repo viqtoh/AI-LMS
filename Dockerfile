@@ -34,4 +34,4 @@ COPY . .
 EXPOSE 5000
 
 # Start backend server
-CMD ["nodemon","start"]
+CMD ["nodemon","server.js"]
