@@ -34,4 +34,5 @@ COPY . .
 EXPOSE 5000
 
 # Start backend server
-CMD ["nodemon","start"]
+CMD ["npx", "nodemon", "/app/api/server.js"]
+
