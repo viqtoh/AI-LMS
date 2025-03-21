@@ -2,7 +2,7 @@ import React from "react";
 import NavBar from "../components/NavBar";
 import "../styles/home.css";
 import { useState, useEffect } from "react";
-import { API_URL } from "../constants";
+import { API_URL, IMAGE_HOST } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
 import { faInfoCircle } from "@fortawesome/free-solid-svg-icons";
@@ -190,7 +190,7 @@ const Profile = () => {
             <div className="borderedContainer mb-3">
               {user && user.image ? (
                 <div className="profileImage me-2">
-                  <img src={user.image} alt="Profile" />
+                  <img src={`${IMAGE_HOST}${user.image}`} alt="Profile" />
                 </div>
               ) : (
                 <div className="profileImage me-2">
@@ -249,13 +249,10 @@ const Profile = () => {
             </div>
 
             <div className="buttonDiv">
-              <button className="btn btn-primary me-2" onClick={() => setIsEditModalOpen(true)}>
+              <button className="btn btn-theme me-2" onClick={() => setIsEditModalOpen(true)}>
                 Edit Profile
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => setIsChangePasswordModalOpen(true)}
-              >
+              <button className="btn btn-theme" onClick={() => setIsChangePasswordModalOpen(true)}>
                 Change Password
               </button>
             </div>
@@ -265,15 +262,81 @@ const Profile = () => {
 
       {isEditModalOpen && (
         <div className="modal">
-          <div className="modal-content">
+          <div
+            className="modal-content"
+            ref={(el) => {
+              if (el) el.scrollTop = 0;
+            }}
+          >
             <h5>Edit Profile</h5>
             <form onSubmit={handleEditSubmit}>
+              <div className="form-group d-flex align-items-end mb-4">
+                {user && user.image ? (
+                  <div className="profileImage me-2 s-125">
+                    <img
+                      src={`${IMAGE_HOST}${user.image}`}
+                      className="s-125"
+                      id="editimage"
+                      alt="Profile"
+                    />
+                  </div>
+                ) : (
+                  <div className="profileImage me-2 s-125">
+                    <img
+                      src="/images/default_profile.png"
+                      className="s-125"
+                      id="editimage"
+                      alt="Profile"
+                    />
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  name="image"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        document.getElementById("editimage").src = event.target.result;
+                        setEditFormData((prevData) => ({
+                          ...prevData,
+                          image: event.target.result
+                        }));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="form-control ms-2"
+                  style={{ display: "none" }}
+                  id="hiddenFileInput"
+                />
+                <button
+                  type="button"
+                  className="btn btn-theme ms-2"
+                  onClick={() => document.getElementById("hiddenFileInput").click()}
+                >
+                  Upload Image
+                </button>
+              </div>
+
               {editError !== "" ? (
                 <div className="formErrorDiv">
                   <FontAwesomeIcon icon={faInfoCircle} />
                   <p className="formError">{editError}</p>
                 </div>
               ) : null}
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={editFormData.email}
+                  className="form-control"
+                  disabled={true}
+                />
+              </div>
               <div className="form-group">
                 <label>First Name</label>
                 <input
@@ -294,16 +357,7 @@ const Profile = () => {
                   className="form-control"
                 />
               </div>
-              <div className="form-group">
-                <label>Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={editFormData.email}
-                  onChange={handleEditChange}
-                  className="form-control"
-                />
-              </div>
+
               <div className="form-group">
                 <label>Phone</label>
                 <input
@@ -366,7 +420,7 @@ const Profile = () => {
                 />
               </div>
               <div className="modal-buttons">
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="btn btn-theme">
                   {isLoading ? (
                     <div className="spinner-border text-light btnspinner" role="status">
                       <span className="visually-hidden">Loading...</span>
@@ -394,7 +448,12 @@ const Profile = () => {
 
       {isChangePasswordModalOpen && (
         <div className="modal">
-          <div className="modal-content">
+          <div
+            className="modal-content"
+            ref={(el) => {
+              if (el) el.scrollTop = 0;
+            }}
+          >
             <h5>Change Password</h5>
             <form onSubmit={handleChangePasswordSubmit}>
               {passError !== "" ? (
@@ -434,7 +493,7 @@ const Profile = () => {
                 />
               </div>
               <div className="modal-buttons">
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="btn btn-theme">
                   {isLoading ? (
                     <div className="spinner-border text-light btnspinner" role="status">
                       <span className="visually-hidden">Loading...</span>

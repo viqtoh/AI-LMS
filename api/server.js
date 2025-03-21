@@ -10,7 +10,19 @@ require("dotenv").config();
 
 const app = express();
 app.use(cors());
+
+const bodyParser = require("body-parser");
+const fs = require("fs");
+const path = require("path");
+
+// Increase the payload size limit
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+
 app.use(express.json());
+
+// Serve the media folder statically
+app.use("/media", express.static(path.join(__dirname, "media")));
 
 async function getUserByToken(token) {
   try {
@@ -163,6 +175,33 @@ app.get("/api/profile", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+app.get("/api/user/details", authenticateToken, async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "Token missing" });
+    }
+
+    const chuser = await getUserByToken(token);
+
+    if (!chuser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = await User.findOne({ where: { email: chuser.email } });
+
+    res.json({
+      first_name: user.first_name,
+      last_name: user.last_name,
+      image: user.image || ""
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 app.put("/api/profile", authenticateToken, async (req, res) => {
   try {
@@ -179,7 +218,26 @@ app.put("/api/profile", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const { first_name, last_name, phone, address, city, postal_code, country, tax_id } = req.body;
+    const { first_name, last_name, phone, address, city, postal_code, country, tax_id, image } =
+      req.body;
+    if (image) {
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const fileName = `${user.email}_profile_${Date.now()}.png`;
+      const filePath = path.join(__dirname, "media", fileName);
+
+      // Ensure the media directory exists
+      const mediaDir = path.join(__dirname, "media");
+      if (!fs.existsSync(mediaDir)) {
+        fs.mkdirSync(mediaDir);
+      }
+
+      // Save the image to the media folder
+      fs.writeFileSync(filePath, buffer);
+
+      // Update the user's image field with the file path
+      await User.update({ image: `/media/${fileName}` }, { where: { email: user.email } });
+    }
     await User.update(
       {
         first_name,

@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import "../styles/navbar.css";
+import { API_URL, IMAGE_HOST } from "../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-regular-svg-icons";
-
+import { useEffect } from "react";
 import {
   faCog,
   faHouseChimneyWindow,
@@ -14,6 +15,31 @@ import {
 
 const NavBar = ({ title = "Dashboard" }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/user/details`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        });
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error("Failed to fetch user details");
+        }
+        console.log(data);
+
+        setUserData(data);
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -98,10 +124,28 @@ const NavBar = ({ title = "Dashboard" }) => {
             <div className="nav-divider">
               <span className="vertical-line"></span>
             </div>
-            <span>Hi, John Kuy</span>
-            <a href="/account/settings" className="nav-profile">
-              <img src="https://i.pravatar.cc/150?img=1" alt="Profile" />
-            </a>
+            <span>
+              Hi, {userData.first_name} {userData.last_name}
+            </span>
+            {userData && userData.image ? (
+              <div className="profileImage mx-2 s-35">
+                <img
+                  src={`${IMAGE_HOST}${userData.image}`}
+                  className="s-35"
+                  id="editimage"
+                  alt="Profile"
+                />
+              </div>
+            ) : (
+              <div className="profileImage mx-2 s-35">
+                <img
+                  src="/images/default_profile.png"
+                  className="s-35"
+                  id="editimage"
+                  alt="Profile"
+                />
+              </div>
+            )}
             <FontAwesomeIcon icon={faAngleDown} />
           </div>
         </div>
