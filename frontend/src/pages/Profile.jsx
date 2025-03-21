@@ -18,12 +18,12 @@ const Profile = () => {
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
-  const showToast = (message, success = true) => {
+  const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
     console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
-  };
+  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -61,7 +61,7 @@ const Profile = () => {
       localStorage.setItem("error", "session expired");
       window.location.href = "/";
     }
-  }, [token]);
+  }, [token, showToast]);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
