@@ -25,7 +25,7 @@ RUN npm run build
 
 
 # Serve with Nginx
-FROM nginx:stable-alpine
+FROM socialengine/nginx-spa:latest
 
 # Copy built frontend to Nginx web server directory
 COPY --from=frontend-build /app/frontend/build /usr/share/nginx/html
