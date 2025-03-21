@@ -1,11 +1,13 @@
 # Use Node.js base image
 FROM node:20-alpine AS backend
 
-# Set working directory
+# Set working directory to /app/api
 WORKDIR /app/api
 
-# Copy package.json and install dependencies
-COPY package.json package-lock.json ./
+# Copy only the backend package.json and package-lock.json
+COPY api/package.json api/package-lock.json ./
+
+# Install dependencies
 RUN npm install --omit=dev && npm install -g nodemon
 
 # Inject environment variables
@@ -25,16 +27,11 @@ ENV PG_PORT=$PG_PORT
 ENV JWT_SECRET=$JWT_SECRET
 ENV JWT_EXPIRES_IN=$JWT_EXPIRES_IN
 
-
-
-# Copy the rest of the source code
-COPY . .
-
-WORKDIR /app/api
+# Copy only the API source code
+COPY api/. .
 
 # Expose API port
 EXPOSE 5000
 
 # Start backend server
 CMD ["npx", "nodemon", "server.js"]
-
