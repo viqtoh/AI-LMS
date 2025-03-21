@@ -18,10 +18,10 @@ ARG REACT_APP_IMAGE_HOST
 ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
 ENV REACT_APP_IMAGE_HOST=$REACT_APP_IMAGE_HOST
 
+RUN npm run build
 
 COPY . .
 
-RUN npm run build
 
 # Serve with Nginx
 FROM nginx:stable-alpine
