@@ -25,6 +25,8 @@ ENV PG_PORT=$PG_PORT
 ENV JWT_SECRET=$JWT_SECRET
 ENV JWT_EXPIRES_IN=$JWT_EXPIRES_IN
 
+
+
 # Copy the rest of the source code
 COPY . .
 
@@ -32,4 +34,4 @@ COPY . .
 EXPOSE 5000
 
 # Start backend server
-CMD ["nodemon","server.js"]
+CMD ["nodemon","start"]
