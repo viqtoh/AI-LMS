@@ -245,7 +245,7 @@ li svg {
 
 .toast-message {
   position: fixed;
-  top: 20px;
+  top: 100px;
   transform: translateX(-50%);
   background: #28a745;
   color: white;
@@ -258,7 +258,7 @@ li svg {
 
 .toast-message2 {
   position: fixed;
-  top: 20px;
+  top: 100px;
   transform: translateX(-50%);
   background: #a72845;
   color: white;
@@ -267,4 +267,8 @@ li svg {
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
   z-index: 11000 !important;
   font-weight: bold;
+}
+
+.toastH {
+  position: static !important;
 }

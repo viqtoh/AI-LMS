@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../styles/home.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import Toast from "../components/Toast";
+import Toast from "../components/Toast2";
 import { API_URL } from "../constants";
 
 const Register = () => {

@@ -39,7 +39,8 @@ const Profile = () => {
         if (data.error) {
           console.log(data);
           if (data.error === "Invalid token") {
-            localStorage.setItem("error", "token expired");
+            localStorage.setItem("error", "session expired");
+            localStorage.removeItem("token");
             window.location.href = "/";
           }
           showToast(data.error, false);
@@ -57,7 +58,8 @@ const Profile = () => {
     if (token) {
       fetchProfile();
     } else {
-      setIsLoading(false);
+      localStorage.setItem("error", "session expired");
+      window.location.href = "/";
     }
   }, [token]);
 

@@ -460,11 +460,16 @@ iframe {
 }
 
 .toast-message {
-  top: 100px !important;
+  top: 20px !important;
 }
 
 .toast-message2 {
-  top: 100px !important;
+  top: 20px !important;
+}
+
+.toastH {
+  position: fixed;
+  top: 20px;
 }
 
 .main-body {

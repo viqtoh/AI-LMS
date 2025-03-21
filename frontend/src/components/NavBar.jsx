@@ -8,11 +8,17 @@ import {
   faHouseChimneyWindow,
   faSpinner,
   faAngleDown,
-  faRoute
+  faRoute,
+  faSignOutAlt
 } from "@fortawesome/free-solid-svg-icons";
 
 const NavBar = ({ title = "Dashboard" }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/";
+  };
 
   return (
     <>
@@ -46,6 +52,11 @@ const NavBar = ({ title = "Dashboard" }) => {
               <FontAwesomeIcon icon={faCog} /> Profile
             </a>
           </li>
+          <li className="navlogout">
+            <button onClick={handleLogout}>
+              <FontAwesomeIcon icon={faSignOutAlt} /> Logout
+            </button>
+          </li>
         </ul>
       </div>
       <div className={`desktop-sidebar`}>
@@ -68,6 +79,11 @@ const NavBar = ({ title = "Dashboard" }) => {
           <li className={`${title === "Profile" ? "active" : ""}`}>
             <a href="/account/settings">
               <FontAwesomeIcon icon={faCog} /> Profile
+            </a>
+          </li>
+          <li className="navlogout">
+            <a href="/">
+              <FontAwesomeIcon icon={faSignOutAlt} /> Logout
             </a>
           </li>
         </ul>

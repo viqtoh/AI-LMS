@@ -21,7 +21,7 @@ const Toast = ({ message, onClose, isSuccess = true }) => {
       </motion.div>
     </div>
   ) : (
-    <div className="d-flex justify-content-center">
+    <div className="d-flex justify-content-center toastH">
       <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "../styles/home.css";
 import { API_URL } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
-import Toast from "../components/Toast";
+import Toast from "../components/Toast2";
 
 const Home = () => {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -18,7 +18,13 @@ const Home = () => {
     email: "",
     password: ""
   });
-
+  React.useEffect(() => {
+    const error = localStorage.getItem("error");
+    if (error) {
+      showToast(error, false);
+      localStorage.removeItem("error");
+    }
+  }, []);
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
