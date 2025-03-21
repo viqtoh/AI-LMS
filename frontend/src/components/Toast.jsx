@@ -10,23 +10,27 @@ const Toast = ({ message, onClose, isSuccess = true }) => {
   }, [onClose]);
 
   return isSuccess ? (
-    <motion.div
-      initial={{ y: -50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: -50, opacity: 0 }}
-      className="toast-message"
-    >
-      {message}
-    </motion.div>
+    <div className="d-flex justify-content-center toastH">
+      <motion.div
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -50, opacity: 0 }}
+        className="toast-message"
+      >
+        {message}
+      </motion.div>
+    </div>
   ) : (
-    <motion.div
-      initial={{ y: -50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: -50, opacity: 0 }}
-      className="toast-message2"
-    >
-      {message}
-    </motion.div>
+    <div className="d-flex justify-content-center">
+      <motion.div
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -50, opacity: 0 }}
+        className="toast-message2"
+      >
+        {message}
+      </motion.div>
+    </div>
   );
 };
 

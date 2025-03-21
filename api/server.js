@@ -12,6 +12,27 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+async function getUserByToken(token) {
+  try {
+    const user = await User.findOne({ where: { token } });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return {
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      createdAt: user.createdAt,
+      isAdmin: user.isAdmin
+    };
+  } catch (err) {
+    console.error(err);
+    throw new Error("Server error");
+  }
+}
+
 app.post("/api/register", async (req, res) => {
   const { email, password, first_name, last_name } = req.body;
 
@@ -53,11 +74,144 @@ app.post("/api/login", async (req, res) => {
           expiresIn: process.env.JWT_EXPIRES_IN // Token expiration
         });
 
+        await User.update({ token }, { where: { id: user.id } });
+
         return res.json({ message: "Login successful", token });
       }
     }
 
     res.status(401).json({ error: "Invalid credentials" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.post("/api/change/password", authenticateToken, async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "Token missing" });
+    }
+
+    const chuser = await getUserByToken(token);
+
+    if (!chuser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const user = await User.findOne({ where: { email: chuser.email } });
+
+    const { current_password, new_password, confirm_new_password } = req.body;
+
+    if (new_password !== confirm_new_password) {
+      return res.status(400).json({ error: "New password and confirm password do not match" });
+    }
+    console.log(current_password, user);
+    const validPassword = await bcrypt.compare(current_password, user.password);
+
+    if (!validPassword) {
+      return res.status(401).json({ error: "Current password is incorrect" });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(new_password, 10);
+    await User.update({ token: null }, { where: { email: user.email } });
+    await User.update({ password: hashedNewPassword }, { where: { email: user.email } });
+
+    res.json({ message: "Password updated successfully", user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.get("/api/profile", authenticateToken, async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "Token missing" });
+    }
+
+    const chuser = await getUserByToken(token);
+
+    if (!chuser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = await User.findOne({ where: { email: chuser.email } });
+
+    res.json({
+      user: {
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        image: user.image || "",
+        createdAt: user.createdAt,
+        phone: user.phone || "",
+        address: user.address || "",
+        city: user.city || "",
+        postal_code: user.postal_code || "",
+        country: user.country || "",
+        tax_id: user.tax_id || ""
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.put("/api/profile", authenticateToken, async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "Token missing" });
+    }
+
+    const user = await getUserByToken(token);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const { first_name, last_name, phone, address, city, postal_code, country, tax_id } = req.body;
+    await User.update(
+      {
+        first_name,
+        last_name,
+        phone,
+        address,
+        city,
+        postal_code,
+        country,
+        tax_id,
+        token: user.token
+      },
+      { where: { email: user.email } }
+    );
+
+    const updatedUser = await User.findOne({ where: { email: user.email } });
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        email: updatedUser.email,
+        first_name: updatedUser.first_name,
+        last_name: updatedUser.last_name,
+        phone: updatedUser.phone || "",
+        address: updatedUser.address || "",
+        city: updatedUser.city || "",
+        postal_code: updatedUser.postal_code || "",
+        country: updatedUser.country || "",
+        tax_id: updatedUser.tax_id || "",
+        createdAt: updatedUser.createdAt
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
