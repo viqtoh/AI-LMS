@@ -1,14 +1,11 @@
 # Use Node.js base image
 FROM node:20-alpine AS frontend-build
 
+
 # Set working directory
-WORKDIR /app/frontend
+WORKDIR /app
 
-# Copy and install dependencies for both frontend and backend
-COPY package.json package-lock.json ./
-RUN npm install
-
-
+COPY . .
 
 # Inject environment variables (for React and Backend)
 
@@ -19,9 +16,13 @@ ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
 ENV REACT_APP_IMAGE_HOST=$REACT_APP_IMAGE_HOST
 
 
-COPY . .
-
+# Build the frontend
+WORKDIR /app/frontend
+RUN npm install
 RUN npm run build
+
+
+
 
 # Serve with Nginx
 FROM nginx:stable-alpine
