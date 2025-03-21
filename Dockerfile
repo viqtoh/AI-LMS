@@ -1,12 +1,17 @@
-# Build frontend with environment variables
-FROM node:20-alpine AS frontend-build
-WORKDIR /app/frontend
+# Use Node.js base image
+FROM node:20-alpine AS builder
 
-# Copy package.json and install dependencies
-COPY frontend/package.json frontend/package-lock.json ./
+# Set working directory
+WORKDIR /app
+
+# Copy and install dependencies for both frontend and backend
+COPY package.json package-lock.json ./
 RUN npm install
 
-# Inject environment variables into the React build
+# Copy everything
+COPY . .
+
+# Inject environment variables (for React and Backend)
 ARG PG_USER
 ARG PG_HOST
 ARG PG_DATABASE
@@ -17,6 +22,8 @@ ARG JWT_EXPIRES_IN
 ARG REACT_APP_API_BASE_URL
 ARG REACT_APP_IMAGE_HOST
 
+ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
+ENV REACT_APP_IMAGE_HOST=$REACT_APP_IMAGE_HOST
 ENV PG_USER=$PG_USER
 ENV PG_HOST=$PG_HOST
 ENV PG_DATABASE=$PG_DATABASE
@@ -24,24 +31,16 @@ ENV PG_PASSWORD=$PG_PASSWORD
 ENV PG_PORT=$PG_PORT
 ENV JWT_SECRET=$JWT_SECRET
 ENV JWT_EXPIRES_IN=$JWT_EXPIRES_IN
-ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
-ENV REACT_APP_IMAGE_HOST=$REACT_APP_IMAGE_HOST
 
-# Copy source code and build
-COPY frontend ./
+# Build the frontend
+WORKDIR /app/frontend
 RUN npm run build
 
-# Build backend
-FROM python:3.11 AS backend
-WORKDIR /app/api
-COPY api/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-COPY api ./
+# Set back to the root directory
+WORKDIR /app
 
-# Serve frontend with Nginx
-FROM nginx:stable-alpine
-COPY --from=frontend-build /app/frontend/build /usr/share/nginx/html
-COPY --from=backend /app/api /app/api
+# Expose backend port
+EXPOSE 5000
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Start both frontend and backend
+CMD ["npm", "start"]
