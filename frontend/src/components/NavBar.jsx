@@ -114,7 +114,7 @@ const NavBar = ({ title = "Dashboard" }) => {
           </li>
         </ul>
       </div>
-      <div class="preNav">
+      <div className="preNav">
         <div className="NavBar">
           <div></div>
           <div className="nav-right">
@@ -124,9 +124,12 @@ const NavBar = ({ title = "Dashboard" }) => {
             <div className="nav-divider">
               <span className="vertical-line"></span>
             </div>
-            <span>
-              Hi, {userData.first_name} {userData.last_name}
-            </span>
+            {userData && userData.first_name && userData.last_name ? (
+              <span>
+                Hi, {userData.first_name} {userData.last_name}
+              </span>
+            ) : null}
+
             {userData && userData.image ? (
               <div className="profileImage mx-2 s-35">
                 <img
@@ -136,7 +139,7 @@ const NavBar = ({ title = "Dashboard" }) => {
                   alt="Profile"
                 />
               </div>
-            ) : (
+            ) : userData !== null ? (
               <div className="profileImage mx-2 s-35">
                 <img
                   src="/images/default_profile.png"
@@ -145,7 +148,7 @@ const NavBar = ({ title = "Dashboard" }) => {
                   alt="Profile"
                 />
               </div>
-            )}
+            ) : null}
             <FontAwesomeIcon icon={faAngleDown} />
           </div>
         </div>
