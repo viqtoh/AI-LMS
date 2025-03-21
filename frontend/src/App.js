@@ -9,7 +9,7 @@ import Profile from "./pages/Profile";
 
 function App() {
   return (
-    <Router>
+    <Router basename="/">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />
