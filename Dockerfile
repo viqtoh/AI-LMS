@@ -30,9 +30,11 @@ ENV JWT_EXPIRES_IN=$JWT_EXPIRES_IN
 # Copy the rest of the source code
 COPY . .
 
+WORKDIR /app/api
+
 # Expose API port
 EXPOSE 5000
 
 # Start backend server
-CMD ["npx", "nodemon", "/app/api/server.js"]
+CMD ["npx", "nodemon", "server.js"]
 
