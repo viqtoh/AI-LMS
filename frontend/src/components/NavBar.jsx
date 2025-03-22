@@ -15,7 +15,10 @@ import {
 
 const NavBar = ({ title = "Dashboard" }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [userData, setUserData] = useState(null);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [uimage, setUimage] = useState("");
+  const [isloaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -28,13 +31,28 @@ const NavBar = ({ title = "Dashboard" }) => {
         const data = await response.json();
 
         if (data.error) {
+          if (data.error === "Invalid token") {
+            localStorage.setItem("error", "session expired");
+            localStorage.removeItem("token");
+            window.location.href = "/";
+          } else {
+            setFirstName(localStorage.getItem("first_name"));
+            setLastName(localStorage.getItem("last_name"));
+            setUimage(localStorage.getItem("uimage"));
+          }
           throw new Error("Failed to fetch user details");
         }
-        console.log(data);
 
-        setUserData(data);
+        setFirstName(data.first_name);
+        setLastName(data.last_name);
+        setUimage(data.image);
+        localStorage.setItem("uimage", data.uimage);
+        localStorage.setItem("first_name", data.first_name);
+        localStorage.setItem("last_name", data.last_name);
       } catch (error) {
         console.error("Error fetching user details:", error);
+      } finally {
+        setIsLoaded(true);
       }
     };
 
@@ -108,9 +126,9 @@ const NavBar = ({ title = "Dashboard" }) => {
             </a>
           </li>
           <li className="navlogout">
-            <a href="/">
+            <button onClick={handleLogout}>
               <FontAwesomeIcon icon={faSignOutAlt} /> Logout
-            </a>
+            </button>
           </li>
         </ul>
       </div>
@@ -124,17 +142,17 @@ const NavBar = ({ title = "Dashboard" }) => {
             <div className="nav-divider">
               <span className="vertical-line"></span>
             </div>
-            {userData && userData.first_name && userData.last_name ? (
+            {firstName && lastName ? (
               <span>
-                Hi, {userData.first_name} {userData.last_name}
+                Hi, {firstName} {lastName}
               </span>
             ) : null}
 
-            {userData && userData.image ? (
+            {uimage ? (
               <div className="profileImage mx-2 s-35">
-                <img src={`${IMAGE_HOST}${userData.image}`} className="s-35" alt="Profile" />
+                <img src={`${IMAGE_HOST}${uimage}`} className="s-35" alt="Profile" />
               </div>
-            ) : userData !== null ? (
+            ) : isloaded ? (
               <div className="profileImage mx-2 s-35">
                 <img src="/images/default_profile.png" className="s-35" alt="Profile" />
               </div>

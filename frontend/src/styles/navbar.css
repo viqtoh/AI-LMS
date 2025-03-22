@@ -36,6 +36,10 @@ body {
   display: flex;
 }
 
+.navlogout button {
+  color: #a72845;
+}
+
 .sidebar ul li {
   padding: 10px 15px;
   margin-left: 10px;
@@ -72,7 +76,7 @@ li svg {
   margin: 20px 0px 0px 0px;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 1024px) {
   .navHeader h3 {
     margin: 5px 0px 0px 0px;
     font-size: 20px;
@@ -174,7 +178,7 @@ li svg {
 
 /* region desktop */
 
-@media screen and (min-width: 769px) {
+@media screen and (min-width: 1025px) {
   .nav-right span {
     color: #333;
     font-size: 15px;
@@ -281,7 +285,7 @@ li svg {
   height: 40px;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 1024px) {
   .btn-theme {
     font-size: 14px;
   }
