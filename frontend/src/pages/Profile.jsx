@@ -14,6 +14,8 @@ const Profile = () => {
   const [user, setUser] = useState(null);
   const [editError, SetEditError] = useState("");
   const [passError, SetPassError] = useState("");
+  const [profileSrc, setProfileSrc] = useState("/images/default_profile.png");
+
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
 
   const [isSuccess, setIsSuccess] = React.useState(true);
@@ -21,7 +23,6 @@ const Profile = () => {
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
 
@@ -125,6 +126,10 @@ const Profile = () => {
         setIsEditModalOpen(false);
         SetEditError("");
         showToast("Profile updated successfully", true);
+        console.log(data);
+        if (data.user.image !== "") {
+          setProfileSrc(`${IMAGE_HOST}${data.user.image}`);
+        }
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -181,66 +186,78 @@ const Profile = () => {
       <div className="main-body">
         {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
         {isLoading && user === null ? (
-          <div className="loader-container">
-            <div className="loader"></div>
+          <div className="h-100">
+            <h5 className="postHead">My profile</h5>
+            <div className="loader-container">
+              <div className="loader"></div>
+            </div>
           </div>
         ) : (
-          <div>
-            <h5 className="postHead">My profile</h5>
-            <div className="borderedContainer mb-3">
-              {user && user.image ? (
-                <div className="profileImage me-2">
-                  <img src={`${IMAGE_HOST}${user.image}`} alt="Profile" />
-                </div>
-              ) : (
-                <div className="profileImage me-2">
-                  <img src="/images/default_profile.png" alt="Profile" />
-                </div>
-              )}
-              <div className="profileInfo">
-                <h5 className="profileName">
-                  {user?.first_name || "N/A"} {user?.last_name || "N/A"}
-                </h5>
-                <p>{user?.address || "N/A"}</p>
-              </div>
+          <div className="sub-body">
+            <div className="postHead">
+              <h5>My profile</h5>
             </div>
-            <div className="borderedContainer2 mb-3">
-              <p className="borderedTitle">Personal Information</p>
-              <div className="paddedInfo">
-                <div>
-                  <p>First Name</p>
-                  <p className="mb-3 fw-bold">{user?.first_name || "N/A"}</p>
+            <div className="profileInfoBody">
+              <div className="borderedContainer mb-3">
+                {user && user.image ? (
+                  <div className="profileImage me-2">
+                    <img src={`${IMAGE_HOST}${user.image}`} alt="Profile" />
+                  </div>
+                ) : (
+                  <div className="profileImage me-2">
+                    <img src={profileSrc} alt="Profile" />
+                  </div>
+                )}
+                <div className="profileInfo">
+                  <h5 className="profileName">
+                    {user?.first_name || "N/A"} {user?.last_name || "N/A"}
+                  </h5>
+                  <p>{user?.address || "N/A"}</p>
+                </div>
+              </div>
 
-                  <p>Email Address</p>
-                  <p className="mb-3 fw-bold">{user?.email || "N/A"}</p>
+              <div className="borderedContainer2 mb-3">
+                <p className="borderedTitle">Personal Information</p>
+                <div className="paddedInfo">
+                  <div>
+                    <p>First Name</p>
+                    <p className="mb-3 fw-bold">{user?.first_name || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Email Address</p>
+                    <p className="mb-3 fw-bold">{user?.email || "N/A"}</p>
+                  </div>
                 </div>
                 <div className="paddedInfo">
                   <div>
                     <p>Last Name</p>
                     <p className="mb-3 fw-bold">{user?.last_name || "N/A"}</p>
-
+                  </div>
+                  <div>
                     <p>Phone</p>
                     <p className="mb-3 fw-bold">{user?.phone || "N/A"}</p>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="borderedContainer2">
-              <p className="borderedTitle">Address</p>
-              <div className="paddedInfo">
-                <div>
-                  <p>Country</p>
-                  <p className="mb-3 fw-bold">{user?.country || "N/A"}</p>
-
-                  <p>Postal Code</p>
-                  <p className="mb-3 fw-bold">{user?.postal_code || "N/A"}</p>
+              <div className="borderedContainer2">
+                <p className="borderedTitle">Address</p>
+                <div className="paddedInfo">
+                  <div>
+                    <p>Country</p>
+                    <p className="mb-3 fw-bold">{user?.country || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Postal Code</p>
+                    <p className="mb-3 fw-bold">{user?.postal_code || "N/A"}</p>
+                  </div>
                 </div>
                 <div className="paddedInfo">
                   <div>
                     <p>City/State</p>
                     <p className="mb-3 fw-bold">{user?.city || "N/A"}</p>
-
+                  </div>
+                  <div>
                     <p>Tax ID</p>
                     <p className="mb-3 fw-bold">{user?.tax_id || "N/A"}</p>
                   </div>

@@ -281,6 +281,15 @@ li svg {
   height: 40px;
 }
 
+@media screen and (max-width: 768px) {
+  .btn-theme {
+    font-size: 14px;
+  }
+  .buttonDiv {
+    justify-content: space-between;
+  }
+}
+
 .btn-theme:hover {
   background-color: white;
   color: #0057ff;

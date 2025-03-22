@@ -63,9 +63,9 @@ const NavBar = ({ title = "Dashboard" }) => {
               <FontAwesomeIcon icon={faHouseChimneyWindow} /> Dashboard
             </a>
           </li>
-          <li className={`${title === "Course Journey" ? "active" : ""}`}>
+          <li className={`${title === "Content Library" ? "active" : ""}`}>
             <a href="/content-library">
-              <FontAwesomeIcon icon={faRoute} /> Course Journey
+              <FontAwesomeIcon icon={faRoute} /> Content Library
             </a>
           </li>
           <li className={`${title === "Certificates" ? "active" : ""}`}>
@@ -92,9 +92,9 @@ const NavBar = ({ title = "Dashboard" }) => {
               <FontAwesomeIcon icon={faHouseChimneyWindow} /> Dashboard
             </a>
           </li>
-          <li className={`${title === "Course Journey" ? "active" : ""}`}>
+          <li className={`${title === "Content Library" ? "active" : ""}`}>
             <a href="/content-library">
-              <FontAwesomeIcon icon={faRoute} /> Course Journey
+              <FontAwesomeIcon icon={faRoute} /> Content Library
             </a>
           </li>
           <li className={`${title === "Certificates" ? "active" : ""}`}>
@@ -114,7 +114,7 @@ const NavBar = ({ title = "Dashboard" }) => {
           </li>
         </ul>
       </div>
-      <div class="preNav">
+      <div className="preNav">
         <div className="NavBar">
           <div></div>
           <div className="nav-right">
@@ -124,28 +124,21 @@ const NavBar = ({ title = "Dashboard" }) => {
             <div className="nav-divider">
               <span className="vertical-line"></span>
             </div>
-            <span>
-              Hi, {userData.first_name} {userData.last_name}
-            </span>
+            {userData && userData.first_name && userData.last_name ? (
+              <span>
+                Hi, {userData.first_name} {userData.last_name}
+              </span>
+            ) : null}
+
             {userData && userData.image ? (
               <div className="profileImage mx-2 s-35">
-                <img
-                  src={`${IMAGE_HOST}${userData.image}`}
-                  className="s-35"
-                  id="editimage"
-                  alt="Profile"
-                />
+                <img src={`${IMAGE_HOST}${userData.image}`} className="s-35" alt="Profile" />
               </div>
-            ) : (
+            ) : userData !== null ? (
               <div className="profileImage mx-2 s-35">
-                <img
-                  src="/images/default_profile.png"
-                  className="s-35"
-                  id="editimage"
-                  alt="Profile"
-                />
+                <img src="/images/default_profile.png" className="s-35" alt="Profile" />
               </div>
-            )}
+            ) : null}
             <FontAwesomeIcon icon={faAngleDown} />
           </div>
         </div>
