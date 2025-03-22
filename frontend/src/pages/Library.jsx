@@ -5,9 +5,14 @@ import { useState, useEffect } from "react";
 import { API_URL, IMAGE_HOST } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
-import { faStar, faRotateLeft, faSearch } from "@fortawesome/free-solid-svg-icons";
+import {
+  faStar,
+  faRotateLeft,
+  faSearch,
+  faAngleDown,
+  faAngleUp
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCaretDown, faCaretUp } from "@fortawesome/free-solid-svg-icons";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import Select from "react-select";
 
@@ -121,16 +126,40 @@ const Library = () => {
             <div className="loader"></div>
           </div>
         ) : (
-          <div className="sub-body">
+          <div
+            className="sub-body"
+            onScroll={(e) => {
+              const button = document.querySelector(".returnUp");
+              if (e.target.scrollTop > 500) {
+                button.style.opacity = "1";
+                button.style.visibility = "visible";
+              } else {
+                button.style.opacity = "0";
+                button.style.visibility = "hidden";
+              }
+            }}
+          >
+            <button
+              className="btn returnUp"
+              onClick={() => {
+                const subBody = document.querySelector(".sub-body");
+                if (subBody) {
+                  subBody.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+            >
+              <FontAwesomeIcon icon={faAngleUp} />
+            </button>
             <div className="searchContainer">
               <div className="searchBarContainer">
                 <FontAwesomeIcon icon={faSearch} />
-              <input
-                type="text"
-                className="searchBar"
-                placeholder="Search content by title or description"
-                onChange={(e) => console.log(e.target.value)}
-              /></div>
+                <input
+                  type="text"
+                  className="searchBar"
+                  placeholder="Search content by title or description"
+                  onChange={(e) => console.log(e.target.value)}
+                />
+              </div>
 
               <div className="sortContainer">
                 <button className="btn btn-reset">
@@ -159,7 +188,7 @@ const Library = () => {
                     >
                       <h5 className="filterHeading">Content Type</h5>
                       <FontAwesomeIcon
-                        icon={cisCollapsed ? faCaretDown : faCaretUp}
+                        icon={cisCollapsed ? faAngleDown : faAngleUp}
                         style={{ marginLeft: "8px" }}
                       />
                     </div>
@@ -188,7 +217,7 @@ const Library = () => {
                     >
                       <h5 className="filterHeading">Ratings</h5>
                       <FontAwesomeIcon
-                        icon={risCollapsed ? faCaretDown : faCaretUp}
+                        icon={risCollapsed ? faAngleDown : faAngleUp}
                         style={{ marginLeft: "8px" }}
                       />
                     </div>
@@ -226,7 +255,7 @@ const Library = () => {
                     >
                       <h5 className="filterHeading">Favorites</h5>
                       <FontAwesomeIcon
-                        icon={fisCollapsed ? faCaretDown : faCaretUp}
+                        icon={fisCollapsed ? faAngleDown : faAngleUp}
                         style={{ marginLeft: "8px" }}
                       />
                     </div>
