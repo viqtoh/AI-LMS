@@ -220,7 +220,7 @@ app.put("/api/profile", authenticateToken, async (req, res) => {
 
     const { first_name, last_name, phone, address, city, postal_code, country, tax_id, image } =
       req.body;
-    if (image) {
+    if (image && !image.startsWith("/media/")) {
       const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
       const buffer = Buffer.from(base64Data, "base64");
       const fileName = `${user.email}_profile_${Date.now()}.png`;
@@ -267,7 +267,8 @@ app.put("/api/profile", authenticateToken, async (req, res) => {
         postal_code: updatedUser.postal_code || "",
         country: updatedUser.country || "",
         tax_id: updatedUser.tax_id || "",
-        createdAt: updatedUser.createdAt
+        createdAt: updatedUser.createdAt,
+        image: updatedUser.image || ""
       }
     });
   } catch (err) {
