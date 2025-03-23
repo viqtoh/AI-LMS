@@ -13,7 +13,7 @@ import {
   faSignOutAlt
 } from "@fortawesome/free-solid-svg-icons";
 
-const NavBar = ({ title = "Dashboard" }) => {
+const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -161,7 +161,7 @@ const NavBar = ({ title = "Dashboard" }) => {
           </div>
         </div>
         <div className="navbar-title">
-          <h3>{title}</h3>
+          <h3>{title}</h3> {subTitle !== "" ? <h5>/{subTitle}</h5> : null}
         </div>
       </div>
       {/* Overlay when Sidebar is Open */}

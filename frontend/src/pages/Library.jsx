@@ -319,7 +319,9 @@ const Library = () => {
                         <span className="badge course-badge">{getRandomCourse().type}</span>
                       </div>
                       <div className="searchTitle">
-                        <span>{getRandomCourse().title}</span>
+                        <a href="/content-library/path/1">
+                          <span>{getRandomCourse().title}</span>
+                        </a>
                       </div>
                       <div className="searchDesc">
                         <span>{getRandomCourse().description}</span>

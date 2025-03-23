@@ -6,6 +6,7 @@ import Library from "./pages/Library";
 import Certificates from "./pages/Certificates";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import LearnPath from "./pages/LearnPath";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/content-library" element={<Library />} />
+        <Route path="/content-library/path/:id" element={<LearnPath />} />
         <Route path="/certificates" element={<Certificates />} />
         <Route path="/account/settings" element={<Profile />} />
       </Routes>

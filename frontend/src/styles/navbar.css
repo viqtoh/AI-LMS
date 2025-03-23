@@ -136,6 +136,21 @@ li svg {
   padding: 10px;
 }
 
+.navbar-title {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-title h3 {
+  font-size: 20px;
+  margin: 20px 0px 0px 20px !important;
+}
+
+.navbar-title h5 {
+  font-size: 15px;
+  margin: 20px 0px 0px 5px !important;
+}
+
 .nav-right {
   display: flex;
   justify-content: flex-end;
