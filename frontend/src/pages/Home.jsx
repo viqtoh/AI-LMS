@@ -90,10 +90,11 @@ const Home = () => {
                 className="input100"
                 type="text"
                 name="email"
+                placeholder="  "
                 value={formData.email}
                 onChange={handleChange}
               />
-              <span className="focus-input100" data-placeholder="Email"></span>
+              <label>Email</label>
             </div>
 
             <div className="wrap-input100 validate-input" data-validate="Enter password">
@@ -101,10 +102,11 @@ const Home = () => {
                 className="input100"
                 type="password"
                 name="password"
+                placeholder="  "
                 value={formData.password}
                 onChange={handleChange}
               />
-              <span className="focus-input100" data-placeholder="Password"></span>
+              <label>Password</label>
             </div>
 
             <div className="container-login100-form-btn">
