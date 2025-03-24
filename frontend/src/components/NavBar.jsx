@@ -6,22 +6,10 @@ import { faBell, faFolderClosed, faFolderOpen } from "@fortawesome/free-regular-
 import { useEffect } from "react";
 import {
   faCog,
-  faHouseChimneyWindow,
-  faSpinner,
   faAngleDown,
-  faRoute,
   faSignOutAlt,
   faTrophy,
-  faBookSkull,
-  faBook,
-  faCogs,
-  faHouseChimneyCrack,
-  faHouseChimneyMedical,
-  faHouseCircleCheck,
-  faHouseDamage,
   faHouseLock,
-  faHouseUser,
-  faHouseTsunami,
   faHouse
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -50,7 +38,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
           } else {
             setFirstName(localStorage.getItem("first_name"));
             setLastName(localStorage.getItem("last_name"));
-            setUimage(localStorage.getItem("uimage"));
+            setUimage(localStorage.getItem("image"));
           }
           throw new Error("Failed to fetch user details");
         }
@@ -58,7 +46,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
         setFirstName(data.first_name);
         setLastName(data.last_name);
         setUimage(data.image);
-        localStorage.setItem("uimage", data.uimage);
+        localStorage.setItem("image", data.image);
         localStorage.setItem("first_name", data.first_name);
         localStorage.setItem("last_name", data.last_name);
       } catch (error) {

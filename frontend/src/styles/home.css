@@ -433,6 +433,16 @@ iframe {
   .toast-message {
     top: 80px !important;
   }
+  .postHead {
+    display: none;
+  }
+  .navbar-title {
+    position: relative;
+    left: -50px;
+  }
+  .navbar-title h5 {
+    margin-left: 0px;
+  }
 }
 
 .toast-message2 {
@@ -880,6 +890,7 @@ iframe {
 
 .searchBody {
   height: calc(100vh - 350px);
+  margin-bottom: -40px;
 }
 
 .searchResult {
@@ -961,7 +972,7 @@ iframe {
   font-family: "Montserrat", Lato;
 }
 
-@media screen and (min-width: 769px) {
+@media screen and (min-width: 649px) {
   .searchDesc span {
     font-size: 0.9rem;
     -webkit-line-clamp: 2;
@@ -1048,6 +1059,9 @@ iframe {
     border-radius: 8px;
     height: fit-content;
   }
+  .searchBody {
+    height: calc(100vh - 270px) !important;
+  }
 }
 
 .btn-reset:hover {
@@ -1095,7 +1109,7 @@ iframe {
     visibility 0.6s ease-out !important;
 }
 
-@media screen and (min-width: 1024px) {
+@media screen and (min-width: 1025px) {
   .sortContainer button {
     margin-right: 50px;
   }
@@ -1412,4 +1426,233 @@ iframe {
   line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.archievementHeader {
+  height: 300px;
+  width: 100%;
+  background-color: #222;
+  border-radius: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.aheaderImage {
+  border-radius: 100%;
+  width: 200px;
+  background-color: transparent !important;
+  margin-right: 20px;
+}
+
+.aheaderContent {
+  display: flex;
+  padding: 20px;
+  align-items: flex-start;
+  width: auto;
+  height: fit-content;
+}
+
+.aCard {
+  background-color: #3d3d3d;
+  height: 100px;
+  width: 250px;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  align-items: center !important;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.aCardIcon {
+  color: white;
+  height: 60px;
+}
+
+.aCardText {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+  margin-bottom: 0px !important;
+}
+
+.aCardText p {
+  font-size: 14px;
+  margin-bottom: 5px;
+  font-weight: 600;
+  line-height: 1;
+  color: white !important;
+}
+
+.aCardText span {
+  font-size: 20px !important;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mheaderContent {
+  display: none;
+}
+
+@media screen and (max-width: 843px) {
+  .aheaderContent {
+    display: none;
+  }
+  .mheaderContent {
+    display: block;
+  }
+}
+
+@media screen and (max-width: 1183px) and (min-width: 1024px) {
+  .aheaderContent {
+    display: none;
+  }
+  .mheaderContent {
+    display: block;
+  }
+}
+
+.mheaderContent {
+  padding: 20px;
+}
+
+.mheadertitle {
+  display: flex;
+  align-items: center !important;
+}
+
+.mheadertitle span {
+  font-size: 30px !important;
+  margin-left: 10px;
+}
+
+.mheadertitle img {
+  height: 100px;
+  width: 100px;
+  border-radius: 100%;
+}
+
+.mCard {
+  background-color: #3d3d3d;
+  height: 100px;
+  width: 200px;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  align-items: center !important;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.mCardIcon {
+  color: white;
+  height: 40px;
+}
+
+.mCardText {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+  margin-bottom: 0px !important;
+}
+
+.mCardText p {
+  font-size: 14px;
+  margin-bottom: 5px;
+  font-weight: 600;
+  line-height: 1;
+  color: white !important;
+}
+
+.mCardText span {
+  font-size: 20px !important;
+  font-weight: 800;
+  line-height: 1;
+}
+
+@media screen and (max-width: 530px) {
+  .mCard {
+    background-color: #3d3d3d;
+    height: 50px;
+    width: 200px;
+    border-radius: 10px;
+    padding: 10px;
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-top: 5px;
+    margin-bottom: 5px !important;
+  }
+  .mCardIcon {
+    color: white;
+    height: 30px;
+  }
+  .cardDiv {
+    flex-direction: column;
+    align-items: center !important;
+  }
+}
+
+.achievementBody {
+  width: 100%;
+  justify-content: center;
+  display: flex;
+  margin-top: 80px;
+}
+
+@media screen and (max-width: 1024px) {
+  chievementBody {
+    margin-top: 30px;
+  }
+}
+
+.achievementBodyContent {
+  width: 100%;
+  max-width: 1200px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  width: 100%;
+}
+
+.searchButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  color: #666;
+  cursor: pointer;
+}
+
+.searchButton #searchIcon {
+  font-size: 18px;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #333;
+  background-color: transparent;
+}
+
+.searchInput::placeholder {
+  color: #aaa;
+}
+
+.achieventRowTitle {
+  font-size: 13px;
 }
