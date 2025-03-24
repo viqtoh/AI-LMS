@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
-import Certificates from "./pages/Certificates";
+import Achievements from "./pages/Achievements";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import LearnPath from "./pages/LearnPath";
@@ -17,7 +17,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/content-library" element={<Library />} />
         <Route path="/content-library/path/:id" element={<LearnPath />} />
-        <Route path="/certificates" element={<Certificates />} />
+        <Route path="/achievements" element={<Achievements />} />
         <Route path="/account/settings" element={<Profile />} />
       </Routes>
     </Router>

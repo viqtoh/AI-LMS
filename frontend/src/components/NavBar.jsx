@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "../styles/navbar.css";
 import { API_URL, IMAGE_HOST } from "../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell } from "@fortawesome/free-regular-svg-icons";
+import { faBell, faFolderClosed, faFolderOpen } from "@fortawesome/free-regular-svg-icons";
 import { useEffect } from "react";
 import {
   faCog,
@@ -10,7 +10,19 @@ import {
   faSpinner,
   faAngleDown,
   faRoute,
-  faSignOutAlt
+  faSignOutAlt,
+  faTrophy,
+  faBookSkull,
+  faBook,
+  faCogs,
+  faHouseChimneyCrack,
+  faHouseChimneyMedical,
+  faHouseCircleCheck,
+  faHouseDamage,
+  faHouseLock,
+  faHouseUser,
+  faHouseTsunami,
+  faHouse
 } from "@fortawesome/free-solid-svg-icons";
 
 const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
@@ -78,27 +90,42 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
         <ul>
           <li className={`${title === "Dashboard" ? "active" : ""}`}>
             <a href="/dashboard">
-              <FontAwesomeIcon icon={faHouseChimneyWindow} /> Dashboard
+              {title === "Dashboard" ? (
+                <FontAwesomeIcon icon={faHouse} id="homeIcon" />
+              ) : (
+                <FontAwesomeIcon icon={faHouseLock} />
+              )}
+              Dashboard
             </a>
           </li>
           <li className={`${title === "Content Library" ? "active" : ""}`}>
             <a href="/content-library">
-              <FontAwesomeIcon icon={faRoute} /> Content Library
+              {title === "Content Library" ? (
+                <FontAwesomeIcon icon={faFolderOpen} id="folderIcon" />
+              ) : (
+                <FontAwesomeIcon icon={faFolderClosed} />
+              )}
+              Content Library
             </a>
           </li>
-          <li className={`${title === "Certificates" ? "active" : ""}`}>
-            <a href="/certificates">
-              <FontAwesomeIcon icon={faSpinner} /> Progress & Certificates
+          <li className={`${title === "Achievements" ? "active" : ""}`}>
+            <a href="/achievements">
+              <FontAwesomeIcon
+                icon={faTrophy}
+                id={`${title === "Achievements" ? "trophyIcon" : ""}`}
+              />{" "}
+              Achievements
             </a>
           </li>
           <li className={`${title === "Profile" ? "active" : ""}`}>
             <a href="/account/settings">
-              <FontAwesomeIcon icon={faCog} /> Profile
+              <FontAwesomeIcon icon={faCog} id={`${title === "Profile" ? "cogIcon" : ""}`} />
+              Profile
             </a>
           </li>
           <li className="navlogout">
             <button onClick={handleLogout}>
-              <FontAwesomeIcon icon={faSignOutAlt} /> Logout
+              <FontAwesomeIcon icon={faSignOutAlt} id="logoutIcon" /> <span>Logout</span>
             </button>
           </li>
         </ul>
@@ -107,27 +134,43 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
         <ul>
           <li className={`${title === "Dashboard" ? "active" : ""}`}>
             <a href="/dashboard">
-              <FontAwesomeIcon icon={faHouseChimneyWindow} /> Dashboard
+              {title === "Dashboard" ? (
+                <FontAwesomeIcon icon={faHouse} id="homeIcon" />
+              ) : (
+                <FontAwesomeIcon icon={faHouseLock} />
+              )}
+              Dashboard
             </a>
           </li>
           <li className={`${title === "Content Library" ? "active" : ""}`}>
             <a href="/content-library">
-              <FontAwesomeIcon icon={faRoute} /> Content Library
+              {title === "Content Library" ? (
+                <FontAwesomeIcon icon={faFolderOpen} id="folderIcon" />
+              ) : (
+                <FontAwesomeIcon icon={faFolderClosed} />
+              )}
+              Content Library
             </a>
           </li>
-          <li className={`${title === "Certificates" ? "active" : ""}`}>
-            <a href="/certificates">
-              <FontAwesomeIcon icon={faSpinner} /> Progress & Certificates
+          <li className={`${title === "Achievements" ? "active" : ""}`}>
+            <a href="/achievements">
+              <FontAwesomeIcon
+                icon={faTrophy}
+                id={`${title === "Achievements" ? "trophyIcon" : ""}`}
+              />{" "}
+              Achievements
             </a>
           </li>
           <li className={`${title === "Profile" ? "active" : ""}`}>
             <a href="/account/settings">
-              <FontAwesomeIcon icon={faCog} /> Profile
+              <FontAwesomeIcon icon={faCog} id={`${title === "Profile" ? "cogIcon" : ""}`} />
+              Profile
             </a>
           </li>
           <li className="navlogout">
             <button onClick={handleLogout}>
-              <FontAwesomeIcon icon={faSignOutAlt} /> Logout
+              <FontAwesomeIcon icon={faSignOutAlt} id="logoutIcon" />
+              <span>Logout</span>
             </button>
           </li>
         </ul>

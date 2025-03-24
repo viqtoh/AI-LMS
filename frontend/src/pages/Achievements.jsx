@@ -1,14 +1,14 @@
 import React from "react";
 import NavBar from "../components/NavBar";
 
-const Certificates = () => {
+const Achievements = () => {
   return (
     <div>
       <div className="navHeader">
-        <NavBar title="Certificates" />
+        <NavBar title="Achievements" />
       </div>
     </div>
   );
 };
 
-export default Certificates;
+export default Achievements;

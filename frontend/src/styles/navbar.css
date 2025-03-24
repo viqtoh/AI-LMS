@@ -37,7 +37,7 @@ body {
 }
 
 .navlogout button {
-  color: #a72845;
+  color: #ff0f0f;
 }
 
 .sidebar ul li {
@@ -358,4 +358,64 @@ li svg {
 .s-200 {
   height: 200px !important;
   width: 200px !important;
+}
+
+#cogIcon {
+  color: #6c757d;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.navlogout:hover button #logoutIcon,
+.navlogout:hover button span {
+  animation: flasher 1.5s ease-in-out infinite;
+}
+
+#trophyIcon {
+  color: #fbff00;
+  animation: shimmer 1.5s linear infinite;
+}
+
+#homeIcon {
+  color: #abe8f0;
+}
+
+#folderIcon {
+  color: #ffcc00;
+  /* Popular folder color: yellow */
+}
+
+@keyframes shimmer {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+}
+
+@keyframes flasher {
+  0% {
+    color: black;
+  }
+  50% {
+    color: #ff0f0f;
+  }
+  100% {
+    color: black;
+  }
 }
