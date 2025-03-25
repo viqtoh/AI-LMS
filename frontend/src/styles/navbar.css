@@ -230,7 +230,7 @@ li svg {
     background: #fff;
     color: white;
     transition: left 0.3s ease-in-out;
-    border-right: 1px solid #ddd;
+    border-right: 1px solid #efefef;
     z-index: 1000;
     display: block;
   }
@@ -360,8 +360,134 @@ li svg {
 }
 
 #cogIcon {
-  color: #6c757d;
+  color: #fbff00;
   animation: spin 2s linear infinite;
+}
+
+.cogIconDiv {
+}
+
+.lighteningDiv {
+  position: absolute;
+  transform: translateX(-25%) translateY(-15px);
+}
+
+.lighteningDiv svg {
+  height: 10px;
+  margin: 0px 0.5px;
+}
+
+#lightIcon1 {
+  transform: rotateY(180deg) rotate(30deg) translateX(2px);
+  animation: light1 2s linear infinite;
+}
+
+#lightIcon4 {
+  transform: rotate(30deg);
+  animation: light4 2s linear infinite;
+}
+
+#lightIcon2 {
+  animation: light2 3s linear infinite;
+  transform: translateY(-3px);
+}
+
+#lightIcon3 {
+  height: 5px;
+  animation: light3 5s alternate-reverse infinite;
+}
+
+#lightIcon2,
+#lightIcon4 {
+  height: 8px;
+}
+
+@keyframes light1 {
+  0% {
+    transform: rotateY(180deg) rotate(30deg) translateX(2px);
+  }
+  25% {
+    color: black;
+    transform: rotateY(180deg) rotate(30deg) translateY(3px) translateX(2px);
+  }
+  26% {
+    color: white;
+    transform: rotateY(180deg) rotate(30deg) translateY(2px) translateX(2px);
+  }
+  50% {
+    color: yellow;
+    transform: rotateY(180deg) rotate(30deg) translateX(2px);
+  }
+  70% {
+    color: white;
+    transform: rotateY(180deg) rotate(30deg) translateY(2px) translateX(5px);
+  }
+  100% {
+    transform: rotateY(180deg) rotate(30deg) translateX(2px);
+  }
+}
+
+@keyframes light2 {
+  0% {
+    transform: translateY(-3px) rotate(0deg);
+  }
+  20% {
+    color: black;
+    transform: translateY(2px) rotate(10deg);
+  }
+  35% {
+    color: white;
+    transform: translateY(1px) rotate(-5deg);
+  }
+  50% {
+    color: yellow;
+    transform: translateY(-4px) rotate(15deg);
+  }
+  65% {
+    color: white;
+    transform: translateY(2px) rotate(-10deg);
+  }
+  80% {
+    color: black;
+    transform: translateY(0px) rotate(5deg);
+  }
+  100% {
+    transform: translateY(-3px) rotate(0deg);
+  }
+}
+
+@keyframes light3 {
+  0% {
+    transform: translateY(-2px) rotate(0deg);
+  }
+  20% {
+    color: black;
+    transform: translateY(1px) rotate(10deg);
+  }
+  50% {
+    color: yellow;
+    transform: translateY(1px) rotate(15deg);
+  }
+  100% {
+    transform: translateY(-2px) rotate(0deg);
+  }
+}
+
+@keyframes light4 {
+  0% {
+    transform: translateY(-2px) rotate(30deg);
+  }
+  20% {
+    color: black;
+    transform: translateY(1px) rotate(40deg);
+  }
+  50% {
+    color: yellow;
+    transform: translateY(1px) rotate(15deg);
+  }
+  100% {
+    transform: translateY(-2px) rotate(30deg);
+  }
 }
 
 @keyframes spin {
@@ -384,12 +510,48 @@ li svg {
 }
 
 #homeIcon {
-  color: #abe8f0;
+  color: #ffcc00;
+  /* Bright yellow for better contrast */
+  height: 14px;
+}
+
+#carIcon {
+  height: 10px;
+  color: rgb(226, 86, 86);
+  /* Medium gray for better visibility on both #0057ff and yellow */
+  transform: rotateY(180deg) translateY(2px);
+  z-index: 20;
+  animation: moveLeft 5s ease-out infinite;
+}
+
+.homeIconDiv {
+  display: flex;
+  width: 25px;
+  overflow: hidden;
+  justify-content: flex-start;
+  align-items: flex-end;
+  padding-bottom: 8px;
+}
+
+.homeIconDiv svg {
+  margin: 0px !important;
 }
 
 #folderIcon {
   color: #ffcc00;
   /* Popular folder color: yellow */
+}
+
+@keyframes moveLeft {
+  0% {
+    transform: translateX(0) rotateY(180deg) translateY(2px);
+  }
+  75% {
+    transform: translateX(-100%) rotateY(180deg) translateY(2px);
+  }
+  100% {
+    transform: translateX(-100%) rotateY(180deg) translateY(2px);
+  }
 }
 
 @keyframes shimmer {
@@ -428,12 +590,19 @@ li svg {
 .sidebarIcon {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-end;
+  padding-top: 5px;
+  padding-bottom: 50px;
   margin-bottom: 30px;
 }
 
 .sidebarIcon img {
-  width: 100px;
+  width: 130px;
+  height: auto;
+}
+
+#logoIcon {
+  width: 70px;
   height: auto;
 }
 
@@ -448,7 +617,7 @@ li svg {
   align-items: center;
   background-color: #fff;
   border-radius: 10px;
-  border: 1px solid #cdcdcd;
+  border: 1px solid #ededed;
   padding: 5px 10px;
   width: 400px;
 }

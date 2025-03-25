@@ -11,7 +11,12 @@ import {
   faTrophy,
   faHouseLock,
   faHouse,
-  faSearch
+  faSearch,
+  faCar,
+  faCarAlt,
+  faCarSide,
+  faBolt,
+  faBoltLightning
 } from "@fortawesome/free-solid-svg-icons";
 
 const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
@@ -78,15 +83,19 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
         </button>
 
         <div className="sidebarIcon">
-          <img src="/images/ailms.png" alt="AILMS" />
+          <img src="/images/ailms_icon.png" id="logoIcon" alt="AILMS" />
+          <img src="/images/ai-lms.png" alt="AI-LMS" />
         </div>
         <ul>
           <li className={`${title === "Dashboard" ? "active" : ""}`}>
-            <a href="/dashboard">
+            <a href="/dashboard" className="d-flex align-items-center">
               {title === "Dashboard" ? (
-                <FontAwesomeIcon icon={faHouse} id="homeIcon" />
+                <div className="homeIconDiv">
+                  <FontAwesomeIcon icon={faHouse} id="homeIcon" />
+                  <FontAwesomeIcon icon={faCarSide} id="carIcon" />
+                </div>
               ) : (
-                <FontAwesomeIcon icon={faHouseLock} />
+                <FontAwesomeIcon icon={faHouse} />
               )}
               Dashboard
             </a>
@@ -105,14 +114,27 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             <a href="/achievements">
               <FontAwesomeIcon
                 icon={faTrophy}
+                className="mtrophy"
                 id={`${title === "Achievements" ? "trophyIcon" : ""}`}
-              />{" "}
+              />
               Achievements
             </a>
           </li>
           <li className={`${title === "Profile" ? "active" : ""}`}>
-            <a href="/account/settings">
-              <FontAwesomeIcon icon={faCog} id={`${title === "Profile" ? "cogIcon" : ""}`} />
+            <a href="/account/settings" className="d-flex align-items-center">
+              {title === "Profile" ? (
+                <div className="cogIconDiv">
+                  <div className="lighteningDiv">
+                    <FontAwesomeIcon icon={faBoltLightning} id="lightIcon1" />
+                    <FontAwesomeIcon icon={faBoltLightning} id="lightIcon2" />
+                    <FontAwesomeIcon icon={faBoltLightning} id="lightIcon3" />
+                    <FontAwesomeIcon icon={faBoltLightning} id="lightIcon4" />
+                  </div>
+                  <FontAwesomeIcon icon={faCog} id="cogIcon" />
+                </div>
+              ) : (
+                <FontAwesomeIcon icon={faCog} />
+              )}
               Profile
             </a>
           </li>
@@ -125,15 +147,19 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
       </div>
       <div className={`desktop-sidebar`}>
         <div className="sidebarIcon">
-          <img src="/images/ailms.png" alt="AILMS" />
+          <img src="/images/ailms_icon.png" id="logoIcon" alt="AILMS" />
+          <img src="/images/ai-lms.png" alt="AI-LMS" />
         </div>
         <ul>
           <li className={`${title === "Dashboard" ? "active" : ""}`}>
-            <a href="/dashboard">
+            <a href="/dashboard" className="d-flex align-items-center">
               {title === "Dashboard" ? (
-                <FontAwesomeIcon icon={faHouse} id="homeIcon" />
+                <div className="homeIconDiv">
+                  <FontAwesomeIcon icon={faHouse} id="homeIcon" />
+                  <FontAwesomeIcon icon={faCarSide} id="carIcon" />
+                </div>
               ) : (
-                <FontAwesomeIcon icon={faHouseLock} />
+                <FontAwesomeIcon icon={faHouse} />
               )}
               Dashboard
             </a>
@@ -158,8 +184,20 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             </a>
           </li>
           <li className={`${title === "Profile" ? "active" : ""}`}>
-            <a href="/account/settings">
-              <FontAwesomeIcon icon={faCog} id={`${title === "Profile" ? "cogIcon" : ""}`} />
+            <a href="/account/settings" className="d-flex align-items-center">
+              {title === "Profile" ? (
+                <div className="cogIconDiv">
+                  <div className="lighteningDiv">
+                    <FontAwesomeIcon icon={faBoltLightning} id="lightIcon1" />
+                    <FontAwesomeIcon icon={faBoltLightning} id="lightIcon2" />
+                    <FontAwesomeIcon icon={faBoltLightning} id="lightIcon3" />
+                    <FontAwesomeIcon icon={faBoltLightning} id="lightIcon4" />
+                  </div>
+                  <FontAwesomeIcon icon={faCog} id="cogIcon" />
+                </div>
+              ) : (
+                <FontAwesomeIcon icon={faCog} />
+              )}
               Profile
             </a>
           </li>
