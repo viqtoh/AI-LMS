@@ -92,7 +92,7 @@ li svg {
   font-size: 24px;
   background: none;
   border: none;
-  color: white;
+  color: black;
   cursor: pointer;
 }
 
@@ -230,7 +230,6 @@ li svg {
     background: #fff;
     color: white;
     transition: left 0.3s ease-in-out;
-    padding-top: 60px;
     border-right: 1px solid #ddd;
     z-index: 1000;
     display: block;
@@ -417,5 +416,70 @@ li svg {
   }
   100% {
     color: black;
+  }
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+}
+
+.sidebarIcon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.sidebarIcon img {
+  width: 100px;
+  height: auto;
+}
+
+@media screen and (max-width: 868px) {
+  .nav-search-bar {
+    display: none;
+  }
+}
+
+.nav-search-bar {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 10px;
+  border: 1px solid #cdcdcd;
+  padding: 5px 10px;
+  width: 400px;
+}
+
+#navBarIcon {
+  color: #cdcdcd;
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 14px;
+  color: #888;
+}
+
+.search-input::placeholder {
+  color: #aaa;
+}
+
+@media screen and (max-width: 868px) {
+  .nav-search-bar {
+    width: 300px;
+  }
+}
+
+@media screen and (max-width: 750px) {
+  .nav-search-bar {
+    display: none;
   }
 }

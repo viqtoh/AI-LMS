@@ -80,9 +80,8 @@ const Home = () => {
               handleLogin();
             }}
           >
-            <span className="login100-form-title">Welcome</span>
-            <span className="login100-form-avatar">
-              <img src="images/avatar-01.jpg" alt="AVATAR" />
+            <span className="login100-form-logo">
+              <img src="images/ailms.png" alt="LOGO" />
             </span>
 
             <div className="wrap-input100 validate-input" data-validate="Enter eail">

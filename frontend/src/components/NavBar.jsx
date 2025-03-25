@@ -10,7 +10,8 @@ import {
   faSignOutAlt,
   faTrophy,
   faHouseLock,
-  faHouse
+  faHouse,
+  faSearch
 } from "@fortawesome/free-solid-svg-icons";
 
 const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
@@ -75,6 +76,10 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
         <button className="close-btn" onClick={() => setIsOpen(false)}>
           ×
         </button>
+
+        <div className="sidebarIcon">
+          <img src="/images/ailms.png" alt="AILMS" />
+        </div>
         <ul>
           <li className={`${title === "Dashboard" ? "active" : ""}`}>
             <a href="/dashboard">
@@ -119,6 +124,9 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
         </ul>
       </div>
       <div className={`desktop-sidebar`}>
+        <div className="sidebarIcon">
+          <img src="/images/ailms.png" alt="AILMS" />
+        </div>
         <ul>
           <li className={`${title === "Dashboard" ? "active" : ""}`}>
             <a href="/dashboard">
@@ -165,7 +173,12 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
       </div>
       <div className="preNav">
         <div className="NavBar">
-          <div></div>
+          <div className="nav-left">
+            <div className="nav-search-bar">
+              <FontAwesomeIcon icon={faSearch} id="navBarIcon" />
+              <input type="text" placeholder="Search..." className="search-input" />
+            </div>
+          </div>
           <div className="nav-right">
             <a href="/" className="nav-noti">
               <FontAwesomeIcon icon={faBell} />

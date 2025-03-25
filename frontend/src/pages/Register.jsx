@@ -80,18 +80,18 @@ const Register = () => {
       <div className="container-login100">
         <div className="wrap-login100">
           <form
-            className="login100-form"
+            className="login100-form sign100-form"
             onSubmit={(e) => {
               e.preventDefault();
               handleSignup();
             }}
           >
-            <span className="login100-form-title">Start Learning Today!</span>
+            <span className="login100-form-title ftitle1">Start Learning Today!</span>
             <span className="login100-form-title ftitle2">
               Sign up and unlock a world of knowledge.
             </span>
-            <span className="login100-form-avatar">
-              <img src="images/avatar-01.jpg" alt="AVATAR" />
+            <span className="login100-form-logo signupLogo">
+              <img src="images/ailms.png" alt="LOGO" />
             </span>
 
             <div className="wrap-input100 validate-input" data-validate="Enter email">
@@ -151,7 +151,7 @@ const Register = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
               />
-             <label>Confirm Password</label>
+              <label>Confirm Password</label>
             </div>
 
             <div className="container-login100-form-btn">
