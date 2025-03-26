@@ -173,7 +173,7 @@ const Library = () => {
                 <FontAwesomeIcon icon={faSearch} />
                 <input
                   type="text"
-                  className="searchBar"
+                  className="searchBar2"
                   placeholder="Search content by title or description"
                   onChange={(e) => console.log(e.target.value)}
                 />

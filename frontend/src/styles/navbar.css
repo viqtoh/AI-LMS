@@ -517,7 +517,7 @@ li svg {
 
 #carIcon {
   height: 10px;
-  color: rgb(226, 86, 86);
+  color: white;
   /* Medium gray for better visibility on both #0057ff and yellow */
   transform: rotateY(180deg) translateY(2px);
   z-index: 20;

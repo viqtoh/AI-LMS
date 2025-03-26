@@ -1098,7 +1098,7 @@ iframe {
   background-color: #fff;
   padding: 10px;
   border-radius: 5px;
-  border: 1px solid #333;
+  border: 1px solid #aaa;
   margin-bottom: 20px;
   width: 100%;
   display: flex;
@@ -1109,8 +1109,8 @@ iframe {
   margin-right: 20px;
 }
 
-.searchBar,
-.searchBar:focus {
+.searchBar2,
+.searchBar2:focus {
   border: none;
   outline: none;
   font-size: 15px;
@@ -1676,4 +1676,133 @@ iframe {
 
 .achieventRowTitle {
   font-size: 13px;
+}
+
+.dCon {
+  margin-bottom: 20px;
+}
+
+.learnProgressCon,
+.metricsCon,
+.notStartedCon,
+.learnProgressCon {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid #ccc;
+}
+
+.dashTitle {
+  display: flex;
+  align-items: center;
+}
+
+.dashTitle svg {
+  margin-right: 10px;
+}
+
+.CcardImage {
+  height: 100px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  background-color: #fbfbfb !important;
+  justify-content: center;
+}
+
+.CcardImage img {
+  object-fit: cover;
+  height: 100px;
+  width: 100%;
+}
+
+.cardFooter {
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  background-color: #eceeef;
+}
+
+.cardFooter2 {
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  background-color: #d9e2ff;
+}
+
+.cardFooter p,
+.cardFooter2 p {
+  font-size: 12px;
+  line-height: 1;
+  margin-bottom: 0px;
+  color: #222;
+}
+
+.cardBody {
+  flex: 1 1 auto;
+  padding: 10px 20px;
+}
+
+.cardSvg {
+  margin-right: 10px;
+}
+
+.dashBody {
+  display: flex;
+  overflow-x: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dashBody2 {
+  overflow-x: hidden !important;
+  flex-wrap: wrap;
+}
+
+.courseCard {
+  width: 18rem;
+  min-width: 18rem !important;
+  margin-right: 15px;
+}
+
+.card-title {
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  /* Change to desired number of lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0px !important;
+}
+
+.cardBodyTitle {
+  height: 52px;
+}
+
+.metricCard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.metricCount {
+  height: 70px;
+  width: 70px;
+  border-radius: 100%;
+  background-color: #f9f9f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.metricCount span {
+  font-size: 30px;
+  font-weight: 700;
+  color: #222;
 }
