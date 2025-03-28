@@ -82,7 +82,7 @@ app.post("/api/login", async (req, res) => {
 
       if (validPassword) {
         // Generate JWT token
-        await User.update({ token }, { where: { id: user.id } });
+
         if (user.isAdmin) {
           return res.json({ error: "Access denied. Login with a User Account." });
         }
@@ -319,7 +319,6 @@ app.post("/api/admin/login", async (req, res) => {
       const validPassword = await bcrypt.compare(password, user.password);
 
       if (validPassword) {
-        await User.update({ token }, { where: { id: user.id } });
         if (!user.isAdmin) {
           return res.json({ error: "Access denied. Admin privileges required." });
         }
@@ -329,7 +328,7 @@ app.post("/api/admin/login", async (req, res) => {
           process.env.JWT_SECRET,
           { expiresIn: process.env.JWT_EXPIRES_IN }
         );
-
+        await User.update({ token }, { where: { id: user.id } });
         return res.json({ message: "Login successful", token });
       }
     }

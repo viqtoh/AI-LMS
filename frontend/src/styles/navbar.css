@@ -581,6 +581,93 @@ li svg {
   }
 }
 
+.userIconDiv,
+.staffIconDiv {
+  display: flex;
+  width: 25px;
+  align-items: center;
+}
+
+#userIcon {
+  color: #000;
+  margin: 0px;
+}
+
+#userCogIcon {
+  color: #ffd900;
+  animation: spin 2s linear infinite;
+  margin: 0px;
+  height: 8px;
+  position: relative;
+  top: -5px;
+}
+
+#buildingIcon {
+  animation: buildingAnimation 2s linear infinite;
+  margin: 0px;
+  color: #aaa;
+}
+
+#briefcaseIcon {
+  animation: briefcaseAnimation 2s linear infinite;
+  margin: 0px;
+  color: black;
+}
+
+@keyframes buildingAnimation {
+  0% {
+    opacity: 0;
+    height: 0px;
+    width: 0px;
+  }
+  20% {
+    opacity: 1;
+    display: block;
+    height: 0px;
+    width: 0px;
+  }
+  30% {
+    opacity: 1;
+    display: block;
+    height: 20px;
+    width: 20px;
+  }
+  100% {
+    height: 20px;
+    width: 20px;
+  }
+}
+
+@keyframes briefcaseAnimation {
+  0% {
+    opacity: 1;
+    height: 20px;
+    width: 20px;
+    margin-left: 2px;
+  }
+  20% {
+    opacity: 1;
+    display: block;
+    height: 20px;
+    width: 20px;
+    margin-left: 2px;
+  }
+  31% {
+    opacity: 1;
+    display: block;
+    height: 10px;
+    width: 10px;
+    margin-top: 5px;
+    margin-left: 0px;
+  }
+  100% {
+    height: 2px;
+    width: 2px;
+    margin-top: 18px;
+    margin-left: -10px;
+  }
+}
+
 .nav-left {
   display: flex;
   align-items: center;
