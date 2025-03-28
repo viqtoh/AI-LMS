@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "../styles/navbar.css";
 import { API_URL, IMAGE_HOST } from "../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell, faFolderClosed, faFolderOpen } from "@fortawesome/free-regular-svg-icons";
+import { faBell, faFolderClosed, faFolderOpen, faUser } from "@fortawesome/free-regular-svg-icons";
 import { useEffect } from "react";
 import {
   faCog,
@@ -16,10 +16,11 @@ import {
   faCarAlt,
   faCarSide,
   faBolt,
-  faBoltLightning
+  faBoltLightning,
+  faCrown
 } from "@fortawesome/free-solid-svg-icons";
 
-const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
+const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -29,9 +30,10 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       const isAdmin = localStorage.getItem("isAdmin");
-      if (isAdmin === "true") {
-        window.location.href = "/";
-        localStorage.setItem("error", "Login as a User");
+      console.log(isAdmin);
+      if (isAdmin === "false") {
+        window.location.href = "/admin";
+        localStorage.setItem("error", "Login as an Admin");
         localStorage.removeItem("token");
         return;
       }
@@ -89,13 +91,19 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
           ×
         </button>
 
-        <div className="sidebarIcon">
-          <img src="/images/ailms_icon.png" id="logoIcon" alt="AILMS" />
-          <img src="/images/ai-lms.png" alt="AI-LMS" />
+        <div className="adminSidebarIcon">
+          <div className="sidebarIcon">
+            <img src="/images/ailms_icon.png" id="logoIcon" alt="AILMS" />
+            <img src="/images/ai-lms.png" alt="AI-LMS" />
+          </div>
+          <p className="admin-badge">
+            <FontAwesomeIcon icon={faCrown} className="admin-badge-noti" />
+            Admin
+          </p>
         </div>
         <ul>
           <li className={`${title === "Dashboard" ? "active" : ""}`}>
-            <a href="/dashboard" className="d-flex align-items-center">
+            <a href="/admin/dashboard" className="d-flex align-items-center">
               {title === "Dashboard" ? (
                 <div className="homeIconDiv">
                   <FontAwesomeIcon icon={faHouse} id="homeIcon" />
@@ -107,28 +115,38 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
               Dashboard
             </a>
           </li>
-          <li className={`${title === "Content Library" ? "active" : ""}`}>
-            <a href="/content-library">
-              {title === "Content Library" ? (
+          <li className={`${title === "Content Management" ? "active" : ""}`}>
+            <a href="/admin/content-management">
+              {title === "Content Management" ? (
                 <FontAwesomeIcon icon={faFolderOpen} id="folderIcon" />
               ) : (
                 <FontAwesomeIcon icon={faFolderClosed} />
               )}
-              Content Library
+              Content Management
             </a>
           </li>
-          <li className={`${title === "Achievements" ? "active" : ""}`}>
-            <a href="/achievements">
+          <li className={`${title === "User Management" ? "active" : ""}`}>
+            <a href="/admin/user-management">
               <FontAwesomeIcon
                 icon={faTrophy}
                 className="mtrophy"
-                id={`${title === "Achievements" ? "trophyIcon" : ""}`}
+                id={`${title === "User Management" ? "trophyIcon" : ""}`}
               />
-              Achievements
+              User Maanagent
+            </a>
+          </li>
+          <li className={`${title === "Staff Management" ? "active" : ""}`}>
+            <a href="/admin/staff-management">
+              <FontAwesomeIcon
+                icon={faTrophy}
+                className="mtrophy"
+                id={`${title === "Staff Management" ? "trophyIcon" : ""}`}
+              />
+              Staff Management
             </a>
           </li>
           <li className={`${title === "Profile" ? "active" : ""}`}>
-            <a href="/account/settings" className="d-flex align-items-center">
+            <a href="/admin/account/settings" className="d-flex align-items-center">
               {title === "Profile" ? (
                 <div className="cogIconDiv">
                   <div className="lighteningDiv">
@@ -153,13 +171,19 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
         </ul>
       </div>
       <div className={`desktop-sidebar`}>
-        <div className="sidebarIcon">
-          <img src="/images/ailms_icon.png" id="logoIcon" alt="AILMS" />
-          <img src="/images/ai-lms.png" alt="AI-LMS" />
+        <div className="adminSidebarIcon">
+          <div className="sidebarIcon">
+            <img src="/images/ailms_icon.png" id="logoIcon" alt="AILMS" />
+            <img src="/images/ai-lms.png" alt="AI-LMS" />
+          </div>
+          <p className="admin-badge">
+            <FontAwesomeIcon icon={faCrown} className="admin-badge-noti" />
+            Admin
+          </p>
         </div>
         <ul>
           <li className={`${title === "Dashboard" ? "active" : ""}`}>
-            <a href="/dashboard" className="d-flex align-items-center">
+            <a href="/admin/dashboard" className="d-flex align-items-center">
               {title === "Dashboard" ? (
                 <div className="homeIconDiv">
                   <FontAwesomeIcon icon={faHouse} id="homeIcon" />
@@ -171,27 +195,40 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
               Dashboard
             </a>
           </li>
-          <li className={`${title === "Content Library" ? "active" : ""}`}>
-            <a href="/content-library">
-              {title === "Content Library" ? (
+          <li className={`${title === "Content Management" ? "active" : ""}`}>
+            <a href="/admin/content-management">
+              {title === "Content Management" ? (
                 <FontAwesomeIcon icon={faFolderOpen} id="folderIcon" />
               ) : (
                 <FontAwesomeIcon icon={faFolderClosed} />
               )}
-              Content Library
+              Content Management
             </a>
           </li>
-          <li className={`${title === "Achievements" ? "active" : ""}`}>
-            <a href="/achievements">
+          <li className={`${title === "User Management" ? "active" : ""}`}>
+            <a href="/admin/user-management">
+              {title === "User Management" ? (
+                <FontAwesomeIcon icon={faUser} />
+              ) : (
+                <div className="userIconDiv">
+                  <FontAwesomeIcon icon={faUser} id="userIcon" />
+                  <FontAwesomeIcon icon={faCog} id="userCogIcon" />
+                </div>
+              )}
+              User Management
+            </a>
+          </li>
+          <li className={`${title === "Staff Management" ? "active" : ""}`}>
+            <a href="/admin/staff-management">
               <FontAwesomeIcon
                 icon={faTrophy}
-                id={`${title === "Achievements" ? "trophyIcon" : ""}`}
-              />{" "}
-              Achievements
+                id={`${title === "Staff Management" ? "trophyIcon" : ""}`}
+              />
+              Staff Management
             </a>
           </li>
           <li className={`${title === "Profile" ? "active" : ""}`}>
-            <a href="/account/settings" className="d-flex align-items-center">
+            <a href="/admin/account/settings" className="d-flex align-items-center">
               {title === "Profile" ? (
                 <div className="cogIconDiv">
                   <div className="lighteningDiv">
@@ -259,4 +296,4 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
   );
 };
 
-export default NavBar;
+export default AdminNavBar;

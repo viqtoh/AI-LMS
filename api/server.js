@@ -82,9 +82,16 @@ app.post("/api/login", async (req, res) => {
 
       if (validPassword) {
         // Generate JWT token
-        const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, {
-          expiresIn: process.env.JWT_EXPIRES_IN // Token expiration
-        });
+        await User.update({ token }, { where: { id: user.id } });
+        if (user.isAdmin) {
+          return res.json({ error: "Access denied. Login with a User Account." });
+        }
+
+        const token = jwt.sign(
+          { userId: user.id, email: user.email, iat: Math.floor(Date.now() / 1000) },
+          process.env.JWT_SECRET,
+          { expiresIn: process.env.JWT_EXPIRES_IN }
+        );
 
         await User.update({ token }, { where: { id: user.id } });
 
@@ -191,6 +198,7 @@ app.get("/api/user/details", authenticateToken, async (req, res) => {
     }
 
     const user = await User.findOne({ where: { email: chuser.email } });
+    console.log(user);
 
     res.json({
       first_name: user.first_name,
@@ -294,4 +302,41 @@ app.get("/dashboard", authenticateToken, (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+{
+  /* Admin API */
+}
+
+app.post("/api/admin/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (user) {
+      // Compare hashed password
+      const validPassword = await bcrypt.compare(password, user.password);
+
+      if (validPassword) {
+        await User.update({ token }, { where: { id: user.id } });
+        if (!user.isAdmin) {
+          return res.json({ error: "Access denied. Admin privileges required." });
+        }
+        // Generate JWT token
+        const token = jwt.sign(
+          { userId: user.id, email: user.email, iat: Math.floor(Date.now() / 1000) },
+          process.env.JWT_SECRET,
+          { expiresIn: process.env.JWT_EXPIRES_IN }
+        );
+
+        return res.json({ message: "Login successful", token });
+      }
+    }
+
+    res.status(401).json({ error: "Invalid credentials" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 });

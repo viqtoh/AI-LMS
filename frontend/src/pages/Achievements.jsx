@@ -36,7 +36,6 @@ const Achievements = () => {
   useEffect(() => {
     setImageUrl(localStorage.getItem("image"));
     setUsername(localStorage.getItem("first_name") + " " + localStorage.getItem("last_name"));
-    console.log(imageUrl);
   }, []);
 
   const [isSuccess, setIsSuccess] = React.useState(true);
@@ -62,7 +61,11 @@ const Achievements = () => {
           <div className="sub-body">
             <div className="archievementHeader">
               <div className="aheaderContent">
-                <img src={`${IMAGE_HOST}${imageUrl}`} alt="user-image" className="aheaderImage" />
+                <img
+                  src={imageUrl ? `${IMAGE_HOST}${imageUrl}` : "/images/default_profile.png"}
+                  alt="user-image"
+                  className="aheaderImage"
+                />
 
                 <div className="AheaderContent">
                   <div className="headerTitle">
@@ -94,9 +97,8 @@ const Achievements = () => {
                 <div className="AheaderContent">
                   <div className="headerTitle">
                     <div className="mheadertitle">
-                      {" "}
                       <img
-                        src={`${IMAGE_HOST}${imageUrl}`}
+                        src={imageUrl ? `${IMAGE_HOST}${imageUrl}` : "/images/default_profile.png"}
                         alt="user-image"
                         className="mheaderImage"
                       />

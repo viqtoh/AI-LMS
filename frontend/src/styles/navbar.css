@@ -652,3 +652,54 @@ li svg {
     display: none;
   }
 }
+
+.adminSidebarIcon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.adminSidebarIcon div {
+  margin-bottom: 0px;
+  padding-bottom: 0px;
+}
+
+.admin-badge {
+  background-color: #fff;
+  border: 1px solid #0057ff;
+  width: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #0057ff;
+  margin-top: 10px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  margin-left: 10px;
+  font-weight: bold;
+}
+
+.admin-badge-noti {
+  height: 15px;
+  width: 15px;
+  margin-right: 5px;
+  color: goldenrod;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  padding-right: 20px;
+}
+
+.nav-right button {
+  display: flex;
+  align-items: center;
+}
+
+@media screen and (max-width: 767px) {
+  .nameForTab {
+    display: none;
+  }
+}

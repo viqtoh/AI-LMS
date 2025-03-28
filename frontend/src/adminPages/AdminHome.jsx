@@ -4,7 +4,7 @@ import { API_URL } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast2";
 
-const Home = () => {
+const AdminHome = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -39,7 +39,7 @@ const Home = () => {
       return;
     }
     try {
-      const response = await fetch(`${API_URL}/api/login`, {
+      const response = await fetch(`${API_URL}/api/admin/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -54,10 +54,10 @@ const Home = () => {
 
       if (!data.error && data.token) {
         localStorage.setItem("token", data.token);
-        localStorage.setItem("isAdmin", "false");
+        localStorage.setItem("isAdmin", "true");
         showToast("Login successful!", true);
         // Redirect to login page
-        window.location.href = "/dashboard";
+        window.location.href = "admin/dashboard";
       } else {
         showToast(data.error || "Something went wrong", false);
       }
@@ -116,7 +116,7 @@ const Home = () => {
                     <span className="visually-hidden">Loading...</span>
                   </div>
                 ) : (
-                  "Login"
+                  <span className="first-letter-cap">Login as Admin</span>
                 )}
               </button>
             </div>
@@ -125,11 +125,6 @@ const Home = () => {
               Forgot Password?
             </a>
             <br />
-
-            <span className="txt1 me-2">Don’t have an account?</span>
-            <a href="/register" className="txt2">
-              Sign up
-            </a>
           </form>
         </div>
       </div>
@@ -137,4 +132,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default AdminHome;

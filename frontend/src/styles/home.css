@@ -338,11 +338,11 @@ iframe {
   height: 50px;
   background-color: #0057ff;
   border-radius: 25px;
-  box-shadow: 0 10px 30px 0px rgba(87, 184, 70, 0.5);
-  -moz-box-shadow: 0 10px 30px 0px rgba(87, 184, 70, 0.5);
-  -webkit-box-shadow: 0 10px 30px 0px rgba(87, 184, 70, 0.5);
-  -o-box-shadow: 0 10px 30px 0px rgba(87, 184, 70, 0.5);
-  -ms-box-shadow: 0 10px 30px 0px rgba(87, 184, 70, 0.5);
+  box-shadow: 0 10px 30px 0px #aaa;
+  -moz-box-shadow: 0 10px 30px 0px #aaa;
+  -webkit-box-shadow: 0 10px 30px 0px #aaa;
+  -o-box-shadow: 0 10px 30px 0px #aaa;
+  -ms-box-shadow: 0 10px 30px 0px #aaa;
   -webkit-transition: all 0.4s;
   -o-transition: all 0.4s;
   -moz-transition: all 0.4s;
@@ -1805,4 +1805,12 @@ iframe {
   font-size: 30px;
   font-weight: 700;
   color: #222;
+}
+
+.first-letter-cap {
+  text-transform: none;
+}
+
+.first-letter-cap::first-letter {
+  text-transform: uppercase;
 }
