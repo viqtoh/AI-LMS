@@ -7,8 +7,10 @@ import Achievements from "./pages/Achievements";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import LearnPath from "./pages/LearnPath";
-import AdminHome from "./adminPages/AdminHome";
+import AdminHome from "./adminPages/Home";
 import AdminDashboard from "./adminPages/Dashboard";
+import UserManagement from "./adminPages/UserManagement";
+import StaffManagement from "./adminPages/StaffManagement";
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminHome />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/user-management" element={<UserManagement />} />
+        <Route path="/admin/staff-management" element={<StaffManagement />} />
       </Routes>
     </Router>
   );

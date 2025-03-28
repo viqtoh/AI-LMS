@@ -10,7 +10,7 @@ import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import Select from "react-select";
 import CourseCard from "../components/CourseCard";
 
-const AdminDashboard = () => {
+const StaffManagement = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(false);
   const [cisCollapsed, setCisCollapsed] = useState(false);
@@ -36,7 +36,7 @@ const AdminDashboard = () => {
   return (
     <div>
       <div className="navHeader">
-        <AdminNavBar />
+        <AdminNavBar title="Staff Management" />
       </div>
       <div className="main-body5 main-body main-body3 main-body4">
         {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
@@ -75,4 +75,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default StaffManagement;

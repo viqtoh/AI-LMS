@@ -2,7 +2,12 @@ import React, { useState } from "react";
 import "../styles/navbar.css";
 import { API_URL, IMAGE_HOST } from "../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell, faFolderClosed, faFolderOpen, faUser } from "@fortawesome/free-regular-svg-icons";
+import {
+  faBell,
+  faBuilding,
+  faFolderClosed,
+  faFolderOpen
+} from "@fortawesome/free-regular-svg-icons";
 import { useEffect } from "react";
 import {
   faCog,
@@ -17,7 +22,9 @@ import {
   faCarSide,
   faBolt,
   faBoltLightning,
-  faCrown
+  faCrown,
+  faUser,
+  faBriefcase
 } from "@fortawesome/free-solid-svg-icons";
 
 const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
@@ -126,25 +133,36 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
             </a>
           </li>
           <li className={`${title === "User Management" ? "active" : ""}`}>
-            <a href="/admin/user-management">
-              <FontAwesomeIcon
-                icon={faTrophy}
-                className="mtrophy"
-                id={`${title === "User Management" ? "trophyIcon" : ""}`}
-              />
-              User Maanagent
+            <a href="/admin/user-management" className="d-flex align-items-center">
+              {title !== "User Management" ? (
+                <FontAwesomeIcon icon={faUser} />
+              ) : (
+                <div className="userIconDiv">
+                  <FontAwesomeIcon icon={faUser} id="userIcon" />
+                  <FontAwesomeIcon icon={faCog} id="userCogIcon" />
+                </div>
+              )}
+              User Management
             </a>
           </li>
-          <li className={`${title === "Staff Management" ? "active" : ""}`}>
-            <a href="/admin/staff-management">
-              <FontAwesomeIcon
-                icon={faTrophy}
-                className="mtrophy"
-                id={`${title === "Staff Management" ? "trophyIcon" : ""}`}
-              />
-              Staff Management
-            </a>
-          </li>
+          {title !== "Staff Management" ? (
+            <li>
+              <a href="/admin/staff-management">
+                <FontAwesomeIcon icon={faBriefcase} />
+                Staff Management
+              </a>
+            </li>
+          ) : (
+            <li className="active">
+              <a href="/admin/staff-management" className="d-flex align-items-center">
+                <div className="staffIconDiv">
+                  <FontAwesomeIcon icon={faBuilding} id="buildingIcon" />
+                  <FontAwesomeIcon icon={faBriefcase} id="briefcaseIcon" />
+                </div>
+                Staff Management
+              </a>
+            </li>
+          )}
           <li className={`${title === "Profile" ? "active" : ""}`}>
             <a href="/admin/account/settings" className="d-flex align-items-center">
               {title === "Profile" ? (
@@ -206,8 +224,8 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
             </a>
           </li>
           <li className={`${title === "User Management" ? "active" : ""}`}>
-            <a href="/admin/user-management">
-              {title === "User Management" ? (
+            <a href="/admin/user-management" className="d-flex align-items-center">
+              {title !== "User Management" ? (
                 <FontAwesomeIcon icon={faUser} />
               ) : (
                 <div className="userIconDiv">
@@ -218,15 +236,25 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
               User Management
             </a>
           </li>
-          <li className={`${title === "Staff Management" ? "active" : ""}`}>
-            <a href="/admin/staff-management">
-              <FontAwesomeIcon
-                icon={faTrophy}
-                id={`${title === "Staff Management" ? "trophyIcon" : ""}`}
-              />
-              Staff Management
-            </a>
-          </li>
+          {title !== "Staff Management" ? (
+            <li>
+              <a href="/admin/staff-management">
+                <FontAwesomeIcon icon={faBriefcase} />
+                Staff Management
+              </a>
+            </li>
+          ) : (
+            <li className="active">
+              <a href="/admin/staff-management" className="d-flex align-items-center">
+                <div className="staffIconDiv">
+                  <FontAwesomeIcon icon={faBuilding} id="buildingIcon" />
+                  <FontAwesomeIcon icon={faBriefcase} id="briefcaseIcon" />
+                </div>
+                Staff Management
+              </a>
+            </li>
+          )}
+
           <li className={`${title === "Profile" ? "active" : ""}`}>
             <a href="/admin/account/settings" className="d-flex align-items-center">
               {title === "Profile" ? (
