@@ -85,7 +85,7 @@ const Home = () => {
               <img src="images/ailms.png" alt="LOGO" />
             </span>
 
-            <div className="wrap-input100 validate-input" data-validate="Enter eail">
+            <div className="wrap-input100 validate-input" data-validate="Enter email">
               <input
                 className="input100"
                 type="text"
