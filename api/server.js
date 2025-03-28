@@ -93,7 +93,8 @@ app.post("/api/login", async (req, res) => {
           { expiresIn: process.env.JWT_EXPIRES_IN }
         );
 
-        await User.update({ token }, { where: { id: user.id } });
+        const lastLogin = new Date();
+        await User.update({ token, lastLogin }, { where: { id: user.id } });
 
         return res.json({ message: "Login successful", token });
       }
@@ -328,7 +329,8 @@ app.post("/api/admin/login", async (req, res) => {
           process.env.JWT_SECRET,
           { expiresIn: process.env.JWT_EXPIRES_IN }
         );
-        await User.update({ token }, { where: { id: user.id } });
+        const lastLogin = new Date();
+        await User.update({ token, lastLogin }, { where: { id: user.id } });
         return res.json({ message: "Login successful", token });
       }
     }

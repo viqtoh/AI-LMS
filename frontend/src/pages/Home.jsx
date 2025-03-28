@@ -15,7 +15,7 @@ const Home = () => {
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   };
   const [formData, setFormData] = useState({
-    email: "",
+    email: localStorage.getItem("email") || "",
     password: ""
   });
   React.useEffect(() => {
@@ -55,8 +55,8 @@ const Home = () => {
       if (!data.error && data.token) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("isAdmin", "false");
+        localStorage.setItem("email", formData.email);
         showToast("Login successful!", true);
-        // Redirect to login page
         window.location.href = "/dashboard";
       } else {
         showToast(data.error || "Something went wrong", false);
@@ -85,7 +85,7 @@ const Home = () => {
               <img src="images/ailms.png" alt="LOGO" />
             </span>
 
-            <div className="wrap-input100 validate-input" data-validate="Enter eail">
+            <div className="wrap-input100 validate-input" data-validate="Enter email">
               <input
                 className="input100"
                 type="text"

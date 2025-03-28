@@ -84,7 +84,7 @@ label {
   top: 50%;
   transform: translateY(-50%);
   transition: 0.3s ease-in-out;
-  font-size: 15x;
+  font-size: 15px;
   color: #888;
   pointer-events: none;
 }
@@ -744,6 +744,7 @@ iframe {
 
 .form-group label {
   display: block;
+  position: relative;
   font-size: 14px;
   color: #555;
   margin-bottom: 5px;
