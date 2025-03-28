@@ -22,6 +22,7 @@ const Library = () => {
   const [cisCollapsed, setCisCollapsed] = useState(false);
   const [risCollapsed, setRisCollapsed] = useState(false);
   const [fisCollapsed, setFisCollapsed] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -48,6 +49,7 @@ const Library = () => {
       height: "3px",
       fontSize: "12px",
       boxShadow: "none",
+
       "&:hover": { borderColor: "#8c8c8c", backgroundColor: "#eaeaea" }
     }),
     singleValue: (base) => ({
@@ -62,13 +64,29 @@ const Library = () => {
       ...base,
       backgroundColor: isSelected ? "#4a90e2" : isFocused ? "#cce4ff" : "white",
       color: isSelected ? "white" : "#333",
-      padding: "10px",
+      padding: "5px",
       cursor: "pointer"
     }),
     menu: (base) => ({
       ...base,
       borderRadius: "8px",
       boxShadow: "0px 4px 6px rgba(0,0,0,0.1)"
+    }),
+    indicatorSeparator: () => ({
+      display: "none"
+    }),
+
+    // Optional: Style the dropdown arrow container if needed
+    indicatorsContainer: (base) => ({
+      ...base,
+      padding: "0px",
+      color: "#333",
+      height: "28px",
+      width: "24px"
+    }),
+    dropdownIndicator: (base) => ({
+      ...base,
+      padding: "8px 4px 0px 0px" // Adjust this value
     })
   };
 
@@ -155,7 +173,7 @@ const Library = () => {
                 <FontAwesomeIcon icon={faSearch} />
                 <input
                   type="text"
-                  className="searchBar"
+                  className="searchBar2"
                   placeholder="Search content by title or description"
                   onChange={(e) => console.log(e.target.value)}
                 />
@@ -172,10 +190,17 @@ const Library = () => {
                   placeholder={"Sort: Default"}
                   onChange={handleChange}
                 />
+
+                <button
+                  className="btn btn-reset showFilterBtn"
+                  onClick={() => setShowFilter(!showFilter)}
+                >
+                  <span className="ms-1">Show Filters</span>
+                </button>
               </div>
             </div>
             <div className="desktopSeperator">
-              <div className="desktopFilterMain">
+              <div className="desktopFilterMain" style={showFilter ? { display: "block" } : {}}>
                 <div
                   className="filterSeperator"
                   style={!cisCollapsed ? { maxHeight: "300px" } : {}}
@@ -294,7 +319,9 @@ const Library = () => {
                         <span className="badge course-badge">{getRandomCourse().type}</span>
                       </div>
                       <div className="searchTitle">
-                        <span>{getRandomCourse().title}</span>
+                        <a href="/content-library/path/1">
+                          <span>{getRandomCourse().title}</span>
+                        </a>
                       </div>
                       <div className="searchDesc">
                         <span>{getRandomCourse().description}</span>

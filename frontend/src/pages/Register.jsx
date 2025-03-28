@@ -80,18 +80,18 @@ const Register = () => {
       <div className="container-login100">
         <div className="wrap-login100">
           <form
-            className="login100-form"
+            className="login100-form sign100-form"
             onSubmit={(e) => {
               e.preventDefault();
               handleSignup();
             }}
           >
-            <span className="login100-form-title">Start Learning Today!</span>
+            <span className="login100-form-title ftitle1">Start Learning Today!</span>
             <span className="login100-form-title ftitle2">
               Sign up and unlock a world of knowledge.
             </span>
-            <span className="login100-form-avatar">
-              <img src="images/avatar-01.jpg" alt="AVATAR" />
+            <span className="login100-form-logo signupLogo">
+              <img src="images/ailms.png" alt="LOGO" />
             </span>
 
             <div className="wrap-input100 validate-input" data-validate="Enter email">
@@ -99,10 +99,11 @@ const Register = () => {
                 className="input100"
                 type="text"
                 name="email"
+                placeholder="  "
                 value={formData.email}
                 onChange={handleChange}
               />
-              <span className="focus-input100" data-placeholder="Email"></span>
+              <label>Email</label>
             </div>
 
             <div className="wrap-input100 validate-input" data-validate="Enter first name">
@@ -110,10 +111,11 @@ const Register = () => {
                 className="input100"
                 type="text"
                 name="first_name"
+                placeholder="  "
                 value={formData.first_name}
                 onChange={handleChange}
               />
-              <span className="focus-input100" data-placeholder="First Name"></span>
+              <label>First Name</label>
             </div>
 
             <div className="wrap-input100 validate-input" data-validate="Enter last name">
@@ -121,10 +123,11 @@ const Register = () => {
                 className="input100"
                 type="text"
                 name="last_name"
+                placeholder="  "
                 value={formData.last_name}
                 onChange={handleChange}
               />
-              <span className="focus-input100" data-placeholder="Last Name"></span>
+              <label>Last Name</label>
             </div>
 
             <div className="wrap-input100 validate-input" data-validate="Enter password">
@@ -132,10 +135,11 @@ const Register = () => {
                 className="input100"
                 type="password"
                 name="password"
+                placeholder="  "
                 value={formData.password}
                 onChange={handleChange}
               />
-              <span className="focus-input100" data-placeholder="Password"></span>
+              <label>Password</label>
             </div>
 
             <div className="wrap-input100 validate-input" data-validate="Confirm password">
@@ -143,10 +147,11 @@ const Register = () => {
                 className="input100"
                 type="password"
                 name="confirmPassword"
+                placeholder="  "
                 value={formData.confirmPassword}
                 onChange={handleChange}
               />
-              <span className="focus-input100" data-placeholder="Confirm Password"></span>
+              <label>Confirm Password</label>
             </div>
 
             <div className="container-login100-form-btn">

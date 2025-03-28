@@ -1,13 +1,236 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import NavBar from "../components/NavBar";
+import "../styles/home.css";
+import { API_URL, IMAGE_HOST } from "../constants";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Toast from "../components/Toast";
+import { faSearch, faAngleUp } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHeart } from "@fortawesome/free-regular-svg-icons";
+import Select from "react-select";
+import CourseCard from "../components/CourseCard";
 
 const Dashboard = () => {
   const token = localStorage.getItem("token");
-  console.log(token);
+  const [isLoading, setIsLoading] = useState(false);
+  const [cisCollapsed, setCisCollapsed] = useState(false);
+  const [risCollapsed, setRisCollapsed] = useState(false);
+  const [fisCollapsed, setFisCollapsed] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+
+  const [isSuccess, setIsSuccess] = React.useState(true);
+  const [toast, setToast] = useState(null);
+  const showToast = React.useCallback((message, success = true) => {
+    setToast(message);
+    setIsSuccess(success);
+    console.log(isSuccess);
+    setTimeout(() => setToast(null), 5000); // Hide after 5s
+  }, []);
+  const extendDescriptions = (courses) => {
+    return courses.map((course) => ({
+      ...course,
+      description: `${course.description} This course provides in-depth knowledge and practical examples to help you master the subject effectively.`
+    }));
+  };
+
   return (
     <div>
       <div className="navHeader">
         <NavBar />
+      </div>
+      <div className="main-body5 main-body main-body3 main-body4">
+        {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
+        {isLoading ? (
+          <div className="loader-container">
+            <div className="loader"></div>
+          </div>
+        ) : (
+          <div
+            className="sub-body"
+            onScroll={(e) => {
+              const button = document.querySelector(".returnUp");
+              if (e.target.scrollTop > 500) {
+                button.style.opacity = "1";
+                button.style.visibility = "visible";
+              } else {
+                button.style.opacity = "0";
+                button.style.visibility = "hidden";
+              }
+            }}
+          >
+            <button
+              className="btn returnUp"
+              onClick={() => {
+                const subBody = document.querySelector(".sub-body");
+                if (subBody) {
+                  subBody.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+            >
+              <FontAwesomeIcon icon={faAngleUp} />
+            </button>
+            <div className="searchContainer">
+              <div className="searchBarContainer">
+                <FontAwesomeIcon icon={faSearch} />
+                <input
+                  type="text"
+                  className="searchBar2"
+                  placeholder="Search content by title or description"
+                  onChange={(e) => console.log(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="dashboardContainer row">
+              <div className="dConDiv row col-md-8 nobar">
+                <div className="dCon">
+                  <div className="learnProgressCon">
+                    <div className="dashTitle">
+                      <svg width="20" height="20" viewBox="0 0 36 36" className="circular-chart">
+                        <path
+                          className="circle-bg"
+                          d="M18 2.0845
+                         a 15.9155 15.9155 0 0 1 0 31.831
+                         a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#0057d222"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="circle"
+                          d="M18 2.0845
+                         a 15.9155 15.9155 0 0 1 0 31.831
+                         a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#0057d2"
+                          strokeWidth="4"
+                          strokeDasharray={`${35}, ${100 - 35}`} // Replace 35 with a dynamic progress value
+                        />
+                      </svg>
+                      <span>In Progress (3)</span>
+                    </div>
+                    <div className="dashBody mt-2">
+                      <CourseCard
+                        image="/images/course_card_test.png"
+                        title="Conflict Management Package"
+                        assigned="22/03/2025"
+                        type="Learning Path"
+                        progress={35}
+                      />
+
+                      <CourseCard
+                        title="Management Package"
+                        assigned="22/03/2025"
+                        type="Learning Path"
+                        progress={65}
+                      />
+
+                      <CourseCard
+                        image="/images/course_card_test.png"
+                        title="Conflict Management Package"
+                        assigned="22/03/2025"
+                        type="Learning Path"
+                        progress={0}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="dCon">
+                  <div className="notStartedCon">
+                    <div className="dashTitle">
+                      <svg
+                        fill="#0057ff"
+                        width="20px"
+                        height="20px"
+                        viewBox="0 0 512.00 512.00"
+                        id="icons"
+                        xmlns="http://www.w3.org/2000/svg"
+                        stroke="#0057ff"
+                        transform="rotate(90)"
+                      >
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g
+                          id="SVGRepo_tracerCarrier"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke="#CCCCCC"
+                          stroke-width="1.024"
+                        ></g>
+                        <g id="SVGRepo_iconCarrier">
+                          <path d="M208,512,155.62,372.38,16,320l139.62-52.38L208,128l52.38,139.62L400,320,260.38,372.38Z"></path>
+                          <path
+                            d="M88,176,64.43,111.57,0,88,64.43,64.43,88,0l23.57,64.43L176,88l-64.43,23.57Z"
+                            fill="#0057ff77"
+                          ></path>
+                          <path
+                            d="M400,256l-31.11-80.89L288,144l80.89-31.11L400,32l31.11,80.89L512,144l-80.89,31.11Z"
+                            fill="#0057ff77"
+                          ></path>
+                        </g>
+                      </svg>
+                      <span>Not Started (1)</span>
+                    </div>
+                    <div className="dashBody mt-2">
+                      <CourseCard
+                        image="/images/course_card_test.png"
+                        title="Conflict Management Package"
+                        assigned="22/03/2025"
+                        type="Learning Path"
+                        progress={35}
+                        due={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="dConDiv row col-md-4 nobar">
+                <div className="dCon ">
+                  <div className="metricsCon">
+                    <div className="dashTitle">
+                      <span>Training Metrics</span>
+                    </div>
+
+                    <div className="dashBody dashBody2 mt-2">
+                      <div className="col-6">
+                        <div className="metricCard">
+                          <div className="metricCount">0</div>
+                          <span>Overdue</span>
+                        </div>
+                      </div>
+                      <div className="col-6">
+                        <div className="metricCard">
+                          <div className="metricCount">3</div>
+                          <span>In Progress</span>
+                        </div>
+                      </div>
+                      <div className="col-6">
+                        <div className="metricCard">
+                          <div className="metricCount">1</div>
+                          <span>Not Started</span>
+                        </div>
+                      </div>
+                      <div className="col-6">
+                        <div className="metricCard">
+                          <div className="metricCount">21</div>
+                          <span>Completed</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="dCon">
+                  <div className="learnProgressCon">
+                    <div className="dashTitle">
+                      <span>News</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
