@@ -15,7 +15,7 @@ const AdminHome = () => {
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   };
   const [formData, setFormData] = useState({
-    email: "",
+    email: localStorage.getItem("email") || "",
     password: ""
   });
   React.useEffect(() => {
@@ -55,6 +55,7 @@ const AdminHome = () => {
       if (!data.error && data.token) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("isAdmin", "true");
+        localStorage.setItem("email", formData.email);
         showToast("Login successful!", true);
         // Redirect to login page
         window.location.href = "admin/dashboard";

@@ -61,6 +61,10 @@ const User = sequelize.define(
     },
     tax_id: {
       type: DataTypes.STRING
+    },
+    lastLogin: {
+      type: DataTypes.DATE,
+      allowNull: true
     }
   },
   {
