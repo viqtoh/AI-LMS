@@ -341,3 +341,101 @@ app.post("/api/admin/login", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+app.post("/api/admin/learningpath", async (req, res) => {
+  try {
+    const { title, description, image, difficulty, estimated_time, is_published, categoryIds } =
+      req.body;
+
+    // Validate required fields
+    if (!title) {
+      return res.status(400).json({ error: "Title is required." });
+    }
+
+    // Create Learning Path
+    const learningPath = await LearningPath.create({
+      title,
+      description,
+      image,
+      difficulty,
+      estimated_time,
+      is_published
+    });
+
+    // If categoryIds exist and are not empty, associate them
+    if (Array.isArray(categoryIds) && categoryIds.length > 0) {
+      const categories = await Category.findAll({ where: { id: categoryIds } });
+
+      if (categories.length !== categoryIds.length) {
+        return res.status(404).json({ error: "One or more categories not found." });
+      }
+
+      await learningPath.addCategories(categories);
+    }
+
+    res.status(201).json({ learningPath });
+  } catch (error) {
+    console.error("Error creating learning path:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.put("/api/admin/learningpath/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, image, difficulty, estimated_time, is_published, categoryIds } =
+      req.body;
+
+    // Find the existing Learning Path
+    const learningPath = await LearningPath.findByPk(id);
+    if (!learningPath) {
+      return res.status(404).json({ error: "Learning Path not found." });
+    }
+
+    // Update Learning Path details
+    await learningPath.update({
+      title,
+      description,
+      image,
+      difficulty,
+      estimated_time,
+      is_published
+    });
+
+    // If categoryIds exist and are not empty, associate them
+    if (Array.isArray(categoryIds) && categoryIds.length > 0) {
+      const categories = await Category.findAll({ where: { id: categoryIds } });
+
+      if (categories.length !== categoryIds.length) {
+        return res.status(404).json({ error: "One or more categories not found." });
+      }
+
+      // Add new categories without removing existing ones
+      await learningPath.addCategories(categories);
+    }
+
+    res.status(200).json({ learningPath });
+  } catch (error) {
+    console.error("Error updating learning path:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.post("/api/admin/category", async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    // Validate request
+    if (!name) {
+      return res.status(400).json({ error: "Category name is required." });
+    }
+
+    // Create Category
+    const category = await Category.create({ name });
+
+    res.status(201).json(category);
+  } catch (error) {
+    console.error("Error creating category:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});

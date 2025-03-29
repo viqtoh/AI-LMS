@@ -72,10 +72,4 @@ const User = sequelize.define(
   }
 );
 
-// Sync model with database (creates table if not exists)
-sequelize
-  .sync({ alter: true })
-  .then(() => console.log("✅ Users table created or already exists."))
-  .catch((err) => console.error("❌ Error syncing database:", err));
-
 module.exports = User;

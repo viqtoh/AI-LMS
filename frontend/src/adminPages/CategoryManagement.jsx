@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import Select from "react-select";
 
-const StaffManagement = () => {
+const CategoryManagement = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(false);
   const [cisCollapsed, setCisCollapsed] = useState(false);
@@ -35,7 +35,7 @@ const StaffManagement = () => {
   return (
     <div>
       <div className="navHeader">
-        <AdminNavBar title="Staff Management" />
+        <AdminNavBar title="Category Management" />
       </div>
       <div className="main-body5 main-body main-body3 main-body4">
         {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
@@ -74,4 +74,4 @@ const StaffManagement = () => {
   );
 };
 
-export default StaffManagement;
+export default CategoryManagement;
