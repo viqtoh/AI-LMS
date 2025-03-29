@@ -19,7 +19,7 @@ import AdminNavBar from "../components/AdminNavBar";
 
 const ContentManagement = () => {
   const token = localStorage.getItem("token");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [cisCollapsed, setCisCollapsed] = useState(false);
   const [risCollapsed, setRisCollapsed] = useState(false);
   const [fisCollapsed, setFisCollapsed] = useState(false);

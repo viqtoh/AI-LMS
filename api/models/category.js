@@ -16,19 +16,8 @@ const Category = sequelize.define(
     }
   },
   {
-    timestamps: true // Adds createdAt and updatedAt columns
+    timestamps: true
   }
 );
-
-Category.associate = (models) => {
-  Category.belongsToMany(require("./learningPath"), {
-    through: "LearningPathCategory",
-    foreignKey: "categoryId"
-  });
-  Category.belongsToMany(require("./course"), {
-    through: "CourseCategory",
-    foreignKey: "categoryId"
-  });
-};
 
 module.exports = Category;

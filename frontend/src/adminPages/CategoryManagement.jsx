@@ -11,7 +11,7 @@ import Select from "react-select";
 
 const CategoryManagement = () => {
   const token = localStorage.getItem("token");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [cisCollapsed, setCisCollapsed] = useState(false);
   const [risCollapsed, setRisCollapsed] = useState(false);
   const [fisCollapsed, setFisCollapsed] = useState(false);
@@ -25,12 +25,36 @@ const CategoryManagement = () => {
     console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
-  const extendDescriptions = (courses) => {
-    return courses.map((course) => ({
-      ...course,
-      description: `${course.description} This course provides in-depth knowledge and practical examples to help you master the subject effectively.`
-    }));
-  };
+
+  const [categories, setCategories] = useState([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editCategory, setEditCategory] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/admin/category`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch categories");
+        }
+        const data = await response.json();
+        console.log(data);
+        setCategories(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        showToast("Failed to load categories", false);
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, [token, showToast]);
 
   return (
     <div>
@@ -45,31 +69,194 @@ const CategoryManagement = () => {
           </div>
         ) : (
           <div className="sub-body">
-            <button
-              className="btn returnUp"
-              onClick={() => {
-                const subBody = document.querySelector(".sub-body");
-                if (subBody) {
-                  subBody.scrollTo({ top: 0, behavior: "smooth" });
-                }
-              }}
-            >
-              <FontAwesomeIcon icon={faAngleUp} />
+            <button className="btn btn-primary mb-3" onClick={() => setShowCreateModal(true)}>
+              Create Category
             </button>
-            <div className="searchContainer">
-              <div className="searchBarContainer">
-                <FontAwesomeIcon icon={faSearch} />
-                <input
-                  type="text"
-                  className="searchBar2"
-                  placeholder="Search content by title or description"
-                  onChange={(e) => console.log(e.target.value)}
-                />
+
+            {categories.length > 0 ? (
+              <div className="category-list row">
+                {categories.map((category) => (
+                  <div className="categoryCardContainer mt-3" key={category.id}>
+                    <div className="category-card">
+                      <div className="category-header">
+                        <div className="category-header-left">
+                          <h3>{category.name}</h3>
+                        </div>
+                        <div className="category-header-right">
+                          <button
+                            className="edit-button"
+                            onClick={() => {
+                              setEditCategory(category);
+                              setShowEditModal(true);
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button className="merge-button">Merge</button>
+                        </div>
+                      </div>
+                      <div className="category-details">
+                        <p>{category.text}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            ) : (
+              <div className="noObjects">
+                <span>No categories available</span>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {showCreateModal && (
+        <div className="modal">
+          <div
+            className="modal-content"
+            ref={(el) => {
+              if (el) el.scrollTop = 0;
+            }}
+          >
+            <h2>Create Category</h2>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const newCategory = {
+                  name: formData.get("name"),
+                  description: formData.get("description"),
+                  image: formData.get("image")
+                };
+
+                try {
+                  const response = await fetch(`${API_URL}/api/admin/category`, {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(newCategory)
+                  });
+
+                  if (!response.ok) {
+                    throw new Error("Failed to create category");
+                  }
+
+                  const createdCategory = await response.json();
+                  setCategories((prev) => [...prev, createdCategory]);
+                  showToast("Category created successfully", true);
+                  setShowCreateModal(false);
+                } catch (error) {
+                  console.error("Error creating category:", error);
+                  showToast("Failed to create category", false);
+                }
+              }}
+            >
+              <div className="form-group mt-3">
+                <label htmlFor="name">Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  className="form-control"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="modal-buttons">
+                <button type="submit" className="btn btn-theme">
+                  Submit
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowCreateModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && editCategory && (
+        <div className="modal">
+          <div
+            className="modal-content"
+            ref={(el) => {
+              if (el) el.scrollTop = 0;
+            }}
+          >
+            <h2>Edit Category</h2>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const updatedCategory = {
+                  name: formData.get("name"),
+                  description: formData.get("description"),
+                  image: formData.get("image")
+                };
+
+                try {
+                  const response = await fetch(`${API_URL}/api/admin/category/${editCategory.id}`, {
+                    method: "PUT",
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(updatedCategory)
+                  });
+
+                  if (!response.ok) {
+                    throw new Error("Failed to update category");
+                  }
+
+                  const updatedData = await response.json();
+                  setCategories((prev) =>
+                    prev.map((cat) => (cat.id === editCategory.id ? updatedData : cat))
+                  );
+                  showToast("Category updated successfully", true);
+                  setShowEditModal(false);
+                } catch (error) {
+                  console.error("Error updating category:", error);
+                  showToast("Failed to update category", false);
+                }
+              }}
+            >
+              <div className="form-group mt-3">
+                <label htmlFor="name">Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  className="form-control"
+                  defaultValue={editCategory.name}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="modal-buttons">
+                <button type="submit" className="btn btn-theme">
+                  Submit
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowEditModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
