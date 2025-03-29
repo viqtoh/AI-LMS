@@ -11,7 +11,7 @@ import Select from "react-select";
 
 const CreateContent = () => {
   const token = localStorage.getItem("token");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [cisCollapsed, setCisCollapsed] = useState(false);
   const [risCollapsed, setRisCollapsed] = useState(false);
   const [fisCollapsed, setFisCollapsed] = useState(false);
@@ -31,6 +31,34 @@ const CreateContent = () => {
       description: `${course.description} This course provides in-depth knowledge and practical examples to help you master the subject effectively.`
     }));
   };
+
+  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/admin/category`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch categories");
+        }
+        const data = await response.json();
+        console.log(data);
+        setCategories(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        showToast("Failed to load categories", false);
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, [token, showToast]);
 
   return (
     <div>
@@ -129,16 +157,25 @@ const CreateContent = () => {
                         </select>
                       </div>
                       <div className="form-group">
-                        <label htmlFor="categories">Categories</label>
                         <Select
                           isMulti
-                          options={[
-                            { value: "Web Development", label: "Web Development" },
-                            { value: "React", label: "React" },
-                            { value: "Node.js", label: "Node.js" }
-                          ]}
+                          isSearchable
+                          value={categories
+                            .filter((category) => selectedCategories.includes(category.id))
+                            .map((category) => ({
+                              value: category.id,
+                              label: category.name
+                            }))}
+                          onChange={(selectedOptions) =>
+                            setSelectedCategories(selectedOptions.map((option) => option.value))
+                          }
+                          options={categories.map((category) => ({
+                            value: category.id,
+                            label: category.name
+                          }))}
                           className="basic-multi-select"
                           classNamePrefix="select"
+                          styles={{ container: (base) => ({ ...base, width: "100%" }) }}
                         />
                       </div>
                       <div className="form-group">

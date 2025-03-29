@@ -1,6 +1,5 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../db");
-const Category = require("./category");
 
 const LearningPath = sequelize.define(
   "LearningPath",
@@ -37,13 +36,5 @@ const LearningPath = sequelize.define(
   },
   { timestamps: true }
 );
-
-LearningPath.associate = (models) => {
-  LearningPath.hasMany(models.Course, { foreignKey: "learningPathId", onDelete: "CASCADE" });
-  LearningPath.belongsToMany(Category, {
-    through: "LearningPathCategory",
-    foreignKey: "learningPathId"
-  });
-};
 
 module.exports = LearningPath;

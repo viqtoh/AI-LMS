@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const authenticateToken = require("./middleware/auth");
 const pool = require("./db");
-const { User } = require("./models");
+const { User, LearningPath, Category, Course, Module, UserProgress } = require("./models");
 
 require("dotenv").config();
 
@@ -128,7 +128,6 @@ app.post("/api/change/password", authenticateToken, async (req, res) => {
     if (new_password !== confirm_new_password) {
       return res.status(400).json({ error: "New password and confirm password do not match" });
     }
-    console.log(current_password, user);
     const validPassword = await bcrypt.compare(current_password, user.password);
 
     if (!validPassword) {
@@ -199,7 +198,6 @@ app.get("/api/user/details", authenticateToken, async (req, res) => {
     }
 
     const user = await User.findOne({ where: { email: chuser.email } });
-    console.log(user);
 
     res.json({
       first_name: user.first_name,
@@ -286,7 +284,7 @@ app.put("/api/profile", authenticateToken, async (req, res) => {
   }
 });
 
-app.get("/api/users", async (req, res) => {
+app.get("/api/users", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM users");
     res.json(result.rows);
@@ -342,7 +340,7 @@ app.post("/api/admin/login", async (req, res) => {
   }
 });
 
-app.post("/api/admin/learningpath", async (req, res) => {
+app.post("/api/admin/learningpath", authenticateToken, async (req, res) => {
   try {
     const { title, description, image, difficulty, estimated_time, is_published, categoryIds } =
       req.body;
@@ -380,7 +378,7 @@ app.post("/api/admin/learningpath", async (req, res) => {
   }
 });
 
-app.put("/api/admin/learningpath/:id", async (req, res) => {
+app.put("/api/admin/learningpath/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, image, difficulty, estimated_time, is_published, categoryIds } =
@@ -421,8 +419,9 @@ app.put("/api/admin/learningpath/:id", async (req, res) => {
   }
 });
 
-app.post("/api/admin/category", async (req, res) => {
+app.put("/api/admin/category/:id", authenticateToken, async (req, res) => {
   try {
+    const { id } = req.params;
     const { name } = req.body;
 
     // Validate request
@@ -430,12 +429,46 @@ app.post("/api/admin/category", async (req, res) => {
       return res.status(400).json({ error: "Category name is required." });
     }
 
-    // Create Category
-    const category = await Category.create({ name });
+    // Find the existing Category
+    const category = await Category.findByPk(id);
+    if (!category) {
+      return res.status(404).json({ error: "Category not found." });
+    }
 
-    res.status(201).json(category);
+    // Update Category
+    await category.update({ name });
+
+    // Return the updated category
+    res.status(200).json(category);
   } catch (error) {
-    console.error("Error creating category:", error);
+    console.error("Error updating category:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/api/admin/category", authenticateToken, async (req, res) => {
+  try {
+    const categories = await Category.findAll({
+      include: [
+        { model: LearningPath, through: { attributes: [] }, as: "LearningPaths" },
+        { model: Course, through: { attributes: [] }, as: "Courses" }
+      ]
+    });
+
+    // Format response
+    const formattedCategories = categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      learningPathCount: category.LearningPaths ? category.LearningPaths.length : 0,
+      courseCount: category.Courses ? category.Courses.length : 0,
+      text: `Used in ${
+        category.LearningPaths ? category.LearningPaths.length : 0
+      } Learning Paths and ${category.Courses ? category.Courses.length : 0} Courses`
+    }));
+
+    res.status(200).json(formattedCategories);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
