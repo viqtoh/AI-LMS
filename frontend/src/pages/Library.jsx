@@ -306,7 +306,7 @@ const Library = () => {
                     </div>
                     <div className="searchImage">
                       <img
-                        src="images/course_default.png"
+                        src="/images/course_default.png"
                         className="courseDefault"
                         alt="Profile"
                       />

@@ -8,7 +8,6 @@ import { faSearch, faAngleUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import Select from "react-select";
-import CourseCard from "../components/CourseCard";
 
 const StaffManagement = () => {
   const token = localStorage.getItem("token");

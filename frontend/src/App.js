@@ -11,6 +11,8 @@ import AdminHome from "./adminPages/Home";
 import AdminDashboard from "./adminPages/Dashboard";
 import UserManagement from "./adminPages/UserManagement";
 import StaffManagement from "./adminPages/StaffManagement";
+import ContentManagement from "./adminPages/ContentManagement";
+import CreateContent from "./adminPages/CreateContent";
 
 function App() {
   return (
@@ -27,6 +29,8 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminHome />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/content-management" element={<ContentManagement />} />
+        <Route path="/admin/content-management/create" element={<CreateContent />} />
         <Route path="/admin/user-management" element={<UserManagement />} />
         <Route path="/admin/staff-management" element={<StaffManagement />} />
       </Routes>

@@ -56,7 +56,7 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
           if (data.error === "Invalid token") {
             localStorage.setItem("error", "session expired");
             localStorage.removeItem("token");
-            window.location.href = "/";
+            window.location.href = "/admin";
           } else {
             setFirstName(localStorage.getItem("first_name"));
             setLastName(localStorage.getItem("last_name"));
