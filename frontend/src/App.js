@@ -13,6 +13,7 @@ import UserManagement from "./adminPages/UserManagement";
 import StaffManagement from "./adminPages/StaffManagement";
 import ContentManagement from "./adminPages/ContentManagement";
 import CreateContent from "./adminPages/CreateContent";
+import CategoryManagement from "./adminPages/CategoryManagement";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/content-management" element={<ContentManagement />} />
         <Route path="/admin/content-management/create" element={<CreateContent />} />
+        <Route path="/admin/category-management" element={<CategoryManagement />} />
         <Route path="/admin/user-management" element={<UserManagement />} />
         <Route path="/admin/staff-management" element={<StaffManagement />} />
       </Routes>

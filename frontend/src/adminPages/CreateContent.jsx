@@ -48,13 +48,13 @@ const CreateContent = () => {
             <div className="tab-container">
               <div className="tab-header">
                 <button
-                  className={`tab-button ${!showFilter ? "active" : ""}`}
+                  className={`tab-button1 tab-button ${!showFilter ? "active" : ""}`}
                   onClick={() => setShowFilter(false)}
                 >
                   <span className="unshow-mobile">Create </span>Learning Path
                 </button>
                 <button
-                  className={`tab-button ${showFilter ? "active" : ""}`}
+                  className={`tab-button2 tab-button ${showFilter ? "active" : ""}`}
                   onClick={() => setShowFilter(true)}
                 >
                   <span className="unshow-mobile">Create </span>Course

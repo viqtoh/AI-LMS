@@ -24,7 +24,9 @@ import {
   faBoltLightning,
   faCrown,
   faUser,
-  faBriefcase
+  faBriefcase,
+  faTag,
+  faTags
 } from "@fortawesome/free-solid-svg-icons";
 
 const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
@@ -132,6 +134,20 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
               Content Management
             </a>
           </li>
+          <li className={`${title === "Category Management" ? "active" : ""}`}>
+            <a href="/admin/category-management" className="d-flex align-items-center">
+              {title !== "Category Management" ? (
+                <FontAwesomeIcon icon={faTag} />
+              ) : (
+                <div className="tagIconDiv">
+                  <FontAwesomeIcon icon={faTag} id="tagIcon" />
+                  <FontAwesomeIcon icon={faTag} id="tagIcon2" />
+                  <FontAwesomeIcon icon={faCog} id="tagCogIcon" />
+                </div>
+              )}
+              Category Management
+            </a>
+          </li>
           <li className={`${title === "User Management" ? "active" : ""}`}>
             <a href="/admin/user-management" className="d-flex align-items-center">
               {title !== "User Management" ? (
@@ -145,6 +161,7 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
               User Management
             </a>
           </li>
+
           {title !== "Staff Management" ? (
             <li>
               <a href="/admin/staff-management">
@@ -223,6 +240,20 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
               Content Management
             </a>
           </li>
+          <li className={`${title === "Category Management" ? "active" : ""}`}>
+            <a href="/admin/category-management" className="d-flex align-items-center">
+              {title !== "Category Management" ? (
+                <FontAwesomeIcon icon={faTag} />
+              ) : (
+                <div className="tagIconDiv">
+                  <FontAwesomeIcon icon={faTag} id="tagIcon" />
+                  <FontAwesomeIcon icon={faTag} id="tagIcon2" />
+                  <FontAwesomeIcon icon={faCog} id="tagCogIcon" />
+                </div>
+              )}
+              Category Management
+            </a>
+          </li>
           <li className={`${title === "User Management" ? "active" : ""}`}>
             <a href="/admin/user-management" className="d-flex align-items-center">
               {title !== "User Management" ? (
@@ -236,6 +267,7 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
               User Management
             </a>
           </li>
+
           {title !== "Staff Management" ? (
             <li>
               <a href="/admin/staff-management">

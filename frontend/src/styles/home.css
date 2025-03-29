@@ -1839,13 +1839,18 @@ iframe {
 
 .tab-header {
   display: flex;
+  align-self: center;
+  margin-left: auto;
+  margin-right: auto;
   justify-content: space-around;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
+  max-width: 600px;
 }
 
 .tab-button {
-  flex: 1;
+  max-width: 300px;
+  width: 50%;
   padding: 10px 20px;
   font-size: 16px;
   font-weight: 600;
@@ -1856,7 +1861,20 @@ iframe {
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
-  border-radius: 8px;
+}
+
+.tab-button1 {
+  border-top-left-radius: 8px !important;
+  border-bottom-left-radius: 8px !important;
+  border-top-right-radius: 0px !important;
+  border-bottom-right-radius: 0px !important;
+}
+
+.tab-button2 {
+  border-top-right-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+  border-top-left-radius: 0px !important;
+  border-bottom-left-radius: 0px !important;
 }
 
 .tab-button:hover {
@@ -1890,6 +1908,7 @@ iframe {
   }
   .tab-button {
     font-size: 13px;
+    padding: 10px 10px;
   }
 }
 
@@ -1905,7 +1924,7 @@ iframe {
 #learningPathForm label,
 #courseForm label {
   font-size: 14px;
-  color: #333;
+  color: #111;
   margin-bottom: 0px;
   width: fit-content;
 }
