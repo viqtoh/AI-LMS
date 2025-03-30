@@ -350,25 +350,105 @@ app.post("/api/admin/learningpath", authenticateToken, async (req, res) => {
       return res.status(400).json({ error: "Title is required." });
     }
 
+    let categories = [];
+
+    if (Array.isArray(categoryIds) && categoryIds.length > 0) {
+      categories = await Category.findAll({ where: { id: categoryIds } });
+
+      if (categories.length !== categoryIds.length) {
+        return res.status(404).json({ error: "One or more categories not found." });
+      }
+    }
+
     // Create Learning Path
     const learningPath = await LearningPath.create({
       title,
       description,
-      image,
       difficulty,
       estimated_time,
       is_published
     });
 
+    if (image && !image.startsWith("/media/")) {
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const fileName = `${title}_image_${Date.now()}.png`;
+      const filePath = path.join(__dirname, "media", fileName);
+
+      // Ensure the media directory exists
+      const mediaDir = path.join(__dirname, "media");
+      if (!fs.existsSync(mediaDir)) {
+        fs.mkdirSync(mediaDir);
+      }
+
+      // Save the image to the media folder
+      fs.writeFileSync(filePath, buffer);
+
+      await learningPath.update(
+        { image: `/media/${fileName}` },
+        { where: { id: learningPath.id } }
+      );
+    }
+
     // If categoryIds exist and are not empty, associate them
+    if (categories) {
+      await learningPath.addCategories(categories);
+    }
+
+    res.status(201).json({ learningPath });
+  } catch (error) {
+    console.error("Error creating learning path:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.post("/api/admin/course", authenticateToken, async (req, res) => {
+  try {
+    const { title, description, image, show_outside, categoryIds } = req.body;
+
+    // Validate required fields
+    if (!title) {
+      return res.status(400).json({ error: "Title is required." });
+    }
+
+    let categories = [];
+
     if (Array.isArray(categoryIds) && categoryIds.length > 0) {
-      const categories = await Category.findAll({ where: { id: categoryIds } });
+      categories = await Category.findAll({ where: { id: categoryIds } });
 
       if (categories.length !== categoryIds.length) {
         return res.status(404).json({ error: "One or more categories not found." });
       }
+    }
 
-      await learningPath.addCategories(categories);
+    // Create Learning Path
+    const course = await Course.create({
+      title,
+      description,
+      show_outside
+    });
+
+    if (image && !image.startsWith("/media/")) {
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const fileName = `${title}_image_${Date.now()}.png`;
+      const filePath = path.join(__dirname, "media", fileName);
+
+      // Ensure the media directory exists
+      const mediaDir = path.join(__dirname, "media");
+      if (!fs.existsSync(mediaDir)) {
+        fs.mkdirSync(mediaDir);
+      }
+
+      // Save the image to the media folder
+      fs.writeFileSync(filePath, buffer);
+
+      await course.update({ image: `/media/${fileName}` }, { where: { id: course.id } });
+    }
+
+    // If categoryIds exist and are not empty, associate them
+    if (categories) {
+      await course.addCategories(categories);
     }
 
     res.status(201).json({ learningPath });

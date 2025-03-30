@@ -19,7 +19,7 @@ import AdminNavBar from "../components/AdminNavBar";
 
 const ContentManagement = () => {
   const token = localStorage.getItem("token");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [cisCollapsed, setCisCollapsed] = useState(false);
   const [risCollapsed, setRisCollapsed] = useState(false);
   const [fisCollapsed, setFisCollapsed] = useState(false);
@@ -324,7 +324,7 @@ const ContentManagement = () => {
                         <span className="badge course-badge">{getRandomCourse().type}</span>
                       </div>
                       <div className="searchTitle">
-                        <a href="/content-library/path/1">
+                        <a href="/admin/content-library/path/3">
                           <span>{getRandomCourse().title}</span>
                         </a>
                       </div>
