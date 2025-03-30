@@ -57,10 +57,10 @@ const db = {
 sequelize
   .sync({ alter: true })
   .then(() => {
-    console.log("Database synchronized successfully.");
+    console.log("✅ Database synchronized successfully.");
   })
   .catch((error) => {
-    console.error("Error synchronizing the database:", error);
+    console.log("❌ Database synchronization failed:", error);
   });
 
 module.exports = db;

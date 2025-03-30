@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AdminNavBar from "../components/AdminNavBar";
 import "../styles/home.css";
 import { API_URL, IMAGE_HOST } from "../constants";
@@ -17,12 +17,67 @@ const CreateContent = () => {
   const [fisCollapsed, setFisCollapsed] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
 
+  const [pathFormData, setPathFormData] = useState({
+    title: "",
+    description: "",
+    difficulty: "Beginner",
+    estimated_time: "",
+    is_published: false,
+    image: ""
+  });
+
+  const [courseFormData, setCourseFormData] = useState({
+    title: "",
+    description: "",
+    show_outside: false,
+    image: ""
+  });
+
+  const handlePathChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "is_published") {
+      let val = false;
+      if (e.target.checked) {
+        val = true;
+      }
+      setPathFormData((prevData) => ({
+        ...prevData,
+        [name]: val
+      }));
+    } else {
+      setPathFormData((prevData) => ({
+        ...prevData,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleCourseChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "show_outside") {
+      let val = false;
+      if (e.target.checked) {
+        val = true;
+      }
+      setCourseFormData((prevData) => ({
+        ...prevData,
+        [name]: val
+      }));
+    } else {
+      setCourseFormData((prevData) => ({
+        ...prevData,
+        [name]: value
+      }));
+    }
+  };
+
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
   const extendDescriptions = (courses) => {
@@ -34,6 +89,7 @@ const CreateContent = () => {
 
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCategories2, setSelectedCategories2] = useState([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -47,7 +103,6 @@ const CreateContent = () => {
           throw new Error("Failed to fetch categories");
         }
         const data = await response.json();
-        console.log(data);
         setCategories(data);
         setIsLoading(false);
       } catch (error) {
@@ -59,6 +114,72 @@ const CreateContent = () => {
 
     fetchCategories();
   }, [token, showToast]);
+
+  const formRef = useRef(null);
+
+  const handleLearningPathSubmit = async (e) => {
+    e.preventDefault();
+
+    const formData = pathFormData;
+
+    // Append selected categories as a JSON string
+    formData["categoryIds"] = JSON.stringify(selectedCategories);
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/learningpath`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        showToast(errorData.error || "Failed to create learning path", false);
+        return;
+      }
+
+      const result = await response.json();
+      showToast("Learning path created successfully!", true);
+      window.location.href = `/admin/content-library/path/${result.id}`;
+    } catch (error) {
+      console.error("Error creating Learning path:", error);
+      showToast("Internal Server Error", false);
+    }
+  };
+
+  const handleCourseSubmit = async (e) => {
+    e.preventDefault();
+
+    const formData = courseFormData;
+    formData["categoryIds"] = JSON.stringify(selectedCategories2);
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/course`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        showToast(errorData.error || "Failed to create learning path", false);
+        return;
+      }
+
+      const result = await response.json();
+      showToast("Learning path created successfully!", true);
+      window.location.href = `/admin/content-library/course/${result.id}`;
+    } catch (error) {
+      console.error("Error creating COurse:", error);
+      showToast("Internal Server Error", false);
+    }
+  };
 
   return (
     <div>
@@ -91,7 +212,11 @@ const CreateContent = () => {
               <div className="tab-content">
                 {!showFilter ? (
                   <div className="learning-path-tab">
-                    <form id="learningPathForm">
+                    <form
+                      id="learningPathForm"
+                      ref={(el) => (formRef.current = el)}
+                      onSubmit={handleLearningPathSubmit}
+                    >
                       <div className="form-group">
                         <label htmlFor="image">Image</label>
                         <div className="uploadImageCon">
@@ -106,6 +231,7 @@ const CreateContent = () => {
                           <input
                             type="file"
                             id="image"
+                            name="image"
                             className="form-control"
                             accept="image/*"
                             style={{ display: "none" }}
@@ -116,6 +242,10 @@ const CreateContent = () => {
                                 reader.onload = (event) => {
                                   const preview = document.getElementById("image-preview");
                                   preview.src = event.target.result;
+                                  setPathFormData((prevData) => ({
+                                    ...prevData,
+                                    image: event.target.result
+                                  }));
                                 };
                                 reader.readAsDataURL(file);
                               }
@@ -136,27 +266,40 @@ const CreateContent = () => {
                         <input
                           type="text"
                           id="title"
+                          name="title"
                           className="form-control"
                           placeholder="Enter title"
+                          value={pathFormData.title}
+                          onChange={handlePathChange}
                         />
                       </div>
                       <div className="form-group">
                         <label htmlFor="description">Description</label>
                         <textarea
                           id="description"
+                          name="description"
                           className="form-control"
                           placeholder="Enter description"
+                          value={pathFormData.description}
+                          onChange={handlePathChange}
                         ></textarea>
                       </div>
                       <div className="form-group">
                         <label htmlFor="difficulty">Difficulty</label>
-                        <select id="difficulty" className="form-control">
-                          <option>Beginner</option>
-                          <option>Intermediate</option>
-                          <option>Advanced</option>
+                        <select
+                          id="difficulty"
+                          name="difficulty"
+                          className="form-control"
+                          value={pathFormData.difficulty}
+                          onChange={handlePathChange}
+                        >
+                          <option value="Beginner">Beginner</option>
+                          <option value="Intermediate">Intermediate</option>
+                          <option value="Advanced">Advanced</option>
                         </select>
                       </div>
                       <div className="form-group">
+                        <label htmlFor="path-category">Category</label>
                         <Select
                           isMulti
                           isSearchable
@@ -175,6 +318,7 @@ const CreateContent = () => {
                           }))}
                           className="basic-multi-select"
                           classNamePrefix="select"
+                          id="path-category"
                           styles={{ container: (base) => ({ ...base, width: "100%" }) }}
                         />
                       </div>
@@ -183,13 +327,23 @@ const CreateContent = () => {
                         <input
                           type="text"
                           id="estimated_time"
+                          name="estimated_time"
                           className="form-control"
                           placeholder="Enter estimated time"
+                          value={pathFormData.estimated_time}
+                          onChange={handlePathChange}
                         />
                       </div>
                       <div className="form-group">
                         <label htmlFor="is_published">Publish</label>
-                        <input type="checkbox" id="is_published" className="form-check-input" />
+                        <input
+                          type="checkbox"
+                          id="is_published"
+                          name="is_published"
+                          className="form-check-input"
+                          checked={pathFormData.is_published}
+                          onChange={handlePathChange}
+                        />
                       </div>
                       <button type="submit" className="btn btn-primary">
                         Submit
@@ -200,12 +354,58 @@ const CreateContent = () => {
                   <div className="course-tab">
                     <form id="courseForm">
                       <div className="form-group">
+                        <label htmlFor="image">Image</label>
+                        <div className="uploadImageCon">
+                          <div className="image-preview-container">
+                            <img
+                              src="/images/course_default.png"
+                              alt="Preview"
+                              id="Cimage-preview"
+                              className="image-preview"
+                            />
+                          </div>
+                          <input
+                            type="file"
+                            id="Cimage"
+                            name="image"
+                            className="form-control"
+                            accept="image/*"
+                            style={{ display: "none" }}
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  const preview = document.getElementById("Cimage-preview");
+                                  preview.src = event.target.result;
+                                  setCourseFormData((prevData) => ({
+                                    ...prevData,
+                                    image: event.target.result
+                                  }));
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-theme"
+                            onClick={() => document.getElementById("Cimage").click()}
+                          >
+                            Upload Image
+                          </button>
+                        </div>
+                      </div>
+                      <div className="form-group">
                         <label htmlFor="course-title">Course Title</label>
                         <input
                           type="text"
                           id="course-title"
                           className="form-control"
+                          name="title"
                           placeholder="Enter course title"
+                          value={courseFormData.title}
+                          onChange={handleCourseChange}
                         />
                       </div>
                       <div className="form-group">
@@ -214,11 +414,45 @@ const CreateContent = () => {
                           id="course-description"
                           className="form-control"
                           placeholder="Enter course description"
+                          name="description"
+                          value={courseFormData.description}
+                          onChange={handleCourseChange}
                         ></textarea>
                       </div>
                       <div className="form-group">
+                        <label htmlFor="course-category">Category</label>
+                        <Select
+                          isMulti
+                          isSearchable
+                          value={categories
+                            .filter((category) => selectedCategories2.includes(category.id))
+                            .map((category) => ({
+                              value: category.id,
+                              label: category.name
+                            }))}
+                          onChange={(selectedOptions) =>
+                            setSelectedCategories2(selectedOptions.map((option) => option.value))
+                          }
+                          options={categories.map((category) => ({
+                            value: category.id,
+                            label: category.name
+                          }))}
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                          id="course-category"
+                          styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                        />
+                      </div>
+                      <div className="form-group">
                         <label htmlFor="show-outside">Show Outside</label>
-                        <input type="checkbox" id="show-outside" className="form-check-input" />
+                        <input
+                          type="checkbox"
+                          id="show-outside"
+                          name="show_outside"
+                          className="form-check-input"
+                          checked={courseFormData.show_outside}
+                          onChange={handleCourseChange}
+                        />
                       </div>
 
                       <button type="submit" className="btn btn-primary">

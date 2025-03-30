@@ -11,7 +11,7 @@ const pool = new Pool({
 
 pool
   .connect()
-  .then(() => console.log("Connected to PostgreSQL"))
+  .then(() => console.log("✅ Connected to PostgreSQL"))
   .catch((err) => console.error("Connection error", err));
 
 module.exports = pool;
@@ -34,7 +34,7 @@ const sequelize = new Sequelize(
 // Test the connection
 sequelize
   .authenticate()
-  .then(() => console.log("✅ Connected to PostgreSQL successfully!"))
+  .then(() => console.log("✅ Tested PostgreSQL successfully!"))
   .catch((err) => console.error("❌ PostgreSQL connection error:", err));
 
 module.exports = sequelize;
