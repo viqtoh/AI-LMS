@@ -58,7 +58,7 @@ const AdminHome = () => {
         localStorage.setItem("email", formData.email);
         showToast("Login successful!", true);
         // Redirect to login page
-        window.location.href = "admin/dashboard";
+        window.location.href = "/admin/dashboard";
       } else {
         showToast(data.error || "Something went wrong", false);
       }
@@ -83,7 +83,7 @@ const AdminHome = () => {
             }}
           >
             <span className="login100-form-logo">
-              <img src="images/ailms.png" alt="LOGO" />
+              <img src="/images/ailms.png" alt="LOGO" />
             </span>
 
             <div className="wrap-input100 validate-input" data-validate="Enter eail">
