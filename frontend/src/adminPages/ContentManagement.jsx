@@ -26,6 +26,8 @@ const ContentManagement = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [type, setType] = useState("both");
   const [contents, setContents] = useState([]);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [canRefetch, setCanRefetch] = useState(true);
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -39,11 +41,14 @@ const ContentManagement = () => {
   useEffect(() => {
     const fetchContents = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/admin/contents?type=${type}`, {
-          headers: {
-            Authorization: `Bearer ${token}` // If authentication is required
+        const response = await fetch(
+          `${API_URL}/api/admin/contents?start=0&limit=10&type=${type}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}` // If authentication is required
+            }
           }
-        });
+        );
         const data = await response.json();
         setContents(Array.isArray(data.contents) ? data.contents : []);
       } catch (err) {
@@ -54,11 +59,54 @@ const ContentManagement = () => {
     };
 
     fetchContents();
-  }, [type]);
+  }, []);
+
+  const reFetchContents = async () => {
+    setIsRefetching(true);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/contents?start=${contents.length + 1}&limit=10&type=${type}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}` // If authentication is required
+          }
+        }
+      );
+      const data = await response.json();
+      setContents([...contents, ...(Array.isArray(data.contents) ? data.contents : [])]);
+      if (data.contents.length === 0) {
+        setCanRefetch(false);
+      }
+    } catch (err) {
+      showToast(err.response?.data?.error || "Failed to fetch contents", false);
+    } finally {
+      setIsRefetching(false);
+    }
+  };
 
   useEffect(() => {
-    console.log("Updated Contents:", contents);
-  }, [contents]);
+    const handleScroll = async (e) => {
+      if (canRefetch) {
+        const { scrollTop, scrollHeight, clientHeight } = e.target;
+        if (scrollTop + clientHeight >= scrollHeight - 10 && !isRefetching) {
+          await reFetchContents();
+
+          setTimeout(() => setIsRefetching(false), 500); // Prevent rapid refetching
+        }
+      }
+    };
+
+    const subBody = document.querySelector(".sub-body");
+    if (subBody) {
+      subBody.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (subBody) {
+        subBody.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [contents.length, isRefetching]);
 
   const customStyles = {
     control: (base) => ({
@@ -331,6 +379,16 @@ const ContentManagement = () => {
                     <p>No results found</p>
                   </div>
                 )}
+                {isRefetching ? (
+                  <div className="loader-container2">
+                    <div className="loader2"></div>
+                  </div>
+                ) : null}
+                {!canRefetch ? (
+                  <div className="noData">
+                    <span>No more data</span>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

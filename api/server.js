@@ -685,7 +685,7 @@ app.get("/api/admin/category", authenticateToken, async (req, res) => {
 
 app.get("/api/admin/contents", authenticateToken, async (req, res) => {
   try {
-    const { type, sort } = req.query; // "type" can be "learningpath", "course", or "both". "sort" can be "asc" or "desc".
+    const { type, sort, start = 0, limit = 10 } = req.query; // Default: start at 0, limit 10
 
     let contents = [];
 
@@ -729,7 +729,17 @@ app.get("/api/admin/contents", authenticateToken, async (req, res) => {
       contents.sort((a, b) => a.title.localeCompare(b.title));
     }
 
-    res.status(200).json({ contents });
+    // Pagination
+    const startIdx = parseInt(start, 10);
+    const limitNum = parseInt(limit, 10);
+    const paginatedContents = contents.slice(startIdx, startIdx + limitNum);
+
+    res.status(200).json({
+      total: contents.length,
+      start: startIdx,
+      limit: limitNum,
+      contents: paginatedContents
+    });
   } catch (error) {
     console.error("Error fetching contents:", error);
     res.status(500).json({ error: "Internal Server Error" });

@@ -568,6 +568,25 @@ iframe {
   animation: spin 1s linear infinite;
 }
 
+.loader-container2 {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: 60px;
+  width: 100%;
+  margin-bottom: 50px;
+}
+
+.loader2 {
+  border: 3px solid #f3f3f3;
+  border-top: 3px dotted #333;
+  border-right: 3px dotted #333;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  animation: spin 1s linear infinite;
+}
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -2101,4 +2120,14 @@ iframe {
   font-size: 18px;
   font-weight: bold;
   font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+}
+
+.noData {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.noData span {
+  font-size: 15px;
 }
