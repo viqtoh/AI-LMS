@@ -19,11 +19,15 @@ import AdminNavBar from "../components/AdminNavBar";
 
 const ContentManagement = () => {
   const token = localStorage.getItem("token");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [cisCollapsed, setCisCollapsed] = useState(false);
   const [risCollapsed, setRisCollapsed] = useState(false);
   const [fisCollapsed, setFisCollapsed] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
+  const [type, setType] = useState("both");
+  const [contents, setContents] = useState([]);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [canRefetch, setCanRefetch] = useState(true);
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -33,12 +37,76 @@ const ContentManagement = () => {
     console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
-  const extendDescriptions = (courses) => {
-    return courses.map((course) => ({
-      ...course,
-      description: `${course.description} This course provides in-depth knowledge and practical examples to help you master the subject effectively.`
-    }));
+
+  useEffect(() => {
+    const fetchContents = async () => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/admin/contents?start=0&limit=10&type=${type}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}` // If authentication is required
+            }
+          }
+        );
+        const data = await response.json();
+        setContents(Array.isArray(data.contents) ? data.contents : []);
+      } catch (err) {
+        showToast(err.response?.data?.error || "Failed to fetch contents", false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchContents();
+  }, []);
+
+  const reFetchContents = async () => {
+    setIsRefetching(true);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/contents?start=${contents.length + 1}&limit=10&type=${type}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}` // If authentication is required
+          }
+        }
+      );
+      const data = await response.json();
+      setContents([...contents, ...(Array.isArray(data.contents) ? data.contents : [])]);
+      if (data.contents.length === 0) {
+        setCanRefetch(false);
+      }
+    } catch (err) {
+      showToast(err.response?.data?.error || "Failed to fetch contents", false);
+    } finally {
+      setIsRefetching(false);
+    }
   };
+
+  useEffect(() => {
+    const handleScroll = async (e) => {
+      if (canRefetch) {
+        const { scrollTop, scrollHeight, clientHeight } = e.target;
+        if (scrollTop + clientHeight >= scrollHeight - 10 && !isRefetching) {
+          await reFetchContents();
+
+          setTimeout(() => setIsRefetching(false), 500); // Prevent rapid refetching
+        }
+      }
+    };
+
+    const subBody = document.querySelector(".sub-body");
+    if (subBody) {
+      subBody.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (subBody) {
+        subBody.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [contents.length, isRefetching]);
 
   const customStyles = {
     control: (base) => ({
@@ -99,39 +167,6 @@ const ContentManagement = () => {
 
   const handleChange = (selectedOption) => {
     console.log("Selected:", selectedOption);
-  };
-
-  const getRandomCourse = () => {
-    const courses = extendDescriptions([
-      {
-        title: "Introduction to React",
-        description:
-          "Learn the basics of React, a popular JavaScript library for building user interfaces.",
-        type: "Course"
-      },
-      {
-        title: "Advanced JavaScript",
-        description: "Deep dive into advanced JavaScript concepts and patterns.",
-        type: "Course"
-      },
-      {
-        title: "Web Development Bootcamp",
-        description: "A comprehensive guide to becoming a full-stack web developer.",
-        type: "Learning Path"
-      },
-      {
-        title: "UI/UX Design Principles",
-        description: "Master the principles of user interface and user experience design.",
-        type: "Course"
-      },
-      {
-        title: "Data Structures and Algorithms",
-        description:
-          "Understand the fundamentals of data structures and algorithms for coding interviews.",
-        type: "Learning Path"
-      }
-    ]);
-    return courses[Math.floor(Math.random() * courses.length)];
   };
 
   return (
@@ -304,36 +339,56 @@ const ContentManagement = () => {
                 </div>
               </div>
               <div className="searchBody greyScroll">
-                {[...Array(10)].map((_, index) => (
-                  <div className="searchResult" key={index}>
-                    <div className="sContentHeader2">
-                      <FontAwesomeIcon icon={faHeart} />
+                {contents && contents.length > 0 ? (
+                  contents.map((content, index) => (
+                    <div className="searchResult" key={index}>
+                      <div className="searchImage">
+                        <img
+                          src={
+                            content.image == null
+                              ? "/images/course_default.png"
+                              : `${IMAGE_HOST}${content.image}`
+                          }
+                          className={content.image == null ? "courseDefault" : `courseImage`}
+                          alt="Course"
+                        />
+                      </div>
+                      <div className="searchContent">
+                        <div className="searchBadge">
+                          <span className="badge course-badge">{content.type}</span>
+                        </div>
+                        <div className="searchTitle">
+                          <a
+                            href={
+                              content.type == "Course"
+                                ? `admin/content-library/course/${content.id}`
+                                : `/admin/content-library/path/${content.id}`
+                            }
+                          >
+                            <span>{content.title}</span>
+                          </a>
+                        </div>
+                        <div className="searchDesc">
+                          <span>{content.description}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="searchImage">
-                      <img
-                        src="/images/course_default.png"
-                        className="courseDefault"
-                        alt="Course"
-                      />
-                    </div>
-                    <div className="searchContent">
-                      <div className="sContentHeader">
-                        <FontAwesomeIcon icon={faHeart} />
-                      </div>
-                      <div className="searchBadge">
-                        <span className="badge course-badge">{getRandomCourse().type}</span>
-                      </div>
-                      <div className="searchTitle">
-                        <a href="/admin/content-library/path/3">
-                          <span>{getRandomCourse().title}</span>
-                        </a>
-                      </div>
-                      <div className="searchDesc">
-                        <span>{getRandomCourse().description}</span>
-                      </div>
-                    </div>
+                  ))
+                ) : (
+                  <div className="noObjects">
+                    <p>No results found</p>
                   </div>
-                ))}
+                )}
+                {isRefetching ? (
+                  <div className="loader-container2">
+                    <div className="loader2"></div>
+                  </div>
+                ) : null}
+                {!canRefetch ? (
+                  <div className="noData">
+                    <span>No more data</span>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

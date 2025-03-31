@@ -22,15 +22,16 @@ const CreateContent = () => {
     description: "",
     difficulty: "Beginner",
     estimated_time: "",
-    is_published: false,
+    is_published: true,
     image: ""
   });
 
   const [courseFormData, setCourseFormData] = useState({
     title: "",
     description: "",
-    show_outside: false,
-    image: ""
+    show_outside: true,
+    image: "",
+    is_published: true
   });
 
   const handlePathChange = (e) => {
@@ -56,7 +57,7 @@ const CreateContent = () => {
   const handleCourseChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === "show_outside") {
+    if (name === "show_outside" || name === "is_published") {
       let val = false;
       if (e.target.checked) {
         val = true;
@@ -451,6 +452,18 @@ const CreateContent = () => {
                           name="show_outside"
                           className="form-check-input"
                           checked={courseFormData.show_outside}
+                          onChange={handleCourseChange}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="cis_published">Publish</label>
+                        <input
+                          type="checkbox"
+                          id="cis_published"
+                          name="is_published"
+                          className="form-check-input"
+                          checked={courseFormData.is_published}
                           onChange={handleCourseChange}
                         />
                       </div>

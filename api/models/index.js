@@ -8,34 +8,29 @@ const LearningPath = require("./learningpath");
 const Course = require("./course");
 const Module = require("./module");
 const UserProgress = require("./userProgress");
+const LearningPathCourse = require("./learningpathcourse");
 
 // Define junction tables (before associations)
 const LearningPathCategory = sequelize.define("LearningPathCategory", {}, { timestamps: false });
 const CourseCategory = sequelize.define("CourseCategory", {}, { timestamps: false });
 
-// Define associations AFTER defining all models
+// Define Many-to-Many associations (Only Once)
 Category.belongsToMany(LearningPath, { through: LearningPathCategory, foreignKey: "categoryId" });
-Category.belongsToMany(Course, { through: CourseCategory, foreignKey: "categoryId" });
-
 LearningPath.belongsToMany(Category, {
   through: LearningPathCategory,
   foreignKey: "learningPathId"
 });
 
+Category.belongsToMany(Course, { through: CourseCategory, foreignKey: "categoryId" });
 Course.belongsToMany(Category, { through: CourseCategory, foreignKey: "courseId" });
 
-// Define Many-to-Many relationships
-Category.belongsToMany(LearningPath, {
-  through: LearningPathCategory,
-  foreignKey: "categoryId"
-});
-Category.belongsToMany(Course, {
-  through: CourseCategory,
-  foreignKey: "categoryId"
+LearningPath.belongsToMany(Course, {
+  through: LearningPathCourse,
+  foreignKey: "learningPathId"
 });
 
-Course.belongsToMany(Category, {
-  through: CourseCategory,
+Course.belongsToMany(LearningPath, {
+  through: LearningPathCourse,
   foreignKey: "courseId"
 });
 
@@ -50,7 +45,8 @@ const db = {
   Module,
   Category,
   LearningPathCategory,
-  CourseCategory
+  CourseCategory,
+  LearningPathCourse
 };
 
 // Sync database
