@@ -65,7 +65,7 @@ const ContentManagement = () => {
     setIsRefetching(true);
     try {
       const response = await fetch(
-        `${API_URL}/api/admin/contents?start=${contents.length + 1}&limit=10&type=${type}`,
+        `${API_URL}/api/admin/contents?start=${contents.length}&limit=10&type=${type}`,
         {
           headers: {
             Authorization: `Bearer ${token}` // If authentication is required
