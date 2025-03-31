@@ -679,3 +679,58 @@ app.get("/api/admin/category", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+//region get contents
+
+app.get("/api/admin/contents", authenticateToken, async (req, res) => {
+  try {
+    const { type, sort } = req.query; // "type" can be "learningpath", "course", or "both". "sort" can be "asc" or "desc".
+
+    let contents = [];
+
+    if (!type || type === "both") {
+      // Fetch both Learning Paths and Courses
+      const learningPaths = await LearningPath.findAll({
+        include: [{ model: Category, through: { attributes: [] } }]
+      });
+
+      const courses = await Course.findAll({
+        include: [{ model: Category, through: { attributes: [] } }]
+      });
+
+      // Add "type" attribute and merge into one array
+      contents = [
+        ...learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" })),
+        ...courses.map((course) => ({ ...course.toJSON(), type: "Course" }))
+      ];
+    } else if (type === "learningpath") {
+      // Fetch only Learning Paths
+      const learningPaths = await LearningPath.findAll({
+        include: [{ model: Category, through: { attributes: [] } }]
+      });
+
+      contents = learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" }));
+    } else if (type === "course") {
+      // Fetch only Courses
+      const courses = await Course.findAll({
+        include: [{ model: Category, through: { attributes: [] } }]
+      });
+
+      contents = courses.map((course) => ({ ...course.toJSON(), type: "Course" }));
+    } else {
+      return res.status(400).json({ error: "Invalid type parameter." });
+    }
+
+    // Sorting
+    if (sort === "desc") {
+      contents.sort((a, b) => b.title.localeCompare(a.title));
+    } else {
+      contents.sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    res.status(200).json({ contents });
+  } catch (error) {
+    console.error("Error fetching contents:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});

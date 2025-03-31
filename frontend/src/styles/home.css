@@ -1007,6 +1007,12 @@ iframe {
   width: auto;
 }
 
+.courseImage {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
 .sContentHeader2 {
   display: none;
 }
