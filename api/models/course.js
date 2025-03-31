@@ -17,9 +17,9 @@ const Course = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true
     },
-    order: {
-      type: DataTypes.INTEGER, // Order in the learning path
-      allowNull: false
+    is_published: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   },
   { timestamps: true }
