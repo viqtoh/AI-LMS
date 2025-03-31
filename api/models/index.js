@@ -45,7 +45,8 @@ const db = {
   Module,
   Category,
   LearningPathCategory,
-  CourseCategory
+  CourseCategory,
+  LearningPathCourse
 };
 
 // Sync database

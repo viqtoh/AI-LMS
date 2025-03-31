@@ -469,7 +469,7 @@ app.post("/api/admin/course", authenticateToken, async (req, res) => {
 });
 
 //create course in learning path
-app.post("/api/admin/course", authenticateToken, async (req, res) => {
+app.post("/api/admin/learningpath/course/create", authenticateToken, async (req, res) => {
   try {
     const { title, description, image, show_outside, is_published, categoryIds, learningPathId } =
       req.body;
@@ -550,7 +550,7 @@ app.post("/api/admin/course", authenticateToken, async (req, res) => {
 });
 
 //add a course to learning path
-app.post("/api/admin/learningpath/add-course", authenticateToken, async (req, res) => {
+app.post("/api/admin/learningpath/course/add", authenticateToken, async (req, res) => {
   try {
     const { learningPathId, courseId, orderIndex } = req.body;
 
@@ -585,6 +585,7 @@ app.post("/api/admin/learningpath/add-course", authenticateToken, async (req, re
   }
 });
 
+//update learning path
 app.put("/api/admin/learningpath/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -731,6 +732,60 @@ app.get("/api/admin/contents", authenticateToken, async (req, res) => {
     res.status(200).json({ contents });
   } catch (error) {
     console.error("Error fetching contents:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch learning path
+    const learningPath = await LearningPath.findOne({
+      where: { id },
+      include: [
+        {
+          model: Category,
+          through: { attributes: [] }, // Exclude join table attributes
+          as: "Categories"
+        },
+        {
+          model: Course,
+          include: [
+            {
+              model: Category,
+              through: { attributes: [] },
+              as: "Categories"
+            }
+          ],
+          as: "Courses"
+        }
+      ]
+    });
+
+    if (!learningPath) {
+      return res.status(404).json({ error: "Learning path not found." });
+    }
+
+    // Format response
+    const response = {
+      id: learningPath.id,
+      title: learningPath.title,
+      image: learningPath.image,
+      description: learningPath.description,
+      categories: learningPath.Categories?.map((cat) => cat.name) || [],
+      courses:
+        learningPath.Courses?.map((course) => ({
+          id: course.id,
+          title: course.title,
+          description: course.description,
+          categories: course.Categories?.map((cat) => cat.name) || []
+        })) || []
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching learning path:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

@@ -758,6 +758,12 @@ iframe {
   border-radius: 5px;
 }
 
+.form-group input[type="checkbox"],
+.form-group input[type="radio"] {
+  width: 16px;
+  height: 16px;
+}
+
 .modal-buttons {
   display: flex;
   justify-content: space-between;
@@ -1384,33 +1390,6 @@ iframe {
   background-color: #333;
 }
 
-@media screen and (max-width: 1000px) {
-  .courseHeader {
-    display: none;
-  }
-  .collapsible {
-    width: 100%;
-  }
-}
-
-@media screen and (min-width: 1001px) {
-  .mobileCourseHeader {
-    display: none;
-  }
-}
-
-@media screen and (min-width: 1025px) and (max-width: 1289px) {
-  .courseHeader {
-    display: none;
-  }
-  .mobileCourseHeader {
-    display: block;
-  }
-  .collapsible {
-    width: 100%;
-  }
-}
-
 .collapseIcon {
   background-color: #ddd;
   width: 40px;
@@ -1520,25 +1499,30 @@ iframe {
   line-height: 1;
 }
 
-.mheaderContent {
-  display: none;
-}
-
-@media screen and (max-width: 843px) {
-  .aheaderContent {
+@media screen and (max-width: 1000px) {
+  .courseHeader {
     display: none;
   }
-  .mheaderContent {
-    display: block;
+  .collapsible {
+    width: 100%;
   }
 }
 
-@media screen and (max-width: 1183px) and (min-width: 1024px) {
-  .aheaderContent {
+@media screen and (min-width: 1001px) {
+  .mobileCourseHeader {
     display: none;
   }
-  .mheaderContent {
+}
+
+@media screen and (min-width: 1025px) and (max-width: 1289px) {
+  .courseHeader {
+    display: none;
+  }
+  .mobileCourseHeader {
     display: block;
+  }
+  .collapsible {
+    width: 100%;
   }
 }
 
@@ -2009,6 +1993,12 @@ iframe {
   font-weight: 600;
 }
 
+.noObjects100 {
+  min-width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 .category-list {
   display: flex;
   flex-wrap: wrap;
@@ -2094,4 +2084,21 @@ iframe {
   .category-header-left {
     min-width: calc(100% - 120px);
   }
+}
+
+.courseBodyHeader {
+  align-self: flex-end;
+}
+
+.mheader {
+  height: 50px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.mheader span {
+  font-size: 18px;
+  font-weight: bold;
+  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
 }

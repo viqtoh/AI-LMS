@@ -45,7 +45,6 @@ const ContentManagement = () => {
           }
         });
         const data = await response.json();
-        console.log(data);
         setContents(Array.isArray(data.contents) ? data.contents : []);
       } catch (err) {
         showToast(err.response?.data?.error || "Failed to fetch contents", false);
