@@ -289,6 +289,7 @@ const StaffManagement = () => {
                     <tr>
                       <th></th>
                       <th
+                        className="text-start"
                         onClick={() => {
                           const newSort = sort === "email" ? "-email" : "email";
                           setSort(newSort);
@@ -418,7 +419,7 @@ const StaffManagement = () => {
                             </div>
                           )}
                         </td>
-                        <td>{user.email}</td>
+                        <td className="text-start">{user.email}</td>
                         <td>{user.name}</td>
                         <td>{formatDate(user.lastActive)}</td>
                         <td>{user.status}</td>
