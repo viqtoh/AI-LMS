@@ -788,7 +788,7 @@ const UserManagement = () => {
               if (el) el.scrollTop = 0;
             }}
           >
-            <h5>Edit Profile</h5>
+            <h5>Edit User</h5>
             <form onSubmit={handleEditSubmit}>
               <div className="form-group d-flex align-items-end mb-4">
                 {selectedUser && selectedUser.image ? (
