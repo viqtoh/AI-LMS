@@ -29,7 +29,7 @@ import {
   faTags
 } from "@fortawesome/free-solid-svg-icons";
 
-const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
+const AdminNavBar = ({ title = "Dashboard", subTitle = "", context = "" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -328,26 +328,30 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "" }) => {
             <div className="nav-divider">
               <span className="vertical-line"></span>
             </div>
-            {firstName && lastName ? (
-              <span>
-                Hi, {firstName} <span className="nameForTab">{lastName}</span>
-              </span>
-            ) : null}
+            <a href="/admin/account/settings" className="d-flex text-decoration-none">
+              {firstName && lastName ? (
+                <span>
+                  Hi, {firstName} <span className="nameForTab">{lastName}</span>
+                </span>
+              ) : null}
 
-            {uimage ? (
-              <div className="profileImage mx-2 s-35">
-                <img src={`${IMAGE_HOST}${uimage}`} className="s-35" alt="Profile" />
-              </div>
-            ) : isloaded ? (
-              <div className="profileImage mx-2 s-35">
-                <img src="/images/default_profile.png" className="s-35" alt="Profile" />
-              </div>
-            ) : null}
-            <FontAwesomeIcon icon={faAngleDown} />
+              {uimage ? (
+                <div className="profileImage mx-2 s-35">
+                  <img src={`${IMAGE_HOST}${uimage}`} className="s-35" alt="Profile" />
+                </div>
+              ) : isloaded ? (
+                <div className="profileImage mx-2 s-35">
+                  <img src="/images/default_profile.png" className="s-35" alt="Profile" />
+                </div>
+              ) : null}
+            </a>
           </div>
         </div>
         <div className="navbar-title">
           <h3>{title}</h3> {subTitle !== "" ? <h5>/{subTitle}</h5> : null}
+        </div>
+        <div className="navbar-title2">
+          <h5>{context}</h5>
         </div>
       </div>
       {/* Overlay when Sidebar is Open */}

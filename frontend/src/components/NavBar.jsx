@@ -231,6 +231,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             <div className="nav-divider">
               <span className="vertical-line"></span>
             </div>
+            <a href="/admin/account/settings" className="d-flex text-decoration-none">
             {firstName && lastName ? (
               <span>
                 Hi, {firstName} <span className="nameForTab">{lastName}</span>
@@ -246,7 +247,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
                 <img src="/images/default_profile.png" className="s-35" alt="Profile" />
               </div>
             ) : null}
-            <FontAwesomeIcon icon={faAngleDown} />
+            </a>
           </div>
         </div>
         <div className="navbar-title">

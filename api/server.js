@@ -13,6 +13,7 @@ const {
   UserProgress,
   LearningPathCourse
 } = require("./models");
+const { Op } = require("sequelize");
 
 require("dotenv").config();
 
@@ -816,6 +817,78 @@ app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res)
     res.status(200).json(response);
   } catch (error) {
     console.error("Error fetching learning path:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//region user management
+
+app.get("/api/admin/users", authenticateToken, async (req, res) => {
+  try {
+    const { sort } = req.query;
+
+    const { page = 1, limit = 10 } = req.query;
+
+    const offset = (page - 1) * limit;
+    const search = req.query.search || "";
+
+    const { rows: users, count: totalUsers } = await User.findAndCountAll({
+      attributes: [
+        "email",
+        "image",
+        "first_name",
+        "last_name",
+        "lastLogin",
+        "isActive",
+        "createdAt"
+      ],
+      where: {
+        isAdmin: false,
+        [Op.or]: [
+          { email: { [Op.iLike]: `%${search}%` } },
+          { first_name: { [Op.iLike]: `%${search}%` } },
+          { last_name: { [Op.iLike]: `%${search}%` } }
+        ]
+      },
+      order: (() => {
+        if (!sort) return [];
+        const direction = sort.startsWith("-") ? "DESC" : "ASC";
+        const field = sort.replace("-", "");
+        const validFields = {
+          email: "email",
+          name: ["first_name", "last_name"],
+          lastActive: "lastLogin",
+          status: "isActive",
+          dateAdded: "createdAt"
+        };
+        if (field === "name") {
+          return [
+            [validFields.name[0], direction],
+            [validFields.name[1], direction]
+          ];
+        }
+        return validFields[field] ? [[validFields[field], direction]] : [];
+      })(),
+      limit: parseInt(limit, 10),
+      offset: parseInt(offset, 10)
+    });
+
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    const formattedUsers = users.map((user) => ({
+      email: user.email,
+      image: user.image,
+      name: `${user.first_name} ${user.last_name}`,
+      lastActive: user.lastLogin || "Never",
+      status: user.isActive ? "Active" : "Inactive",
+      dateAdded: user.createdAt
+    }));
+
+    res
+      .status(200)
+      .json({ totalUsers, totalPages, currentPage: parseInt(page, 10), users: formattedUsers });
+  } catch (error) {
+    console.error("Error fetching users:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
