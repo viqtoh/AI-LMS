@@ -59,6 +59,10 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "", context = "" }) => {
             localStorage.setItem("error", "session expired");
             localStorage.removeItem("token");
             window.location.href = "/admin";
+          } else if (data.error === "User not found" || data.error === "Account Disabled") {
+            localStorage.setItem("error", data.error);
+            localStorage.removeItem("token");
+            window.location.href = "/admin";
           } else {
             setFirstName(localStorage.getItem("first_name"));
             setLastName(localStorage.getItem("last_name"));

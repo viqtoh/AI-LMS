@@ -95,7 +95,9 @@ app.post("/api/login", async (req, res) => {
         if (user.isAdmin) {
           return res.json({ error: "Access denied. Login with a User Account." });
         }
-
+        if (!user.isActive) {
+          return res.json({ error: "User Account Disabled" });
+        }
         const token = jwt.sign(
           { userId: user.id, email: user.email, iat: Math.floor(Date.now() / 1000) },
           process.env.JWT_SECRET,
@@ -136,6 +138,10 @@ app.post("/api/change/password", authenticateToken, async (req, res) => {
 
     if (new_password !== confirm_new_password) {
       return res.status(400).json({ error: "New password and confirm password do not match" });
+    }
+
+    if (new_password === "" || new_password === null) {
+      return res.status(400).json({ error: "Please Enter a Valid Password" });
     }
     const validPassword = await bcrypt.compare(current_password, user.password);
 
@@ -207,6 +213,10 @@ app.get("/api/user/details", authenticateToken, async (req, res) => {
     }
 
     const user = await User.findOne({ where: { email: chuser.email } });
+
+    if (!user.isActive) {
+      return res.json({ error: "Account Disabled" });
+    }
 
     res.json({
       first_name: user.first_name,
@@ -328,6 +338,11 @@ app.post("/api/admin/login", async (req, res) => {
         if (!user.isAdmin) {
           return res.json({ error: "Access denied. Admin privileges required." });
         }
+
+        if (!user.isActive) {
+          return res.json({ error: "Admin Account Disabled" });
+        }
+
         // Generate JWT token
         const token = jwt.sign(
           { userId: user.id, email: user.email, iat: Math.floor(Date.now() / 1000) },
@@ -834,13 +849,20 @@ app.get("/api/admin/users", authenticateToken, async (req, res) => {
 
     const { rows: users, count: totalUsers } = await User.findAndCountAll({
       attributes: [
+        "id",
         "email",
         "image",
         "first_name",
         "last_name",
         "lastLogin",
         "isActive",
-        "createdAt"
+        "createdAt",
+        "phone",
+        "address",
+        "city",
+        "country",
+        "postal_code",
+        "tax_id"
       ],
       where: {
         isAdmin: false,
@@ -867,6 +889,13 @@ app.get("/api/admin/users", authenticateToken, async (req, res) => {
             [validFields.name[1], direction]
           ];
         }
+        if (field === "status") {
+          let dir = "ASC";
+          if (direction === "ASC") {
+            dir = "DESC";
+          }
+          return [[validFields.status, dir]];
+        }
         return validFields[field] ? [[validFields[field], direction]] : [];
       })(),
       limit: parseInt(limit, 10),
@@ -876,12 +905,22 @@ app.get("/api/admin/users", authenticateToken, async (req, res) => {
     const totalPages = Math.ceil(totalUsers / limit);
 
     const formattedUsers = users.map((user) => ({
+      id: user.id,
       email: user.email,
       image: user.image,
       name: `${user.first_name} ${user.last_name}`,
       lastActive: user.lastLogin || "Never",
       status: user.isActive ? "Active" : "Inactive",
-      dateAdded: user.createdAt
+      dateAdded: user.createdAt,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      phone: user.phone,
+      address: user.address,
+      city: user.city,
+      country: user.country,
+      postal_code: user.postal_code,
+      tax_id: user.tax_id,
+      isActive: user.isActive
     }));
 
     res
@@ -890,5 +929,218 @@ app.get("/api/admin/users", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.post("/api/admin/user", authenticateToken, async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "Token missing" });
+    }
+
+    const {
+      email,
+      first_name,
+      last_name,
+      phone,
+      address,
+      city,
+      postal_code,
+      country,
+      tax_id,
+      image,
+      password,
+      confirm_password
+    } = req.body;
+
+    if (password !== confirm_password) {
+      return res.status(400).json({ error: "Password and confirm password do not match" });
+    }
+
+    if (password === "" || password === null) {
+      return res.status(400).json({ error: "Please Enter a Valid Password" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email is already registered" });
+    }
+
+    await User.create({
+      email,
+      first_name,
+      last_name,
+      phone,
+      address,
+      city,
+      postal_code,
+      country,
+      tax_id,
+      password: hashedPassword
+    });
+
+    if (image && !image.startsWith("/media/")) {
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const fileName = `${email}_profile_${Date.now()}.png`;
+      const filePath = path.join(__dirname, "media", fileName);
+
+      // Ensure the media directory exists
+      const mediaDir = path.join(__dirname, "media");
+      if (!fs.existsSync(mediaDir)) {
+        fs.mkdirSync(mediaDir);
+      }
+
+      // Save the image to the media folder
+      fs.writeFileSync(filePath, buffer);
+
+      // Update the user's image field with the file path
+      await User.update({ image: `/media/${fileName}` }, { where: { email: email } });
+    }
+    const createdUser = await User.findOne({ where: { email: email } });
+
+    res.json({
+      message: "User created successfully",
+      user: {
+        email: createdUser.email,
+        first_name: createdUser.first_name,
+        last_name: createdUser.last_name,
+        phone: createdUser.phone || "",
+        address: createdUser.address || "",
+        city: createdUser.city || "",
+        postal_code: createdUser.postal_code || "",
+        country: createdUser.country || "",
+        tax_id: createdUser.tax_id || "",
+        createdAt: createdUser.createdAt,
+        image: createdUser.image || ""
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.put("/api/admin/user/:id", authenticateToken, async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "Token missing" });
+    }
+
+    const { id } = req.params;
+
+    const { first_name, last_name, phone, address, city, postal_code, country, tax_id, image } =
+      req.body;
+
+    const user = await User.findOne({ where: { id } });
+    if (image && !image.startsWith("/media/")) {
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const fileName = `${user.email}_profile_${Date.now()}.png`;
+      const filePath = path.join(__dirname, "media", fileName);
+
+      // Ensure the media directory exists
+      const mediaDir = path.join(__dirname, "media");
+      if (!fs.existsSync(mediaDir)) {
+        fs.mkdirSync(mediaDir);
+      }
+
+      // Save the image to the media folder
+      fs.writeFileSync(filePath, buffer);
+
+      // Update the user's image field with the file path
+      await User.update({ image: `/media/${fileName}` }, { where: { email: user.email } });
+    }
+    await User.update(
+      {
+        first_name,
+        last_name,
+        phone,
+        address,
+        city,
+        postal_code,
+        country,
+        tax_id,
+        token: user.token
+      },
+      { where: { email: user.email } }
+    );
+
+    const updatedUser = await User.findOne({ where: { email: user.email } });
+
+    res.json({
+      message: "User updated successfully",
+      user: {
+        email: updatedUser.email,
+        first_name: updatedUser.first_name,
+        last_name: updatedUser.last_name,
+        phone: updatedUser.phone || "",
+        address: updatedUser.address || "",
+        city: updatedUser.city || "",
+        postal_code: updatedUser.postal_code || "",
+        country: updatedUser.country || "",
+        tax_id: updatedUser.tax_id || "",
+        createdAt: updatedUser.createdAt,
+        image: updatedUser.image || ""
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+app.put("/api/admin/user/:id/disable", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the user by ID
+    const user = await User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    // Update the user's status to inactive
+    await user.update({ isActive: !user.isActive });
+
+    res.status(200).json({ message: "User disabled successfully." });
+  } catch (error) {
+    console.error("Error disabling user:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.post("/api/admin/change/password/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id);
+
+    const { new_password, confirm_new_password } = req.body;
+
+    if (new_password !== confirm_new_password) {
+      return res.status(400).json({ error: "New password and confirm password do not match" });
+    }
+
+    if (new_password === "" || new_password === null) {
+      return res.status(400).json({ error: "Please Enter a Valid Password" });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(new_password, 10);
+    await User.update({ token: null }, { where: { email: user.email } });
+    await User.update({ password: hashedNewPassword }, { where: { email: user.email } });
+
+    res.json({ message: "Password updated successfully", user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });

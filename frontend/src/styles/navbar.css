@@ -325,6 +325,11 @@ li svg {
   height: 40px;
 }
 
+.btn-theme2 {
+  transition-duration: 0.3s;
+  height: 40px;
+}
+
 @media screen and (max-width: 1024px) {
   .btn-theme {
     font-size: 14px;

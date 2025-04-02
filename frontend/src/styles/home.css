@@ -2222,3 +2222,15 @@ iframe {
     font-size: 12px;
   }
 }
+.disableText {
+  font-size: 15px;
+}
+
+.disableText span {
+  font-weight: bold;
+}
+
+.contentTable table tr td,
+.contentTable table tr th {
+  text-align: center;
+}

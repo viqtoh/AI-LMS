@@ -13,7 +13,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [editError, SetEditError] = useState("");
-  const [passError, SetPassError] = useState("");
+  const [passError, setPassError] = useState("");
   const [profileSrc, setProfileSrc] = useState("/images/default_profile.png");
 
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
@@ -140,10 +140,10 @@ const Profile = () => {
 
   const handleChangePasswordSubmit = async (e) => {
     e.preventDefault();
-    SetPassError("");
+    setPassError("");
     setIsLoading(true);
     if (passwordFormData.new_password !== passwordFormData.confirm_new_password) {
-      SetPassError("New password and confirm password do not match");
+      setPassError("New password and confirm password do not match");
       return;
     }
     try {
@@ -162,13 +162,11 @@ const Profile = () => {
           localStorage.setItem("error", "token expired");
           window.location.href = "/";
         }
-        SetPassError(data.error);
+        setPassError(data.error);
       } else {
-        setUser(data.user);
-        setIsEditModalOpen(false);
-        SetPassError("");
+        setIsChangePasswordModalOpen(false);
+        setPassError("");
         showToast("Password updated successfully", true);
-        window.location.href = "/";
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -524,7 +522,7 @@ const Profile = () => {
                   className="btn btn-secondary"
                   onClick={() => {
                     setIsChangePasswordModalOpen(false);
-                    SetPassError("");
+                    setPassError("");
                   }}
                   disabled={isLoading}
                 >
