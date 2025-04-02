@@ -48,6 +48,10 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             localStorage.setItem("error", "session expired");
             localStorage.removeItem("token");
             window.location.href = "/";
+          } else if (data.error === "User not found" || data.error === "Account Disabled") {
+            localStorage.setItem("error", data.error);
+            localStorage.removeItem("token");
+            window.location.href = "/";
           } else {
             setFirstName(localStorage.getItem("first_name"));
             setLastName(localStorage.getItem("last_name"));
@@ -231,22 +235,23 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             <div className="nav-divider">
               <span className="vertical-line"></span>
             </div>
-            {firstName && lastName ? (
-              <span>
-                Hi, {firstName} <span className="nameForTab">{lastName}</span>
-              </span>
-            ) : null}
+            <a href="/admin/account/settings" className="d-flex text-decoration-none">
+              {firstName && lastName ? (
+                <span>
+                  Hi, {firstName} <span className="nameForTab">{lastName}</span>
+                </span>
+              ) : null}
 
-            {uimage ? (
-              <div className="profileImage mx-2 s-35">
-                <img src={`${IMAGE_HOST}${uimage}`} className="s-35" alt="Profile" />
-              </div>
-            ) : isloaded ? (
-              <div className="profileImage mx-2 s-35">
-                <img src="/images/default_profile.png" className="s-35" alt="Profile" />
-              </div>
-            ) : null}
-            <FontAwesomeIcon icon={faAngleDown} />
+              {uimage ? (
+                <div className="profileImage mx-2 s-35">
+                  <img src={`${IMAGE_HOST}${uimage}`} className="s-35" alt="Profile" />
+                </div>
+              ) : isloaded ? (
+                <div className="profileImage mx-2 s-35">
+                  <img src="/images/default_profile.png" className="s-35" alt="Profile" />
+                </div>
+              ) : null}
+            </a>
           </div>
         </div>
         <div className="navbar-title">

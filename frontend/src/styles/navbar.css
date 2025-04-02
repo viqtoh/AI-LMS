@@ -153,6 +153,13 @@ li svg {
   line-height: 1.1;
 }
 
+.navbar-title2 h5 {
+  font-size: 13px;
+  margin: 20px 0px 0px 20px !important;
+  line-height: 1.1;
+  color: #555;
+}
+
 @media screen and (max-width: 500px) {
   .navbar-title h3 {
     font-size: 17px;
@@ -162,6 +169,11 @@ li svg {
   .navbar-title h5 {
     font-size: 12px;
     margin: 0px 0px 0px 5px !important;
+  }
+  .navbar-title2 h5 {
+    font-size: 12px;
+    margin: 0px 0px 0px 20px !important;
+    line-height: 1.1;
   }
 }
 
@@ -309,6 +321,11 @@ li svg {
   background-color: #0057ff;
   color: white;
   border: 1px solid #0057ff;
+  transition-duration: 0.3s;
+  height: 40px;
+}
+
+.btn-theme2 {
   transition-duration: 0.3s;
   height: 40px;
 }
