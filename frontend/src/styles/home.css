@@ -1528,16 +1528,19 @@ iframe {
 }
 
 @media screen and (min-width: 1001px) {
-  .mobileCourseHeader {
+  .mobileCourseHeader,
+  .mheaderContent {
     display: none;
   }
 }
 
-@media screen and (min-width: 1025px) and (max-width: 1289px) {
-  .courseHeader {
+@media screen and (max-width: 1289px) {
+  .courseHeader,
+  .aheaderContent {
     display: none;
   }
-  .mobileCourseHeader {
+  .mobileCourseHeader,
+  .mheaderContent {
     display: block;
   }
   .collapsible {
@@ -1633,7 +1636,7 @@ iframe {
 }
 
 @media screen and (max-width: 1024px) {
-  chievementBody {
+  .achievementBody {
     margin-top: 30px;
   }
 }
