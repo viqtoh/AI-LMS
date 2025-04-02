@@ -11,22 +11,15 @@ import {
 import { useEffect } from "react";
 import {
   faCog,
-  faAngleDown,
   faSignOutAlt,
-  faTrophy,
-  faHouseLock,
   faHouse,
   faSearch,
-  faCar,
-  faCarAlt,
   faCarSide,
-  faBolt,
   faBoltLightning,
   faCrown,
   faUser,
   faBriefcase,
-  faTag,
-  faTags
+  faTag
 } from "@fortawesome/free-solid-svg-icons";
 
 const AdminNavBar = ({ title = "Dashboard", subTitle = "", context = "" }) => {

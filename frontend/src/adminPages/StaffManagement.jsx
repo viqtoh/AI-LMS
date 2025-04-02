@@ -9,15 +9,12 @@ import Toast from "../components/Toast";
 import {
   faSearch,
   faAngleUp,
-  faArrowUp,
   faSortAlphaAsc,
   faSortAlphaDesc,
   faInfoCircle,
   faCrown
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHeart } from "@fortawesome/free-regular-svg-icons";
-import Select from "react-select";
 
 const StaffManagement = () => {
   const token = localStorage.getItem("token");
@@ -88,7 +85,6 @@ const StaffManagement = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
 
   const handleDisableUser = () => {

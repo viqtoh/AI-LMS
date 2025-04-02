@@ -6,16 +6,11 @@ import { faBell, faFolderClosed, faFolderOpen } from "@fortawesome/free-regular-
 import { useEffect } from "react";
 import {
   faCog,
-  faAngleDown,
   faSignOutAlt,
   faTrophy,
-  faHouseLock,
   faHouse,
   faSearch,
-  faCar,
-  faCarAlt,
   faCarSide,
-  faBolt,
   faBoltLightning
 } from "@fortawesome/free-solid-svg-icons";
 

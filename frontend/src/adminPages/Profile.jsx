@@ -1,11 +1,10 @@
 import React from "react";
-import NavBar from "../components/NavBar";
 import "../styles/home.css";
 import { useState, useEffect } from "react";
 import { API_URL, IMAGE_HOST } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
-import { faCrow, faCrown, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
+import { faCrown, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import AdminNavBar from "../components/AdminNavBar";
 
