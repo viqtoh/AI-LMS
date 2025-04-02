@@ -340,12 +340,18 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "", context = "" }) => {
               ) : null}
 
               {uimage ? (
-                <div className="profileImage mx-2 s-35">
-                  <img src={`${IMAGE_HOST}${uimage}`} className="s-35" alt="Profile" />
+                <div className="adminProfileImage mx-2 s-35">
+                  <div className="adminProfileIconDiv">
+                    <FontAwesomeIcon icon={faCrown} className="adminProfileIcon2" />
+                  </div>
+                  <img src={`${IMAGE_HOST}${uimage}`} className="s-31" alt="Profile" />
                 </div>
               ) : isloaded ? (
-                <div className="profileImage mx-2 s-35">
-                  <img src="/images/default_profile.png" className="s-35" alt="Profile" />
+                <div className="adminProfileImage mx-2 s-35">
+                  <div className="adminProfileIconDiv">
+                    <FontAwesomeIcon icon={faCrown} className="adminProfileIcon2" />
+                  </div>
+                  <img src="/images/default_profile.png" className="s-31" alt="Profile" />
                 </div>
               ) : null}
             </a>

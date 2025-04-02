@@ -15,6 +15,7 @@ import ContentManagement from "./adminPages/ContentManagement";
 import CreateContent from "./adminPages/CreateContent";
 import CategoryManagement from "./adminPages/CategoryManagement";
 import AdminLearnPath from "./adminPages/LearnPath";
+import AdminProfile from "./adminPages/Profile";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
         <Route path="/admin/category-management" element={<CategoryManagement />} />
         <Route path="/admin/user-management" element={<UserManagement />} />
         <Route path="/admin/staff-management" element={<StaffManagement />} />
+        <Route path="/admin/account/settings" element={<AdminProfile />} />
       </Routes>
     </Router>
   );
