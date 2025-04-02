@@ -627,6 +627,26 @@ app.put("/api/admin/learningpath/:id", authenticateToken, async (req, res) => {
   }
 });
 
+app.post("/api/admin/category", authenticateToken, async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    // Validate request
+    if (!name) {
+      return res.status(400).json({ error: "Category name is required." });
+    }
+
+    // Update Category
+    category = await Category.create({ name });
+
+    // Return the updated category
+    res.status(200).json(category);
+  } catch (error) {
+    console.error("Error creating category:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 app.put("/api/admin/category/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
