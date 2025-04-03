@@ -9,14 +9,11 @@ import Toast from "../components/Toast";
 import {
   faSearch,
   faAngleUp,
-  faArrowUp,
   faSortAlphaAsc,
   faSortAlphaDesc,
   faInfoCircle
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHeart } from "@fortawesome/free-regular-svg-icons";
-import Select from "react-select";
 
 const UserManagement = () => {
   const token = localStorage.getItem("token");
@@ -347,6 +344,7 @@ const UserManagement = () => {
                     <tr>
                       <th></th>
                       <th
+                        className="text-start"
                         onClick={() => {
                           const newSort = sort === "email" ? "-email" : "email";
                           setSort(newSort);
@@ -470,7 +468,7 @@ const UserManagement = () => {
                             </div>
                           )}
                         </td>
-                        <td>{user.email}</td>
+                        <td className="text-start">{user.email}</td>
                         <td>{user.name}</td>
                         <td>{formatDate(user.lastActive)}</td>
                         <td>{user.status}</td>

@@ -6,16 +6,11 @@ import { faBell, faFolderClosed, faFolderOpen } from "@fortawesome/free-regular-
 import { useEffect } from "react";
 import {
   faCog,
-  faAngleDown,
   faSignOutAlt,
   faTrophy,
-  faHouseLock,
   faHouse,
   faSearch,
-  faCar,
-  faCarAlt,
   faCarSide,
-  faBolt,
   faBoltLightning
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -235,7 +230,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             <div className="nav-divider">
               <span className="vertical-line"></span>
             </div>
-            <a href="/admin/account/settings" className="d-flex text-decoration-none">
+            <a href="/account/settings" className="d-flex text-decoration-none align-items-center">
               {firstName && lastName ? (
                 <span>
                   Hi, {firstName} <span className="nameForTab">{lastName}</span>

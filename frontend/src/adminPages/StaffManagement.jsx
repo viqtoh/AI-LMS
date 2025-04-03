@@ -9,14 +9,12 @@ import Toast from "../components/Toast";
 import {
   faSearch,
   faAngleUp,
-  faArrowUp,
   faSortAlphaAsc,
   faSortAlphaDesc,
-  faInfoCircle
+  faInfoCircle,
+  faCrown
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHeart } from "@fortawesome/free-regular-svg-icons";
-import Select from "react-select";
 
 const StaffManagement = () => {
   const token = localStorage.getItem("token");
@@ -87,7 +85,6 @@ const StaffManagement = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
 
   const handleDisableUser = () => {
@@ -288,6 +285,7 @@ const StaffManagement = () => {
                     <tr>
                       <th></th>
                       <th
+                        className="text-start"
                         onClick={() => {
                           const newSort = sort === "email" ? "-email" : "email";
                           setSort(newSort);
@@ -394,24 +392,30 @@ const StaffManagement = () => {
                       <tr key={index}>
                         <td>
                           {user.image ? (
-                            <div className="profileImage mx-2 s-35">
+                            <div className="adminProfileImage mx-2 s-35">
+                              <div className="adminProfileIconDiv">
+                                <FontAwesomeIcon icon={faCrown} className="adminProfileIcon2" />
+                              </div>
                               <img
                                 src={`${IMAGE_HOST}${user.image}`}
-                                className="s-35"
+                                className="s-31"
                                 alt="Profile"
                               />
                             </div>
                           ) : (
-                            <div className="profileImage mx-2 s-35">
+                            <div className="adminProfileImage mx-2 s-35">
+                              <div className="adminProfileIconDiv">
+                                <FontAwesomeIcon icon={faCrown} className="adminProfileIcon2" />
+                              </div>
                               <img
                                 src="/images/default_profile.png"
-                                className="s-35"
+                                className="s-31"
                                 alt="Profile"
                               />
                             </div>
                           )}
                         </td>
-                        <td>{user.email}</td>
+                        <td className="text-start">{user.email}</td>
                         <td>{user.name}</td>
                         <td>{formatDate(user.lastActive)}</td>
                         <td>{user.status}</td>
@@ -523,10 +527,13 @@ const StaffManagement = () => {
             <h5>Add Staff</h5>
             <form onSubmit={handleAddSubmit}>
               <div className="form-group d-flex align-items-end mb-4">
-                <div className="profileImage me-2 s-125">
+                <div className="adminProfileImage me-2 s-125">
+                  <div className="adminProfileIconDiv">
+                    <FontAwesomeIcon icon={faCrown} className="adminProfileIcon3" />
+                  </div>
                   <img
                     src="/images/default_profile.png"
-                    className="s-125"
+                    className="s-121"
                     id="addimage"
                     alt="Profile"
                   />
@@ -687,19 +694,25 @@ const StaffManagement = () => {
             <form onSubmit={handleEditSubmit}>
               <div className="form-group d-flex align-items-end mb-4">
                 {selectedUser && selectedUser.image ? (
-                  <div className="profileImage me-2 s-125">
+                  <div className="adminProfileImage me-2 s-125">
+                    <div className="adminProfileIconDiv">
+                      <FontAwesomeIcon icon={faCrown} className="adminProfileIcon3" />
+                    </div>
                     <img
                       src={`${IMAGE_HOST}${selectedUser.image}`}
-                      className="s-125"
+                      className="s-121"
                       id="editimage"
                       alt="Profile"
                     />
                   </div>
                 ) : (
-                  <div className="profileImage me-2 s-125">
+                  <div className="adminProfileImage me-2 s-125">
+                    <div className="adminProfileIconDiv">
+                      <FontAwesomeIcon icon={faCrown} className="adminProfileIcon3" />
+                    </div>
                     <img
                       src="/images/default_profile.png"
-                      className="s-125"
+                      className="s-121"
                       id="editimage"
                       alt="Profile"
                     />

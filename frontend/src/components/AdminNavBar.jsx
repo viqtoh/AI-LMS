@@ -11,22 +11,15 @@ import {
 import { useEffect } from "react";
 import {
   faCog,
-  faAngleDown,
   faSignOutAlt,
-  faTrophy,
-  faHouseLock,
   faHouse,
   faSearch,
-  faCar,
-  faCarAlt,
   faCarSide,
-  faBolt,
   faBoltLightning,
   faCrown,
   faUser,
   faBriefcase,
-  faTag,
-  faTags
+  faTag
 } from "@fortawesome/free-solid-svg-icons";
 
 const AdminNavBar = ({ title = "Dashboard", subTitle = "", context = "" }) => {
@@ -332,7 +325,10 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "", context = "" }) => {
             <div className="nav-divider">
               <span className="vertical-line"></span>
             </div>
-            <a href="/admin/account/settings" className="d-flex text-decoration-none">
+            <a
+              href="/admin/account/settings"
+              className="d-flex text-decoration-none align-items-center"
+            >
               {firstName && lastName ? (
                 <span>
                   Hi, {firstName} <span className="nameForTab">{lastName}</span>
@@ -340,12 +336,18 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "", context = "" }) => {
               ) : null}
 
               {uimage ? (
-                <div className="profileImage mx-2 s-35">
-                  <img src={`${IMAGE_HOST}${uimage}`} className="s-35" alt="Profile" />
+                <div className="adminProfileImage mx-2 s-35">
+                  <div className="adminProfileIconDiv">
+                    <FontAwesomeIcon icon={faCrown} className="adminProfileIcon2" />
+                  </div>
+                  <img src={`${IMAGE_HOST}${uimage}`} className="s-31" alt="Profile" />
                 </div>
               ) : isloaded ? (
-                <div className="profileImage mx-2 s-35">
-                  <img src="/images/default_profile.png" className="s-35" alt="Profile" />
+                <div className="adminProfileImage mx-2 s-35">
+                  <div className="adminProfileIconDiv">
+                    <FontAwesomeIcon icon={faCrown} className="adminProfileIcon2" />
+                  </div>
+                  <img src="/images/default_profile.png" className="s-31" alt="Profile" />
                 </div>
               ) : null}
             </a>
