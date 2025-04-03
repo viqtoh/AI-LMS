@@ -28,27 +28,42 @@ const ContentManagement = () => {
   const [contents, setContents] = useState([]);
   const [isRefetching, setIsRefetching] = useState(false);
   const [canRefetch, setCanRefetch] = useState(true);
+  const [categories, setCategories] = useState([]);
+  const [fCategories, setFcategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [isPublished, setIsPublished] = useState("");
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("asc");
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
 
   useEffect(() => {
     const fetchContents = async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/api/admin/contents?start=0&limit=10&type=${type}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}` // If authentication is required
-            }
+        setCanRefetch(true);
+        setContents([]);
+        const queryParams = new URLSearchParams({
+          start: 0,
+          limit: 10,
+          type,
+          isPublished,
+          categories: selectedCategories.join(","),
+          search,
+          sort
+        });
+
+        console.log(queryParams.toString());
+        const response = await fetch(`${API_URL}/api/admin/contents?${queryParams.toString()}`, {
+          headers: {
+            Authorization: `Bearer ${token}` // If authentication is required
           }
-        );
+        });
         const data = await response.json();
         setContents(Array.isArray(data.contents) ? data.contents : []);
       } catch (err) {
@@ -59,19 +74,100 @@ const ContentManagement = () => {
     };
 
     fetchContents();
-  }, []);
+  }, [type, isPublished, selectedCategories, search, sort]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/admin/category`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch categories");
+        }
+        const data = await response.json();
+        setCategories(data);
+        setFcategories(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        showToast("Failed to load categories", false);
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, [token, showToast]);
+
+  const resetFilter = () => {
+    setType("both");
+    setIsPublished("");
+    setSelectedCategories([]);
+    setSearch("");
+    setSort("asc");
+    document.getElementById("learnCheck").checked = false;
+    document.getElementById("courseCheck").checked = false;
+    document.getElementById("publishedRad").checked = false;
+    document.getElementById("NoPublishedRad").checked = false;
+    document.querySelectorAll(".catCheck").forEach((checkbox) => {
+      checkbox.checked = false;
+    });
+  };
+
+  const makeType = () => {
+    let ck = document.getElementById("learnCheck");
+    let ch2 = document.getElementById("courseCheck");
+    if (ck.checked && ch2.checked) {
+      setType("both");
+    } else if (ck.checked && !ch2.checked) {
+      setType("learningpath");
+    } else if (!ck.checked && ch2.checked) {
+      setType("course");
+    } else {
+      setType("both");
+    }
+  };
+
+  const makeCategory = (value) => {
+    if (selectedCategories.includes(value)) {
+      setSelectedCategories(selectedCategories.filter((item) => item !== value));
+    } else {
+      setSelectedCategories([...selectedCategories, value]);
+    }
+  };
+
+  const makePublished = () => {
+    let publishedRad = document.getElementById("publishedRad");
+    let NoPublishedRad = document.getElementById("NoPublishedRad");
+    if (publishedRad.checked) {
+      setIsPublished("yes");
+    } else if (NoPublishedRad.checked) {
+      setIsPublished("no");
+    } else {
+      setIsPublished("");
+    }
+  };
 
   const reFetchContents = async () => {
     setIsRefetching(true);
     try {
-      const response = await fetch(
-        `${API_URL}/api/admin/contents?start=${contents.length}&limit=10&type=${type}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}` // If authentication is required
-          }
+      const queryParams = new URLSearchParams({
+        start: contents.length,
+        limit: 10,
+        type,
+        isPublished,
+        categories: selectedCategories.join(","),
+        search,
+        sort
+      });
+
+      const response = await fetch(`${API_URL}/api/admin/contents?${queryParams.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}` // If authentication is required
         }
-      );
+      });
       const data = await response.json();
       setContents([...contents, ...(Array.isArray(data.contents) ? data.contents : [])]);
       if (data.contents.length === 0) {
@@ -166,7 +262,11 @@ const ContentManagement = () => {
   ];
 
   const handleChange = (selectedOption) => {
-    console.log("Selected:", selectedOption);
+    if (selectedOption.value === "z-a") {
+      setSort("desc");
+    } else {
+      setSort("asc");
+    }
   };
 
   return (
@@ -207,17 +307,35 @@ const ContentManagement = () => {
             </button>
             <div className="searchContainer">
               <div className="searchBarContainer">
-                <FontAwesomeIcon icon={faSearch} />
+                <FontAwesomeIcon
+                  icon={faSearch}
+                  onClick={() => {
+                    const searchInput = document.querySelector(".searchBar2");
+                    if (searchInput) {
+                      setSearch(searchInput.value);
+                    }
+                  }}
+                  style={{ cursor: "pointer" }}
+                />
                 <input
                   type="text"
                   className="searchBar2"
                   placeholder="Search content by title or description"
-                  onChange={(e) => console.log(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setSearch(e.target.value);
+                    }
+                  }}
                 />
               </div>
 
               <div className="sortContainer">
-                <button className="btn btn-reset">
+                <button
+                  className="btn btn-reset"
+                  onClick={() => {
+                    resetFilter();
+                  }}
+                >
                   <FontAwesomeIcon icon={faRotateLeft} />
                   <span className="ms-1">Reset Filters</span>
                 </button>
@@ -260,11 +378,23 @@ const ContentManagement = () => {
 
                     <ul className="collapsed-list nobar">
                       <li>
-                        <input type="checkbox" />
+                        <input
+                          type="checkbox"
+                          id="learnCheck"
+                          onClick={() => {
+                            makeType();
+                          }}
+                        />
                         <span>Learning Paths</span>
                       </li>
                       <li>
-                        <input type="checkbox" />
+                        <input
+                          type="checkbox"
+                          id="courseCheck"
+                          onClick={() => {
+                            makeType();
+                          }}
+                        />
                         <span>Courses</span>
                       </li>
                     </ul>
@@ -280,29 +410,40 @@ const ContentManagement = () => {
                       onClick={() => setRisCollapsed(!risCollapsed)}
                       style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
                     >
-                      <h5 className="filterHeading">Ratings</h5>
+                      <h5 className="filterHeading">Categories</h5>
                       <FontAwesomeIcon
                         icon={risCollapsed ? faAngleDown : faAngleUp}
                         style={{ marginLeft: "8px" }}
                       />
                     </div>
 
-                    <ul className="collapsed-list nobar">
-                      {[5, 4, 3, 2, 1].map((rating) => (
-                        <li key={rating}>
-                          <input type="checkbox" />
-                          <span>
-                            {[...Array(5)].map((_, index) => (
-                              <FontAwesomeIcon
-                                key={index}
-                                icon={faStar}
-                                style={{
-                                  color: index < rating ? "#555" : "#d3d3d3",
-                                  marginRight: "4px"
-                                }}
-                              />
-                            ))}
-                          </span>
+                    <div className="categorySearchCon">
+                      <FontAwesomeIcon icon={faSearch} />
+                      <input
+                        type="text"
+                        className="categorySearch"
+                        placeholder="Search categories"
+                        onChange={(e) => {
+                          const searchValue = e.target.value.toLowerCase();
+                          const filtered = categories.filter((category) =>
+                            category.name.toLowerCase().includes(searchValue)
+                          );
+                          setFcategories(filtered);
+                        }}
+                      />
+                    </div>
+
+                    <ul className="collapsed-list collapsed-list2">
+                      {fCategories.map((category) => (
+                        <li key={category.name}>
+                          <input
+                            type="checkbox"
+                            className="catCheck"
+                            onClick={() => {
+                              makeCategory(category.name);
+                            }}
+                          />
+                          <span>{category.name}</span>
                         </li>
                       ))}
                     </ul>
@@ -318,7 +459,7 @@ const ContentManagement = () => {
                       onClick={() => setFisCollapsed(!fisCollapsed)}
                       style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
                     >
-                      <h5 className="filterHeading">Favorites</h5>
+                      <h5 className="filterHeading">Published</h5>
                       <FontAwesomeIcon
                         icon={fisCollapsed ? faAngleDown : faAngleUp}
                         style={{ marginLeft: "8px" }}
@@ -327,11 +468,33 @@ const ContentManagement = () => {
 
                     <ul className="collapsed-list nobar">
                       <li>
-                        <input type="radio" name="favorites" value="yes" />
+                        <input
+                          type="radio"
+                          name="published"
+                          id="publishedRad"
+                          onClick={() => {
+                            if (isPublished === "yes") {
+                              document.getElementById("publishedRad").checked = false;
+                            }
+                            makePublished();
+                          }}
+                          value="yes"
+                        />
                         <span>Yes</span>
                       </li>
                       <li>
-                        <input type="radio" name="favorites" value="no" />
+                        <input
+                          type="radio"
+                          name="published"
+                          id="NoPublishedRad"
+                          onClick={() => {
+                            if (isPublished === "no") {
+                              document.getElementById("NoPublishedRad").checked = false;
+                            }
+                            makePublished();
+                          }}
+                          value="no"
+                        />
                         <span>No</span>
                       </li>
                     </ul>

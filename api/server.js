@@ -655,8 +655,27 @@ app.post("/api/admin/category", authenticateToken, async (req, res) => {
     // Update Category
     category = await Category.create({ name });
 
+    const cat = await Category.findOne({
+      where: { id: category.id },
+      include: [
+        { model: LearningPath, through: { attributes: [] }, as: "LearningPaths" },
+        { model: Course, through: { attributes: [] }, as: "Courses" }
+      ]
+    });
+
+    // Format response
+    const formattedCategory = {
+      id: cat.id,
+      name: cat.name,
+      learningPathCount: cat.LearningPaths ? cat.LearningPaths.length : 0,
+      courseCount: cat.Courses ? cat.Courses.length : 0,
+      text: `Used in ${cat.LearningPaths ? cat.LearningPaths.length : 0} Learning Paths and ${
+        cat.Courses ? cat.Courses.length : 0
+      } Courses`
+    };
+
     // Return the updated category
-    res.status(200).json(category);
+    res.status(200).json(formattedCategory);
   } catch (error) {
     console.error("Error creating category:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -682,8 +701,27 @@ app.put("/api/admin/category/:id", authenticateToken, async (req, res) => {
     // Update Category
     await category.update({ name });
 
+    const cat = await Category.findOne({
+      where: { id: category.id },
+      include: [
+        { model: LearningPath, through: { attributes: [] }, as: "LearningPaths" },
+        { model: Course, through: { attributes: [] }, as: "Courses" }
+      ]
+    });
+
+    // Format response
+    const formattedCategory = {
+      id: cat.id,
+      name: cat.name,
+      learningPathCount: cat.LearningPaths ? cat.LearningPaths.length : 0,
+      courseCount: cat.Courses ? cat.Courses.length : 0,
+      text: `Used in ${cat.LearningPaths ? cat.LearningPaths.length : 0} Learning Paths and ${
+        cat.Courses ? cat.Courses.length : 0
+      } Courses`
+    };
+
     // Return the updated category
-    res.status(200).json(category);
+    res.status(200).json(formattedCategory);
   } catch (error) {
     console.error("Error updating category:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -721,41 +759,66 @@ app.get("/api/admin/category", authenticateToken, async (req, res) => {
 
 app.get("/api/admin/contents", authenticateToken, async (req, res) => {
   try {
-    const { type, sort, start = 0, limit = 10 } = req.query; // Default: start at 0, limit 10
+    const { type, sort, start = 0, limit = 10, categories, isPublished, search } = req.query; // Default: start at 0, limit 10
 
     let contents = [];
+    if (categories) {
+      const categoryList = categories.split(",").map((cat) => cat.trim());
+      const categoryFilter = {
+        include: [
+          {
+            model: Category,
+            where: { name: { [Op.in]: categoryList } },
+            through: { attributes: [] }
+          }
+        ]
+      };
 
-    if (!type || type === "both") {
-      // Fetch both Learning Paths and Courses
-      const learningPaths = await LearningPath.findAll({
-        include: [{ model: Category, through: { attributes: [] } }]
-      });
+      if (!type || type === "both") {
+        const learningPaths = await LearningPath.findAll(categoryFilter);
+        const courses = await Course.findAll(categoryFilter);
 
-      const courses = await Course.findAll({
-        include: [{ model: Category, through: { attributes: [] } }]
-      });
-
-      // Add "type" attribute and merge into one array
-      contents = [
-        ...learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" })),
-        ...courses.map((course) => ({ ...course.toJSON(), type: "Course" }))
-      ];
-    } else if (type === "learningpath") {
-      // Fetch only Learning Paths
-      const learningPaths = await LearningPath.findAll({
-        include: [{ model: Category, through: { attributes: [] } }]
-      });
-
-      contents = learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" }));
-    } else if (type === "course") {
-      // Fetch only Courses
-      const courses = await Course.findAll({
-        include: [{ model: Category, through: { attributes: [] } }]
-      });
-
-      contents = courses.map((course) => ({ ...course.toJSON(), type: "Course" }));
+        contents = [
+          ...learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" })),
+          ...courses.map((course) => ({ ...course.toJSON(), type: "Course" }))
+        ];
+      } else if (type === "learningpath") {
+        const learningPaths = await LearningPath.findAll(categoryFilter);
+        contents = learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" }));
+      } else if (type === "course") {
+        const courses = await Course.findAll(categoryFilter);
+        contents = courses.map((course) => ({ ...course.toJSON(), type: "Course" }));
+      }
     } else {
-      return res.status(400).json({ error: "Invalid type parameter." });
+      if (!type || type === "both") {
+        const learningPaths = await LearningPath.findAll();
+        const courses = await Course.findAll();
+
+        contents = [
+          ...learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" })),
+          ...courses.map((course) => ({ ...course.toJSON(), type: "Course" }))
+        ];
+      } else if (type === "learningpath") {
+        const learningPaths = await LearningPath.findAll();
+        contents = learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" }));
+      } else if (type === "course") {
+        const courses = await Course.findAll();
+        contents = courses.map((course) => ({ ...course.toJSON(), type: "Course" }));
+      }
+    }
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      contents = contents.filter(
+        (content) =>
+          content.title.toLowerCase().includes(searchLower) ||
+          (content.description && content.description.toLowerCase().includes(searchLower))
+      );
+    }
+
+    if (isPublished) {
+      const isPublishedFilter = isPublished.toLowerCase() === "yes";
+      contents = contents.filter((content) => content.is_published === isPublishedFilter);
     }
 
     // Sorting

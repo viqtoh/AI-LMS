@@ -913,6 +913,10 @@ iframe {
   overflow-y: scroll;
 }
 
+.collapsed-list2 {
+  max-height: 200px;
+}
+
 .collapsed-list li {
   display: flex;
   align-items: center;
@@ -2269,4 +2273,28 @@ iframe {
 .contentTable table tr td,
 .contentTable table tr th {
   text-align: center;
+}
+.categorySearchCon {
+  display: flex;
+  border: 1px solid #333;
+  align-items: center;
+  padding: 5px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.categorySearchCon svg {
+  margin-right: 10px;
+  color: #333;
+}
+
+.categorySearchCon input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 12px;
+}
+
+.categorySearchCon input::placeholder {
+  color: #333;
 }
