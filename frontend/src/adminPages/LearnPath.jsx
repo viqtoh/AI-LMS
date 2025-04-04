@@ -303,8 +303,10 @@ const AdminLearnPath = () => {
                 </button>
               </div>
 
-              {learningPath.courses.length === 0 ? (
-                <div className="noObjects noObjects100 mt-4">No Course Added Yet!</div>
+              {!learningPath ? (
+                <div className="noObjects noObjects100 mt-4">Learning path not found</div>
+              ) : learningPath.courses.length === 0 ? (
+                <div className="noObjects noObjects100 mt-4">No Courses here</div>
               ) : (
                 learningPath.courses.map((section, index) => (
                   <Collapsible key={index} {...section} />

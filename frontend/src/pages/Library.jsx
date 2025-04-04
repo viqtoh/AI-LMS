@@ -484,8 +484,8 @@ const Library = () => {
                           <a
                             href={
                               content.type == "Course"
-                                ? `admin/content-library/course/${content.id}`
-                                : `/admin/content-library/path/${content.id}`
+                                ? `/content-library/course/${content.id}`
+                                : `/content-library/path/${content.id}`
                             }
                           >
                             <span>{content.title}</span>
