@@ -17,6 +17,10 @@ const Course = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true
     },
+    show_outside: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     is_published: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
