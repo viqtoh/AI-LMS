@@ -10,10 +10,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams } from "react-router-dom";
 import Collapsible from "../components/Collapsible";
 
-const LearnPath = () => {
+const Course = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(true);
-  const [learningPath, setLearningPath] = useState(null);
+  const [course, setCourse] = useState(null);
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -26,9 +26,9 @@ const LearnPath = () => {
 
   const { id } = useParams();
   useEffect(() => {
-    const fetchLearningPath = async () => {
+    const fetchCourse = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/learning-path-full/${id}`, {
+        const response = await fetch(`${API_URL}/api/course-full/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`, // If authentication is required
             "Content-Type": "application/json"
@@ -36,10 +36,10 @@ const LearnPath = () => {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch learning path");
+          throw new Error("Failed to fetch course");
         }
         const data = await response.json();
-        setLearningPath(data);
+        setCourse(data);
       } catch (err) {
         showToast(err.message, false);
       } finally {
@@ -47,13 +47,13 @@ const LearnPath = () => {
       }
     };
 
-    fetchLearningPath();
+    fetchCourse();
   }, [id, token]); // Refetch when id or token changes
 
   return (
     <div>
       <div className="navHeader">
-        <NavBar title="Content Library" subTitle="Learning Path" />
+        <NavBar title="Content Library" subTitle="Course" />
       </div>
       <div className="main-body main-body5 main-body4">
         {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
@@ -61,15 +61,15 @@ const LearnPath = () => {
           <div className="loader-container">
             <div className="loader"></div>
           </div>
-        ) : learningPath !== null ? (
+        ) : course !== null ? (
           <div className="sub-body">
             <div className="courseHeader">
               <div className="headerContent">
                 <div className="headerImageCon">
                   <img
                     src={
-                      learningPath.image != null
-                        ? `${IMAGE_HOST}${learningPath.image}`
+                      course.image != null
+                        ? `${IMAGE_HOST}${course.image}`
                         : "/images/sample_image.png"
                     }
                     alt="course-image"
@@ -80,7 +80,7 @@ const LearnPath = () => {
                 <div className="headerContent">
                   <div className="headerTitle">
                     <div>
-                      <span>{learningPath.title}</span>
+                      <span>{course.title}</span>
                       <div className="starDiv">
                         <FontAwesomeIcon
                           icon={faStar}
@@ -129,10 +129,10 @@ const LearnPath = () => {
                     </div>
 
                     <div className="headerDesc">
-                      <span>{learningPath.description}</span>
+                      <span>{course.description}</span>
                     </div>
                     <button className="btn continueBtn">
-                      <span>Continue this learning path</span>
+                      <span>Continue this course</span>
                     </button>
                   </div>
 
@@ -164,8 +164,8 @@ const LearnPath = () => {
                 <div className="mheaderImageCon">
                   <img
                     src={
-                      learningPath.image != null
-                        ? `${IMAGE_HOST}${learningPath.image}`
+                      course.image != null
+                        ? `${IMAGE_HOST}${course.image}`
                         : "/images/sample_image.png"
                     }
                     alt="course-image"
@@ -176,7 +176,7 @@ const LearnPath = () => {
                 <div className="mheaderContent">
                   <div className="mheaderTitle">
                     <div>
-                      <span>{learningPath.title}</span>
+                      <span>{course.title}</span>
                       <div className="starDiv">
                         <FontAwesomeIcon
                           icon={faStar}
@@ -225,10 +225,10 @@ const LearnPath = () => {
                     </div>
 
                     <div className="headerDesc">
-                      <span>{learningPath.description}</span>
+                      <span>{course.description}</span>
                     </div>
                     <button className="btn continueBtn">
-                      <span>COntinue this learning path</span>
+                      <span>Continue this course</span>
                     </button>
                   </div>
 
@@ -256,23 +256,19 @@ const LearnPath = () => {
             </div>
 
             <div className="courseBody">
-              {!learningPath ? (
-                <div className="noObjects noObjects100 mt-4">Learning path not found</div>
-              ) : learningPath.courses.length === 0 ? (
-                <div className="noObjects noObjects100 mt-4">No Courses here</div>
+              {!course ? (
+                <div className="noObjects noObjects100 mt-4">Course not found</div>
               ) : (
-                learningPath.courses.map((section, index) => (
-                  <Collapsible key={index} {...section} />
-                ))
+                <Collapsible {...course} />
               )}
             </div>
           </div>
         ) : (
-          <div className="noObjects">Learning Path not Found!</div>
+          <div className="noObjects">Course not Found!</div>
         )}
       </div>
     </div>
   );
 };
 
-export default LearnPath;
+export default Course;
