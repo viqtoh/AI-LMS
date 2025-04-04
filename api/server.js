@@ -321,6 +321,124 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+//region get categories
+
+app.get("/api/category", authenticateToken, async (req, res) => {
+  try {
+    const categories = await Category.findAll({
+      include: [
+        { model: LearningPath, through: { attributes: [] }, as: "LearningPaths" },
+        { model: Course, through: { attributes: [] }, as: "Courses" }
+      ]
+    });
+
+    // Format response
+    const formattedCategories = categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      learningPathCount: category.LearningPaths ? category.LearningPaths.length : 0,
+      courseCount: category.Courses ? category.Courses.length : 0,
+      text: `Used in ${
+        category.LearningPaths ? category.LearningPaths.length : 0
+      } Learning Paths and ${category.Courses ? category.Courses.length : 0} Courses`
+    }));
+
+    res.status(200).json(formattedCategories);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//region get contents by user
+
+app.get("/api/contents", authenticateToken, async (req, res) => {
+  try {
+    const { type, sort, start = 0, limit = 10, categories, isPublished, search } = req.query; // Default: start at 0, limit 10
+
+    let contents = [];
+    if (categories) {
+      const categoryList = categories.split(",").map((cat) => cat.trim());
+      const categoryFilter = {
+        include: [
+          {
+            model: Category,
+            where: { name: { [Op.in]: categoryList } },
+            through: { attributes: [] }
+          }
+        ]
+      };
+
+      if (!type || type === "both") {
+        const learningPaths = await LearningPath.findAll(categoryFilter);
+        const courses = await Course.findAll(categoryFilter);
+
+        contents = [
+          ...learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" })),
+          ...courses.map((course) => ({ ...course.toJSON(), type: "Course" }))
+        ];
+      } else if (type === "learningpath") {
+        const learningPaths = await LearningPath.findAll(categoryFilter);
+        contents = learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" }));
+      } else if (type === "course") {
+        const courses = await Course.findAll(categoryFilter);
+        contents = courses.map((course) => ({ ...course.toJSON(), type: "Course" }));
+      }
+    } else {
+      if (!type || type === "both") {
+        const learningPaths = await LearningPath.findAll();
+        const courses = await Course.findAll();
+
+        contents = [
+          ...learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" })),
+          ...courses.map((course) => ({ ...course.toJSON(), type: "Course" }))
+        ];
+      } else if (type === "learningpath") {
+        const learningPaths = await LearningPath.findAll();
+        contents = learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" }));
+      } else if (type === "course") {
+        const courses = await Course.findAll();
+        contents = courses.map((course) => ({ ...course.toJSON(), type: "Course" }));
+      }
+    }
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      contents = contents.filter(
+        (content) =>
+          content.title.toLowerCase().includes(searchLower) ||
+          (content.description && content.description.toLowerCase().includes(searchLower))
+      );
+    }
+
+    if (isPublished) {
+      const isPublishedFilter = isPublished.toLowerCase() === "yes";
+      contents = contents.filter((content) => content.is_published === isPublishedFilter);
+    }
+
+    // Sorting
+    if (sort === "desc") {
+      contents.sort((a, b) => b.title.localeCompare(a.title));
+    } else {
+      contents.sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    // Pagination
+    const startIdx = parseInt(start, 10);
+    const limitNum = parseInt(limit, 10);
+    const paginatedContents = contents.slice(startIdx, startIdx + limitNum);
+
+    res.status(200).json({
+      total: contents.length,
+      start: startIdx,
+      limit: limitNum,
+      contents: paginatedContents
+    });
+  } catch (error) {
+    console.error("Error fetching contents:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 //region Admin Apis
 
