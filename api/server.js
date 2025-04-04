@@ -354,7 +354,7 @@ app.get("/api/category", authenticateToken, async (req, res) => {
 
 app.get("/api/contents", authenticateToken, async (req, res) => {
   try {
-    const { type, sort, start = 0, limit = 10, categories, isPublished, search } = req.query; // Default: start at 0, limit 10
+    const { type, sort, start = 0, limit = 10, categories, search } = req.query; // Default: start at 0, limit 10
 
     let contents = [];
     if (categories) {
@@ -371,7 +371,10 @@ app.get("/api/contents", authenticateToken, async (req, res) => {
 
       if (!type || type === "both") {
         const learningPaths = await LearningPath.findAll(categoryFilter);
-        const courses = await Course.findAll(categoryFilter);
+        const courses = await Course.findAll({
+          ...categoryFilter,
+          where: { show_outside: true }
+        });
 
         contents = [
           ...learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" })),
@@ -381,13 +384,16 @@ app.get("/api/contents", authenticateToken, async (req, res) => {
         const learningPaths = await LearningPath.findAll(categoryFilter);
         contents = learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" }));
       } else if (type === "course") {
-        const courses = await Course.findAll(categoryFilter);
+        const courses = await Course.findAll({
+          ...categoryFilter,
+          where: { show_outside: true }
+        });
         contents = courses.map((course) => ({ ...course.toJSON(), type: "Course" }));
       }
     } else {
       if (!type || type === "both") {
         const learningPaths = await LearningPath.findAll();
-        const courses = await Course.findAll();
+        const courses = await Course.findAll({ where: { show_outside: true } });
 
         contents = [
           ...learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" })),
@@ -397,7 +403,7 @@ app.get("/api/contents", authenticateToken, async (req, res) => {
         const learningPaths = await LearningPath.findAll();
         contents = learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" }));
       } else if (type === "course") {
-        const courses = await Course.findAll();
+        const courses = await Course.findAll({ where: { show_outside: true } });
         contents = courses.map((course) => ({ ...course.toJSON(), type: "Course" }));
       }
     }
@@ -411,10 +417,7 @@ app.get("/api/contents", authenticateToken, async (req, res) => {
       );
     }
 
-    if (isPublished) {
-      const isPublishedFilter = isPublished.toLowerCase() === "yes";
-      contents = contents.filter((content) => content.is_published === isPublishedFilter);
-    }
+    contents = contents.filter((content) => content.is_published === true);
 
     // Sorting
     if (sort === "desc") {
@@ -986,7 +989,7 @@ app.get("/api/admin/contents", authenticateToken, async (req, res) => {
 
       if (!type || type === "both") {
         const learningPaths = await LearningPath.findAll(categoryFilter);
-        const courses = await Course.findAll(categoryFilter);
+        const courses = await Course.findAll({ ...categoryFilter, where: { show_outside: true } });
 
         contents = [
           ...learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" })),
@@ -996,13 +999,13 @@ app.get("/api/admin/contents", authenticateToken, async (req, res) => {
         const learningPaths = await LearningPath.findAll(categoryFilter);
         contents = learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" }));
       } else if (type === "course") {
-        const courses = await Course.findAll(categoryFilter);
+        const courses = await Course.findAll({ ...categoryFilter, where: { show_outside: true } });
         contents = courses.map((course) => ({ ...course.toJSON(), type: "Course" }));
       }
     } else {
       if (!type || type === "both") {
         const learningPaths = await LearningPath.findAll();
-        const courses = await Course.findAll();
+        const courses = await Course.findAll({ where: { show_outside: true } });
 
         contents = [
           ...learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" })),
@@ -1012,7 +1015,7 @@ app.get("/api/admin/contents", authenticateToken, async (req, res) => {
         const learningPaths = await LearningPath.findAll();
         contents = learningPaths.map((lp) => ({ ...lp.toJSON(), type: "Learning Path" }));
       } else if (type === "course") {
-        const courses = await Course.findAll();
+        const courses = await Course.findAll({ where: { show_outside: true } });
         contents = courses.map((course) => ({ ...course.toJSON(), type: "Course" }));
       }
     }

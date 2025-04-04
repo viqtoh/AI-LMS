@@ -2031,6 +2031,15 @@ iframe {
   width: 300px;
 }
 
+@media screen and (max-width: 450px) {
+  .image-preview-container {
+    width: 100%;
+  }
+  .image-preview-container img {
+    width: 100%;
+  }
+}
+
 @media screen and (max-width: 664px) {
   .uploadImageCon {
     flex-direction: column;
