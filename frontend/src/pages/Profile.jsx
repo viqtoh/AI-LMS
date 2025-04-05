@@ -38,12 +38,6 @@ const Profile = () => {
         const data = await response.json();
 
         if (data.error) {
-          console.log(data);
-          if (data.error === "Invalid token") {
-            localStorage.setItem("error", "session expired");
-            localStorage.removeItem("token");
-            window.location.href = "/";
-          }
           showToast(data.error, false);
         } else {
           setUser(data.user);
@@ -56,12 +50,7 @@ const Profile = () => {
       }
     };
 
-    if (token) {
-      fetchProfile();
-    } else {
-      localStorage.setItem("error", "session expired");
-      window.location.href = "/";
-    }
+    fetchProfile();
   }, [token, showToast]);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -115,11 +104,6 @@ const Profile = () => {
       });
       const data = await response.json();
       if (data.error) {
-        console.log(data);
-        if (data.error === "Invalid token") {
-          localStorage.setItem("error", "token expired");
-          window.location.href = "/";
-        }
         SetEditError(data.error);
       } else {
         setUser(data.user);
@@ -157,11 +141,6 @@ const Profile = () => {
       });
       const data = await response.json();
       if (data.error) {
-        console.log(data);
-        if (data.error === "Invalid token") {
-          localStorage.setItem("error", "token expired");
-          window.location.href = "/";
-        }
         setPassError(data.error);
       } else {
         setIsChangePasswordModalOpen(false);
