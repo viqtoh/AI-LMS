@@ -524,8 +524,8 @@ const ContentManagement = () => {
                           <a
                             href={
                               content.type == "Course"
-                                ? `admin/content-library/course/${content.id}`
-                                : `/admin/content-library/path/${content.id}`
+                                ? `/admin/content-management/course/${content.id}`
+                                : `/admin/content-management/path/${content.id}`
                             }
                           >
                             <span>{content.title}</span>

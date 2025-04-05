@@ -1058,6 +1058,44 @@ app.get("/api/admin/contents", authenticateToken, async (req, res) => {
   }
 });
 
+//region get single content
+
+app.get("/api/admin/course-full/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch course
+    const course = await Course.findOne({
+      where: { id },
+      include: [
+        {
+          model: Category,
+          through: { attributes: [] }, // Exclude join table attributes
+          as: "Categories"
+        }
+      ]
+    });
+
+    if (!course) {
+      return res.status(404).json({ error: "Course not found." });
+    }
+
+    // Format response
+    const response = {
+      id: course.id,
+      title: course.title,
+      image: course.image,
+      description: course.description,
+      categories: course.Categories?.map((cat) => cat.name) || []
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching course:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;

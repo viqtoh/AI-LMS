@@ -1,0 +1,234 @@
+import React from "react";
+import "../styles/home.css";
+import { useState, useEffect } from "react";
+import { API_URL, IMAGE_HOST } from "../constants";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Toast from "../components/Toast";
+import { faAngleDown, faStar } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useParams } from "react-router-dom";
+import Collapsible from "../components/Collapsible";
+import AdminNavBar from "../components/AdminNavBar";
+
+const AdminCourse = () => {
+  const token = localStorage.getItem("token");
+  const [isLoading, setIsLoading] = useState(true);
+  const [course, setCourse] = useState(null);
+
+  const [isSuccess, setIsSuccess] = React.useState(true);
+  const [toast, setToast] = useState(null);
+  const showToast = React.useCallback((message, success = true) => {
+    setToast(message);
+    setIsSuccess(success);
+    console.log(isSuccess);
+    setTimeout(() => setToast(null), 5000); // Hide after 5s
+  }, []);
+
+  const { id } = useParams();
+  useEffect(() => {
+    const fetchCourse = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/admin/course-full/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // If authentication is required
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch course");
+        }
+        const data = await response.json();
+        setCourse(data);
+      } catch (err) {
+        showToast(err.message, false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCourse();
+  }, [id, token]); // Refetch when id or token changes
+
+  return (
+    <div>
+      <div className="navHeader">
+        <AdminNavBar title="Content Library" subTitle="Course" />
+      </div>
+      <div className="main-body main-body5 main-body4">
+        {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
+        {isLoading ? (
+          <div className="loader-container">
+            <div className="loader"></div>
+          </div>
+        ) : course !== null ? (
+          <div className="sub-body">
+            <div className="courseHeader">
+              <div className="headerContent">
+                <div className="headerImageCon">
+                  <img
+                    src={
+                      course.image != null
+                        ? `${IMAGE_HOST}${course.image}`
+                        : "/images/sample_image.png"
+                    }
+                    alt="course-image"
+                    className="headerImage"
+                  />
+                </div>
+
+                <div className="headerContent">
+                  <div className="headerTitle">
+                    <div>
+                      <span>{course.title}</span>
+                      <div className="starDiv">
+                        <FontAwesomeIcon
+                          icon={faStar}
+                          style={{
+                            color: "#FFCC00",
+                            marginRight: "4px"
+                          }}
+                        />
+                        <FontAwesomeIcon
+                          icon={faStar}
+                          style={{
+                            color: "#FFCC00",
+                            marginRight: "4px"
+                          }}
+                        />
+                        <FontAwesomeIcon
+                          icon={faStar}
+                          style={{
+                            color: "#FFCC00",
+                            marginRight: "4px"
+                          }}
+                        />
+                        <FontAwesomeIcon
+                          icon={faStar}
+                          style={{
+                            color: "#ccc",
+                            marginRight: "4px"
+                          }}
+                        />
+                        <FontAwesomeIcon
+                          icon={faStar}
+                          style={{
+                            color: "#ccc",
+                            marginRight: "4px"
+                          }}
+                        />{" "}
+                        <span>(35)</span>
+                        <FontAwesomeIcon
+                          icon={faAngleDown}
+                          style={{
+                            color: "#fff",
+                            marginRight: "4px"
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="headerDesc">
+                      <span>{course.description}</span>
+                    </div>
+                    <button className="btn continueBtn">
+                      <span>Edit course</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mobileCourseHeader">
+              <div className="mheaderContent">
+                <div className="mheaderImageCon">
+                  <img
+                    src={
+                      course.image != null
+                        ? `${IMAGE_HOST}${course.image}`
+                        : "/images/sample_image.png"
+                    }
+                    alt="course-image"
+                    className="mheaderImage"
+                  />
+                </div>
+
+                <div className="mheaderContent">
+                  <div className="mheaderTitle">
+                    <div>
+                      <span>{course.title}</span>
+                      <div className="starDiv">
+                        <FontAwesomeIcon
+                          icon={faStar}
+                          style={{
+                            color: "#FFCC00",
+                            marginRight: "4px"
+                          }}
+                        />
+                        <FontAwesomeIcon
+                          icon={faStar}
+                          style={{
+                            color: "#FFCC00",
+                            marginRight: "4px"
+                          }}
+                        />
+                        <FontAwesomeIcon
+                          icon={faStar}
+                          style={{
+                            color: "#FFCC00",
+                            marginRight: "4px"
+                          }}
+                        />
+                        <FontAwesomeIcon
+                          icon={faStar}
+                          style={{
+                            color: "#ccc",
+                            marginRight: "4px"
+                          }}
+                        />
+                        <FontAwesomeIcon
+                          icon={faStar}
+                          style={{
+                            color: "#ccc",
+                            marginRight: "4px"
+                          }}
+                        />{" "}
+                        <span>(35)</span>
+                        <FontAwesomeIcon
+                          icon={faAngleDown}
+                          style={{
+                            color: "#fff",
+                            marginRight: "4px"
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="headerDesc">
+                      <span>{course.description}</span>
+                    </div>
+                    <button className="btn continueBtn">
+                      <span>Edit course</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="courseBody">
+              {!course ? (
+                <div className="noObjects noObjects100 mt-4">Course not found</div>
+              ) : (
+                <Collapsible {...course} />
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="noObjects">Course not Found!</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AdminCourse;
