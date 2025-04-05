@@ -575,6 +575,7 @@ app.post("/api/admin/login", async (req, res) => {
   }
 });
 
+//region create contents
 app.post("/api/admin/learningpath", authenticateToken, async (req, res) => {
   try {
     const { title, description, image, difficulty, estimated_time, is_published, categoryIds } =
@@ -814,6 +815,8 @@ app.post("/api/admin/learningpath/course/add", authenticateToken, async (req, re
   }
 });
 
+//region update content
+
 //update learning path
 app.put("/api/admin/learningpath/:id", authenticateToken, async (req, res) => {
   try {
@@ -831,23 +834,44 @@ app.put("/api/admin/learningpath/:id", authenticateToken, async (req, res) => {
     await learningPath.update({
       title,
       description,
-      image,
       difficulty,
       estimated_time,
       is_published
     });
 
-    // If categoryIds exist and are not empty, associate them
-    if (Array.isArray(categoryIds) && categoryIds.length > 0) {
-      const categories = await Category.findAll({ where: { id: categoryIds } });
+    if (image && !image.startsWith("/media/")) {
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const fileName = `${title}_image_${Date.now()}.png`;
+      const filePath = path.join(__dirname, "media", fileName);
 
-      if (categories.length !== categoryIds.length) {
-        return res.status(404).json({ error: "One or more categories not found." });
+      // Ensure the media directory exists
+      const mediaDir = path.join(__dirname, "media");
+      if (!fs.existsSync(mediaDir)) {
+        fs.mkdirSync(mediaDir);
       }
 
-      // Add new categories without removing existing ones
-      await learningPath.addCategories(categories);
+      // Save the image to the media folder
+      fs.writeFileSync(filePath, buffer);
+
+      await learningPath.update(
+        { image: `/media/${fileName}` },
+        { where: { id: learningPath.id } }
+      );
     }
+    let categories = [];
+
+    let categoryIDs = Array.isArray(categoryIds) ? categoryIds : JSON.parse(categoryIds);
+
+    if (categoryIds.length > 0) {
+      categories = await Category.findAll({ where: { id: categoryIDs } });
+
+      if (categories.length !== categoryIDs.length) {
+        return res.status(404).json({ error: "One or more categories not found." });
+      }
+    }
+
+    await learningPath.setCategories(categories);
 
     res.status(200).json({ learningPath });
   } catch (error) {
@@ -1133,13 +1157,16 @@ app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res)
       title: learningPath.title,
       image: learningPath.image,
       description: learningPath.description,
-      categories: learningPath.Categories?.map((cat) => cat.name) || [],
+      categories: learningPath.Categories?.map((cat) => ({ id: cat.id, name: cat.name })) || [],
+      is_published: learningPath.is_published,
+      difficulty: learningPath.difficulty,
+      estimated_time: learningPath.estimated_time,
       courses:
         learningPath.Courses?.map((course) => ({
           id: course.id,
           title: course.title,
           description: course.description,
-          categories: course.Categories?.map((cat) => cat.name) || []
+          categories: course.Categories?.map((cat) => ({ id: cat.id, name: cat.name })) || []
         })) || []
     };
 

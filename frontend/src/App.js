@@ -38,7 +38,7 @@ function App() {
         <Route path="/admin/content-management" element={<ContentManagement />} />
         <Route path="/admin/content-management/create" element={<CreateContent />} />
         <Route path="/admin/content-management/course/:id" element={<AdminCourse />} />
-        <Route path="/admin/content-managment/path/:id" element={<AdminLearnPath />} />
+        <Route path="/admin/content-management/path/:id" element={<AdminLearnPath />} />
         <Route path="/admin/category-management" element={<CategoryManagement />} />
         <Route path="/admin/user-management" element={<UserManagement />} />
         <Route path="/admin/staff-management" element={<StaffManagement />} />
