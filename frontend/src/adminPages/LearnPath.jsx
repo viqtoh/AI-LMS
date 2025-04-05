@@ -68,7 +68,7 @@ const AdminLearnPath = () => {
         console.log(data);
         setLearningPath(data);
         setSelectedCategories(data.categories.map((category) => category.id));
-        console.log(data.categories);
+
         setPathFormData((prevData) => ({
           ...prevData,
           title: data.title,
@@ -400,6 +400,9 @@ const AdminLearnPath = () => {
         <div className="modal">
           <div className="modal-content">
             <form id="learningPathForm" onSubmit={handleLearningPathSubmit}>
+              <div className="mheader">
+                <span>Edit Learning Path</span>
+              </div>
               <div className="form-group">
                 <label htmlFor="image">Image</label>
                 <div className="uploadImageCon MuploadImageCon">

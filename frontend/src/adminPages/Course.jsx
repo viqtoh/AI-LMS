@@ -9,12 +9,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams } from "react-router-dom";
 import Collapsible from "../components/Collapsible";
 import AdminNavBar from "../components/AdminNavBar";
+import Select from "react-select";
 
 const AdminCourse = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(true);
   const [course, setCourse] = useState(null);
-
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
   const showToast = React.useCallback((message, success = true) => {
@@ -23,6 +23,18 @@ const AdminCourse = () => {
     console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
+
+  const [courseFormData, setCourseFormData] = useState({
+    title: "",
+    description: "",
+    image: null,
+    show_outside: false,
+    is_published: false
+  });
+  const [categories, setCategories] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading2, setIsLoading2] = useState(false);
+  const [selectedCategories2, setSelectedCategories2] = useState([]);
 
   const { id } = useParams();
   useEffect(() => {
@@ -40,6 +52,17 @@ const AdminCourse = () => {
         }
         const data = await response.json();
         setCourse(data);
+        console.log(data);
+        console.log("log");
+        setCourseFormData({
+          title: data.title,
+          description: data.description,
+          image: data.image,
+          show_outside: data.show_outside,
+          is_published: data.is_published
+        });
+        setSelectedCategories2(data.categories.map((category) => category.id));
+        console.log(data.categories);
       } catch (err) {
         showToast(err.message, false);
       } finally {
@@ -48,7 +71,74 @@ const AdminCourse = () => {
     };
 
     fetchCourse();
-  }, [id, token]); // Refetch when id or token changes
+  }, [id, token]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/admin/category`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch categories");
+        }
+        const data = await response.json();
+        setCategories(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        showToast("Failed to load categories", false);
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, [token, showToast]);
+
+  const handleCourseChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setCourseFormData((prevData) => ({
+      ...prevData,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading2(true);
+    const formData = courseFormData;
+    formData["categoryIds"] = JSON.stringify(selectedCategories2);
+    formData["learningPathId"] = id;
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/course/${id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        showToast(errorData.error || "Failed to create learning path", false);
+        return;
+      }
+
+      const result = await response.json();
+      showToast("Course updated successfully!", true);
+      setCourse((prevData) => ({ ...prevData, ...result.course }));
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error creating Course:", error);
+      showToast("Internal Server Error", false);
+    } finally {
+      setIsLoading2(false);
+    }
+  };
 
   return (
     <div>
@@ -65,17 +155,15 @@ const AdminCourse = () => {
           <div className="sub-body">
             <div className="courseHeader">
               <div className="headerContent">
-                <div className="headerImageCon">
-                  <img
-                    src={
-                      course.image != null
-                        ? `${IMAGE_HOST}${course.image}`
-                        : "/images/sample_image.png"
-                    }
-                    alt="course-image"
-                    className="headerImage"
-                  />
-                </div>
+                {course.image ? (
+                  <div className="headerImageCon">
+                    <img
+                      src={`${IMAGE_HOST}${course.image}`}
+                      alt="course-image"
+                      className="headerImage"
+                    />
+                  </div>
+                ) : null}
 
                 <div className="headerContent">
                   <div className="headerTitle">
@@ -131,7 +219,7 @@ const AdminCourse = () => {
                     <div className="headerDesc">
                       <span>{course.description}</span>
                     </div>
-                    <button className="btn continueBtn">
+                    <button className="btn continueBtn" onClick={() => setIsModalOpen(true)}>
                       <span>Edit course</span>
                     </button>
                   </div>
@@ -141,17 +229,15 @@ const AdminCourse = () => {
 
             <div className="mobileCourseHeader">
               <div className="mheaderContent">
-                <div className="mheaderImageCon">
-                  <img
-                    src={
-                      course.image != null
-                        ? `${IMAGE_HOST}${course.image}`
-                        : "/images/sample_image.png"
-                    }
-                    alt="course-image"
-                    className="mheaderImage"
-                  />
-                </div>
+                {course.image ? (
+                  <div className="mheaderImageCon">
+                    <img
+                      src={`${IMAGE_HOST}${course.image}`}
+                      alt="course-image"
+                      className="mheaderImage"
+                    />
+                  </div>
+                ) : null}
 
                 <div className="mheaderContent">
                   <div className="mheaderTitle">
@@ -207,7 +293,7 @@ const AdminCourse = () => {
                     <div className="headerDesc">
                       <span>{course.description}</span>
                     </div>
-                    <button className="btn continueBtn">
+                    <button className="btn continueBtn" onClick={() => setIsModalOpen(true)}>
                       <span>Edit course</span>
                     </button>
                   </div>
@@ -227,6 +313,151 @@ const AdminCourse = () => {
           <div className="noObjects">Course not Found!</div>
         )}
       </div>
+
+      {isModalOpen && (
+        <div className="modal">
+          <div className="modal-content">
+            <form id="courseForm mt-1" onSubmit={handleFormSubmit}>
+              <div className="mheader">
+                <span>Edit Course</span>
+              </div>
+              <div className="form-group">
+                <label htmlFor="image">Image</label>
+                <div className="uploadImageCon row">
+                  <div className="image-preview-container">
+                    <img
+                      src={`${IMAGE_HOST}${courseFormData.image}` || "/images/course_default.png"}
+                      alt="Preview"
+                      id="Cimage-preview"
+                      className="image-preview"
+                    />
+                  </div>
+                  <input
+                    type="file"
+                    id="Cimage"
+                    name="image"
+                    className="form-control"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          setCourseFormData((prevData) => ({
+                            ...prevData,
+                            image: event.target.result
+                          }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-theme mt-2"
+                    onClick={() => document.getElementById("Cimage").click()}
+                  >
+                    Upload Image
+                  </button>
+                </div>
+              </div>
+              <div className="form-group">
+                <label htmlFor="course-title">Course Title</label>
+                <input
+                  type="text"
+                  id="course-title"
+                  className="form-control"
+                  name="title"
+                  placeholder="Enter course title"
+                  value={courseFormData.title}
+                  onChange={handleCourseChange}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="course-description">Course Description</label>
+                <textarea
+                  id="course-description"
+                  className="form-control"
+                  placeholder="Enter course description"
+                  name="description"
+                  value={courseFormData.description}
+                  onChange={handleCourseChange}
+                ></textarea>
+              </div>
+              <div className="form-group">
+                <label htmlFor="course-category">Category</label>
+                <Select
+                  isMulti
+                  isSearchable
+                  value={categories
+                    .filter((category) => selectedCategories2.includes(category.id))
+                    .map((category) => ({
+                      value: category.id,
+                      label: category.name
+                    }))}
+                  onChange={(selectedOptions) =>
+                    setSelectedCategories2(selectedOptions.map((option) => option.value))
+                  }
+                  options={categories.map((category) => ({
+                    value: category.id,
+                    label: category.name
+                  }))}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  id="course-category"
+                  styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="show-outside">Show Outside</label>
+                <input
+                  type="checkbox"
+                  id="show-outside"
+                  name="show_outside"
+                  className="form-check-input"
+                  checked={courseFormData.show_outside}
+                  onChange={handleCourseChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="cis_published">Publish</label>
+                <input
+                  type="checkbox"
+                  id="cis_published"
+                  name="is_published"
+                  className="form-check-input"
+                  checked={courseFormData.is_published}
+                  onChange={handleCourseChange}
+                />
+              </div>
+
+              <div className="modal-buttons">
+                <button type="submit" className="btn btn-theme">
+                  {isLoading2 ? (
+                    <div className="spinner-border text-light btnspinner" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  ) : (
+                    "Submit"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                  }}
+                  disabled={isLoading2}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -880,6 +880,69 @@ app.put("/api/admin/learningpath/:id", authenticateToken, async (req, res) => {
   }
 });
 
+app.put("/api/admin/course/:id", authenticateToken, async (req, res) => {
+  try {
+    const { title, description, image, show_outside, is_published, categoryIds } = req.body;
+    const { id } = req.params;
+
+    // Find the existing Learning Path
+    const course = await Course.findByPk(id);
+    if (!course) {
+      return res.status(404).json({ error: "Course not found." });
+    }
+
+    let categories = [];
+    let categoryIDs = Array.isArray(categoryIds) ? categoryIds : JSON.parse(categoryIds);
+
+    if (categoryIDs.length > 0) {
+      categories = await Category.findAll({ where: { id: categoryIDs } });
+
+      if (categories.length !== categoryIDs.length) {
+        return res.status(404).json({ error: "One or more categories not found." });
+      }
+    }
+
+    // update Course
+    await course.update({
+      title,
+      description,
+      show_outside,
+      is_published
+    });
+
+    // Process Image Upload (if provided)
+    if (image && !image.startsWith("/media/")) {
+      const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      const fileName = `${title}_image_${Date.now()}.png`;
+      const filePath = path.join(__dirname, "media", fileName);
+
+      // Ensure media directory exists
+      const mediaDir = path.join(__dirname, "media");
+      if (!fs.existsSync(mediaDir)) {
+        fs.mkdirSync(mediaDir);
+      }
+
+      fs.writeFileSync(filePath, buffer);
+
+      await course.update({ image: `/media/${fileName}` });
+    }
+
+    // Associate Categories (if provided)
+    if (categories.length > 0) {
+      await course.setCategories(categories);
+    }
+
+    res.status(201).json({
+      message: "Course updated successfully.",
+      course
+    });
+  } catch (error) {
+    console.error("Error creating course:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 app.post("/api/admin/category", authenticateToken, async (req, res) => {
   try {
     const { name } = req.body;
@@ -1110,7 +1173,9 @@ app.get("/api/admin/course-full/:id", authenticateToken, async (req, res) => {
       title: course.title,
       image: course.image,
       description: course.description,
-      categories: course.Categories?.map((cat) => cat.name) || []
+      show_outside: course.show_outside,
+      is_published: course.is_published,
+      categories: course.Categories?.map((cat) => ({ id: cat.id, name: cat.name })) || []
     };
 
     res.status(200).json(response);
