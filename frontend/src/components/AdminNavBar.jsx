@@ -32,9 +32,8 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "", context = "" }) => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       const isAdmin = localStorage.getItem("isAdmin");
-      console.log(isAdmin);
       if (isAdmin === "false") {
-        window.location.href = "/admin";
+        window.location.href = `/admin?next=${window.location.pathname}`;
         localStorage.setItem("error", "Login as an Admin");
         localStorage.removeItem("token");
         return;
@@ -51,11 +50,11 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "", context = "" }) => {
           if (data.error === "Invalid token") {
             localStorage.setItem("error", "session expired");
             localStorage.removeItem("token");
-            window.location.href = "/admin";
+            window.location.href = `/admin?next=${window.location.pathname}`;
           } else if (data.error === "User not found" || data.error === "Account Disabled") {
             localStorage.setItem("error", data.error);
             localStorage.removeItem("token");
-            window.location.href = "/admin";
+            window.location.href = `/admin?next=${window.location.pathname}`;
           } else {
             setFirstName(localStorage.getItem("first_name"));
             setLastName(localStorage.getItem("last_name"));

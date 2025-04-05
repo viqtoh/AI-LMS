@@ -25,7 +25,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
     const fetchUserDetails = async () => {
       const isAdmin = localStorage.getItem("isAdmin");
       if (isAdmin === "true") {
-        window.location.href = "/";
+        window.location.href = `/?next=${window.location.pathname}`;
         localStorage.setItem("error", "Login as a User");
         localStorage.removeItem("token");
         return;
@@ -42,11 +42,11 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
           if (data.error === "Invalid token") {
             localStorage.setItem("error", "session expired");
             localStorage.removeItem("token");
-            window.location.href = "/";
+            window.location.href = `/?next=${window.location.pathname}`;
           } else if (data.error === "User not found" || data.error === "Account Disabled") {
             localStorage.setItem("error", data.error);
             localStorage.removeItem("token");
-            window.location.href = "/";
+            window.location.href = `/?next=${window.location.pathname}`;
           } else {
             setFirstName(localStorage.getItem("first_name"));
             setLastName(localStorage.getItem("last_name"));

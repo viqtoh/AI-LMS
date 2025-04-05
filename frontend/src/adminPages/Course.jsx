@@ -11,50 +11,36 @@ import Collapsible from "../components/Collapsible";
 import AdminNavBar from "../components/AdminNavBar";
 import Select from "react-select";
 
-const AdminLearnPath = () => {
+const AdminCourse = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoading2, setIsLoading2] = useState(false);
-
+  const [course, setCourse] = useState(null);
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
+    console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
-  const [learningPath, setLearningPath] = useState(null);
 
-  const { id } = useParams();
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [courseFormData, setCourseFormData] = useState({
     title: "",
     description: "",
-    image: "",
+    image: null,
     show_outside: false,
     is_published: false
   });
-
-  const [selectedCategories, setSelectedCategories] = useState([]);
-
-  const [pathFormData, setPathFormData] = useState({
-    title: "",
-    description: "",
-    image: "",
-    difficulty: "Beginner",
-    estimated_time: "",
-    is_published: false
-  });
-
-  const [selectedCategories2, setSelectedCategories2] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading2, setIsLoading2] = useState(false);
+  const [selectedCategories2, setSelectedCategories2] = useState([]);
 
+  const { id } = useParams();
   useEffect(() => {
-    const fetchLearningPath = async () => {
+    const fetchCourse = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/admin/learning-path-full/${id}`, {
+        const response = await fetch(`${API_URL}/api/admin/course-full/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`, // If authentication is required
             "Content-Type": "application/json"
@@ -62,22 +48,21 @@ const AdminLearnPath = () => {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch learning path");
+          throw new Error("Failed to fetch course");
         }
         const data = await response.json();
+        setCourse(data);
         console.log(data);
-        setLearningPath(data);
-        setSelectedCategories(data.categories.map((category) => category.id));
-
-        setPathFormData((prevData) => ({
-          ...prevData,
+        console.log("log");
+        setCourseFormData({
           title: data.title,
           description: data.description,
           image: data.image,
-          difficulty: data.difficulty,
-          estimated_time: data.estimated_time,
+          show_outside: data.show_outside,
           is_published: data.is_published
-        }));
+        });
+        setSelectedCategories2(data.categories.map((category) => category.id));
+        console.log(data.categories);
       } catch (err) {
         showToast(err.message, false);
       } finally {
@@ -85,36 +70,8 @@ const AdminLearnPath = () => {
       }
     };
 
-    fetchLearningPath();
-  }, [id, token]); // Refetch when id or token changes
-
-  const handlePathChange = (e) => {
-    const { name, value } = e.target;
-
-    if (name === "is_published") {
-      let val = false;
-      if (e.target.checked) {
-        val = true;
-      }
-      setPathFormData((prevData) => ({
-        ...prevData,
-        [name]: val
-      }));
-    } else {
-      setPathFormData((prevData) => ({
-        ...prevData,
-        [name]: value
-      }));
-    }
-  };
-
-  const handleCourseChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setCourseFormData((prevData) => ({
-      ...prevData,
-      [name]: type === "checkbox" ? checked : value
-    }));
-  };
+    fetchCourse();
+  }, [id, token]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -140,16 +97,23 @@ const AdminLearnPath = () => {
     fetchCategories();
   }, [token, showToast]);
 
-  const handleLearningPathSubmit = async (e) => {
+  const handleCourseChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setCourseFormData((prevData) => ({
+      ...prevData,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  };
+
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-
-    const formData = pathFormData;
-
-    // Append selected categories as a JSON string
-    formData["categoryIds"] = JSON.stringify(selectedCategories);
+    setIsLoading2(true);
+    const formData = courseFormData;
+    formData["categoryIds"] = JSON.stringify(selectedCategories2);
+    formData["learningPathId"] = id;
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/learningpath/${id}`, {
+      const response = await fetch(`${API_URL}/api/admin/course/${id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -165,45 +129,11 @@ const AdminLearnPath = () => {
       }
 
       const result = await response.json();
-      console.log(result);
-      setLearningPath((prevData) => ({ ...prevData, ...result.learningPath }));
-      setIsEditModalOpen(false);
-      showToast("Learning path updated successfully!", true);
-    } catch (error) {
-      console.error("Error creating Learning path:", error);
-      showToast("Internal Server Error", false);
-    }
-  };
-
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading2(true);
-    const formData = courseFormData;
-    formData["categoryIds"] = JSON.stringify(selectedCategories2);
-    formData["learningPathId"] = id;
-
-    try {
-      const response = await fetch(`${API_URL}/api/admin/learningpath/course/create`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        showToast(errorData.error || "Failed to create learning path", false);
-        return;
-      }
-
-      const result = await response.json();
-      showToast("Learning path created successfully!", true);
+      showToast("Course updated successfully!", true);
+      setCourse((prevData) => ({ ...prevData, ...result.course }));
       setIsModalOpen(false);
-      window.location.reload();
     } catch (error) {
-      console.error("Error creating COurse:", error);
+      console.error("Error creating Course:", error);
       showToast("Internal Server Error", false);
     } finally {
       setIsLoading2(false);
@@ -213,7 +143,7 @@ const AdminLearnPath = () => {
   return (
     <div>
       <div className="navHeader">
-        <AdminNavBar title="Content Management" subTitle="Learning Path" />
+        <AdminNavBar title="Content Library" subTitle="Course" />
       </div>
       <div className="main-body main-body5 main-body4">
         {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
@@ -221,24 +151,24 @@ const AdminLearnPath = () => {
           <div className="loader-container">
             <div className="loader"></div>
           </div>
-        ) : learningPath !== null ? (
+        ) : course !== null ? (
           <div className="sub-body">
             <div className="courseHeader">
               <div className="headerContent">
-                {learningPath.image && (
+                {course.image ? (
                   <div className="headerImageCon">
                     <img
-                      src={`${IMAGE_HOST}${learningPath.image}`}
+                      src={`${IMAGE_HOST}${course.image}`}
                       alt="course-image"
                       className="headerImage"
                     />
                   </div>
-                )}
+                ) : null}
 
                 <div className="headerContent">
                   <div className="headerTitle">
                     <div>
-                      <span>{learningPath.title}</span>
+                      <span>{course.title}</span>
                       <div className="starDiv">
                         <FontAwesomeIcon
                           icon={faStar}
@@ -287,10 +217,10 @@ const AdminLearnPath = () => {
                     </div>
 
                     <div className="headerDesc">
-                      <span>{learningPath.description}</span>
+                      <span>{course.description}</span>
                     </div>
-                    <button className="btn continueBtn" onClick={() => setIsEditModalOpen(true)}>
-                      <span>Edit learning path</span>
+                    <button className="btn continueBtn" onClick={() => setIsModalOpen(true)}>
+                      <span>Edit course</span>
                     </button>
                   </div>
                 </div>
@@ -299,22 +229,20 @@ const AdminLearnPath = () => {
 
             <div className="mobileCourseHeader">
               <div className="mheaderContent">
-                <div className="mheaderImageCon">
-                  <img
-                    src={
-                      learningPath.image
-                        ? `${IMAGE_HOST}${learningPath.image}`
-                        : "/images/sample_image.png"
-                    }
-                    alt="course-image"
-                    className="mheaderImage"
-                  />
-                </div>
+                {course.image ? (
+                  <div className="mheaderImageCon">
+                    <img
+                      src={`${IMAGE_HOST}${course.image}`}
+                      alt="course-image"
+                      className="mheaderImage"
+                    />
+                  </div>
+                ) : null}
 
                 <div className="mheaderContent">
                   <div className="mheaderTitle">
                     <div>
-                      <span>{learningPath.title}</span>
+                      <span>{course.title}</span>
                       <div className="starDiv">
                         <FontAwesomeIcon
                           icon={faStar}
@@ -363,10 +291,10 @@ const AdminLearnPath = () => {
                     </div>
 
                     <div className="headerDesc">
-                      <span>{learningPath.description}</span>
+                      <span>{course.description}</span>
                     </div>
-                    <button className="btn continueBtn" onClick={() => setIsEditModalOpen(true)}>
-                      <span>Edit learning path</span>
+                    <button className="btn continueBtn" onClick={() => setIsModalOpen(true)}>
+                      <span>Edit course</span>
                     </button>
                   </div>
                 </div>
@@ -374,205 +302,31 @@ const AdminLearnPath = () => {
             </div>
 
             <div className="courseBody">
-              <div className="courseBodyHeader">
-                <button className="btn btn-theme" onClick={() => setIsModalOpen(true)}>
-                  Create Course
-                </button>
-              </div>
-
-              {!learningPath ? (
-                <div className="noObjects noObjects100 mt-4">Learning path not found</div>
-              ) : learningPath.courses.length === 0 ? (
-                <div className="noObjects noObjects100 mt-4">No Courses here</div>
+              {!course ? (
+                <div className="noObjects noObjects100 mt-4">Course not found</div>
               ) : (
-                learningPath.courses.map((section, index) => (
-                  <Collapsible key={index} {...section} />
-                ))
+                <Collapsible {...course} />
               )}
             </div>
           </div>
         ) : (
-          <div className="noObjects">Learning Path not Found!</div>
+          <div className="noObjects">Course not Found!</div>
         )}
       </div>
-
-      {isEditModalOpen && (
-        <div className="modal">
-          <div className="modal-content">
-            <form id="learningPathForm" onSubmit={handleLearningPathSubmit}>
-              <div className="mheader">
-                <span>Edit Learning Path</span>
-              </div>
-              <div className="form-group">
-                <label htmlFor="image">Image</label>
-                <div className="uploadImageCon MuploadImageCon">
-                  <div className="image-preview-container">
-                    <img
-                      src={
-                        learningPath.image
-                          ? `${IMAGE_HOST}${learningPath.image}`
-                          : "/images/course_default.png"
-                      }
-                      alt="Preview"
-                      id="image-preview"
-                      className="image-preview"
-                    />
-                  </div>
-                  <input
-                    type="file"
-                    id="image"
-                    name="image"
-                    className="form-control"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                          const preview = document.getElementById("image-preview");
-                          preview.src = event.target.result;
-                          setPathFormData((prevData) => ({
-                            ...prevData,
-                            image: event.target.result
-                          }));
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-theme"
-                    onClick={() => document.getElementById("image").click()}
-                  >
-                    Upload Image
-                  </button>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="title">Title</label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  className="form-control"
-                  placeholder="Enter title"
-                  value={pathFormData.title}
-                  onChange={handlePathChange}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="description">Description</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  className="form-control"
-                  placeholder="Enter description"
-                  value={pathFormData.description}
-                  onChange={handlePathChange}
-                ></textarea>
-              </div>
-              <div className="form-group">
-                <label htmlFor="difficulty">Difficulty</label>
-                <select
-                  id="difficulty"
-                  name="difficulty"
-                  className="form-control"
-                  value={pathFormData.difficulty}
-                  onChange={handlePathChange}
-                >
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="path-category">Category</label>
-                <Select
-                  isMulti
-                  isSearchable
-                  value={categories
-                    .filter((category) => selectedCategories.includes(category.id))
-                    .map((category) => ({
-                      value: category.id,
-                      label: category.name
-                    }))}
-                  onChange={(selectedOptions) =>
-                    setSelectedCategories(selectedOptions.map((option) => option.value))
-                  }
-                  options={categories.map((category) => ({
-                    value: category.id,
-                    label: category.name
-                  }))}
-                  className="basic-multi-select"
-                  classNamePrefix="select"
-                  id="path-category"
-                  styles={{ container: (base) => ({ ...base, width: "100%" }) }}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="estimated_time">Estimated Time</label>
-                <input
-                  type="text"
-                  id="estimated_time"
-                  name="estimated_time"
-                  className="form-control"
-                  placeholder="Enter estimated time"
-                  value={pathFormData.estimated_time}
-                  onChange={handlePathChange}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="is_published">Publish</label>
-                <input
-                  type="checkbox"
-                  id="is_published"
-                  name="is_published"
-                  className="form-check-input"
-                  checked={pathFormData.is_published}
-                  onChange={handlePathChange}
-                />
-              </div>
-
-              <div className="modal-buttons w-100">
-                <button type="submit" className="btn btn-theme">
-                  {isLoading2 ? (
-                    <div className="spinner-border text-light btnspinner" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                  ) : (
-                    "Submit"
-                  )}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setIsEditModalOpen(false)}
-                  disabled={isLoading2}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {isModalOpen && (
         <div className="modal">
           <div className="modal-content">
             <form id="courseForm mt-1" onSubmit={handleFormSubmit}>
               <div className="mheader">
-                <span>Create Course</span>
+                <span>Edit Course</span>
               </div>
               <div className="form-group">
                 <label htmlFor="image">Image</label>
                 <div className="uploadImageCon row">
                   <div className="image-preview-container">
                     <img
-                      src={courseFormData.image || "/images/course_default.png"}
+                      src={`${IMAGE_HOST}${courseFormData.image}` || "/images/course_default.png"}
                       alt="Preview"
                       id="Cimage-preview"
                       className="image-preview"
@@ -708,4 +462,4 @@ const AdminLearnPath = () => {
   );
 };
 
-export default AdminLearnPath;
+export default AdminCourse;

@@ -57,7 +57,9 @@ const Home = () => {
         localStorage.setItem("isAdmin", "false");
         localStorage.setItem("email", formData.email);
         showToast("Login successful!", true);
-        window.location.href = "/dashboard";
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next");
+        window.location.href = next || "/dashboard";
       } else {
         showToast(data.error || "Something went wrong", false);
       }

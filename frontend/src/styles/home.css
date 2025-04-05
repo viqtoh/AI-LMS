@@ -2031,6 +2031,10 @@ iframe {
   width: 300px;
 }
 
+.MuploadImageCon {
+  width: 100%;
+}
+
 @media screen and (max-width: 450px) {
   .image-preview-container {
     width: 100%;

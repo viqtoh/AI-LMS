@@ -354,7 +354,7 @@ const CreateContent = () => {
                   </div>
                 ) : (
                   <div className="course-tab">
-                    <form id="courseForm">
+                    <form id="courseForm" onSubmit={handleCourseSubmit}>
                       <div className="form-group">
                         <label htmlFor="image">Image</label>
                         <div className="uploadImageCon">

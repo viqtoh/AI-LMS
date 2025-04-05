@@ -57,8 +57,9 @@ const AdminHome = () => {
         localStorage.setItem("isAdmin", "true");
         localStorage.setItem("email", formData.email);
         showToast("Login successful!", true);
-        // Redirect to login page
-        window.location.href = "/admin/dashboard";
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next");
+        window.location.href = next || "/admin/dashboard";
       } else {
         showToast(data.error || "Something went wrong", false);
       }
