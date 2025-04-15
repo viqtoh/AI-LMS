@@ -897,3 +897,11 @@ li svg {
     display: none;
   }
 }
+
+.tab-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  width: 100%;
+  text-align: center;
+}

@@ -305,7 +305,14 @@ const AdminCourse = () => {
               {!course ? (
                 <div className="noObjects noObjects100 mt-4">Course not found</div>
               ) : (
-                <Collapsible {...course} />
+                <div className="adminCourseBody">
+                  <div className="d-flex w-100 justify-content-end mb-5">
+                    <a href={`/admin/content-management/course/${course.id}/module/create`}>
+                      <button className="btn btn-theme"> Add Module</button>
+                    </a>
+                  </div>
+                  <Collapsible {...course} />
+                </div>
               )}
             </div>
           </div>

@@ -15,7 +15,7 @@ const Module = sequelize.define(
       allowNull: false
     },
     content_type: {
-      type: DataTypes.ENUM("video", "pdf", "text", "quiz", "ppt", "docx"),
+      type: DataTypes.ENUM("video", "pdf", "text", "ppt", "docx", "assessment"),
       allowNull: false
     },
     content_url: {
@@ -29,6 +29,23 @@ const Module = sequelize.define(
     order: {
       type: DataTypes.INTEGER, // Order in the course
       allowNull: false
+    },
+    file: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    html: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    assessment_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    is_published: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
     }
   },
   { timestamps: true }
