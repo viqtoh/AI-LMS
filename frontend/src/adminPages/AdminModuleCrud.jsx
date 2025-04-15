@@ -9,7 +9,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import Select from "react-select";
 import { useParams } from "react-router-dom";
-import RichTextEditor from "../components/Editor";
 
 const AdminModuleCrud = () => {
   const token = localStorage.getItem("token");
@@ -82,7 +81,6 @@ const AdminModuleCrud = () => {
   const typeOptions = [
     { value: "pdf", label: "PDF" },
     { value: "video", label: "Video" },
-    { value: "text", label: "Text" },
     { value: "ppt", label: "PPT" },
     { value: "docx", label: "DOCX" },
     { value: "assessment", label: "Assessment" }
@@ -126,16 +124,28 @@ const AdminModuleCrud = () => {
     content_url: "",
     duration: "",
     file: "",
-    html: "",
-    assessment_id: "",
     is_published: true
   });
+
+  const handleEditorChange = (e) => {
+    console.log(e);
+  };
+
+  const fileInputRef = useRef(null);
+
+  const clearFile = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
+  };
 
   const handleContentChange = (e) => {
     setModuleFormData((prevData) => ({
       ...prevData,
       content_type: e.value
     }));
+    setMethod("");
+    clearFile();
   };
 
   const handleUploadOption = (e) => {
@@ -143,7 +153,6 @@ const AdminModuleCrud = () => {
   };
 
   const handleModuleChange = (e) => {
-    console.log(e);
     const { name, value } = e.target;
 
     if (name === "is_published") {
@@ -161,6 +170,7 @@ const AdminModuleCrud = () => {
         [name]: value
       }));
     }
+    console.log(moduleFormData);
   };
 
   const [isSuccess, setIsSuccess] = React.useState(true);
@@ -170,12 +180,6 @@ const AdminModuleCrud = () => {
     setIsSuccess(success);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
-  const extendDescriptions = (courses) => {
-    return courses.map((course) => ({
-      ...course,
-      description: `${course.description} This course provides in-depth knowledge and practical examples to help you master the subject effectively.`
-    }));
-  };
 
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -209,9 +213,10 @@ const AdminModuleCrud = () => {
     e.preventDefault();
 
     const formData = moduleFormData;
+    console.log(JSON.stringify(formData));
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/course`, {
+      const response = await fetch(`${API_URL}/api/admin/course/${course.id}/module`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -222,15 +227,15 @@ const AdminModuleCrud = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        showToast(errorData.error || "Module to create course", false);
+        showToast(errorData.error || "Error creating Module", false);
         return;
       }
 
       const result = await response.json();
       showToast("Module created successfully!", true);
-      window.location.href = `/admin/content-library/course/${id}`;
+      window.location.href = `/admin/content-management/course/${id}`;
     } catch (error) {
-      console.error("Error creating COurse:", error);
+      console.error("Error creating Module:", error);
       showToast("Internal Server Error", false);
     }
   };
@@ -260,7 +265,7 @@ const AdminModuleCrud = () => {
                         id="course-title"
                         className="form-control"
                         name="title"
-                        placeholder="Enter course title"
+                        placeholder="Enter module title"
                         value={moduleFormData.title}
                         onChange={handleModuleChange}
                       />
@@ -294,43 +299,97 @@ const AdminModuleCrud = () => {
                     </div>
 
                     <div className="row mx-0 w-100">
-                      <div className="col-md-6 ps-0 pe-md-2 px-sm-0">
-                        {(moduleFormData.content_type &&
-                          moduleFormData.content_type === "video" &&
-                          method === "file") ||
-                        (moduleFormData.content_type &&
-                          moduleFormData.content_type !== "video" &&
-                          moduleFormData.content_type !== "assessment" &&
-                          moduleFormData.content_type !== "text") ? (
+                      {(moduleFormData.content_type &&
+                        moduleFormData.content_type === "video" &&
+                        method === "file") ||
+                      (moduleFormData.content_type &&
+                        moduleFormData.content_type !== "video" &&
+                        moduleFormData.content_type !== "assessment" &&
+                        moduleFormData.content_type !== "text") ? (
+                        <div className="col-md-6 ps-0 pe-md-2 px-sm-0">
                           <div className="form-group">
                             <label htmlFor="show-outside">Upload File</label>
-                            <Select
-                              styles={customStyles}
-                              options={typeOptions}
-                              placeholder={"Select Type"}
-                              onChange={handleContentChange}
-                              name={"content_type"}
+                            <input
+                              type="file"
+                              id="module-file"
+                              ref={fileInputRef}
+                              className="form-control"
+                              name="file"
+                              accept={
+                                moduleFormData.content_type === "pdf"
+                                  ? ".pdf"
+                                  : moduleFormData.content_type === "video"
+                                    ? "video/*"
+                                    : moduleFormData.content_type === "ppt"
+                                      ? ".ppt,.pptx"
+                                      : moduleFormData.content_type === "docx"
+                                        ? ".doc,.docx"
+                                        : ""
+                              }
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  const reader = new FileReader();
+
+                                  reader.onload = () => {
+                                    setModuleFormData((prevData) => ({
+                                      ...prevData,
+                                      file: reader.result // base64 string or data URL
+                                    }));
+                                    console.log(reader.result); // works here!
+                                  };
+
+                                  // Choose appropriate read method
+                                  if (
+                                    moduleFormData.content_type === "pdf" ||
+                                    moduleFormData.content_type === "ppt" ||
+                                    moduleFormData.content_type === "docx"
+                                  ) {
+                                    reader.readAsDataURL(file); // base64
+                                  } else if (moduleFormData.content_type === "video") {
+                                    reader.readAsDataURL(file); // also works for video preview
+                                  } else {
+                                    reader.readAsText(file); // fallback
+                                  }
+                                }
+                              }}
                             />
                           </div>
-                        ) : moduleFormData.content_type &&
-                          moduleFormData.content_type === "video" &&
-                          method === "link" ? (
+                        </div>
+                      ) : moduleFormData.content_type &&
+                        moduleFormData.content_type === "video" &&
+                        method === "link" ? (
+                        <div className="col-md-12 px-0">
                           <div className="form-group">
-                            <label htmlFor="show-outside">Link to File</label>
-                            <Select
-                              styles={customStyles}
-                              options={typeOptions}
-                              placeholder={"Select Type"}
-                              onChange={handleContentChange}
-                              name={"content_type"}
+                            <label htmlFor="module-link">Link to File</label>
+                            <input
+                              type="text"
+                              id="module-link"
+                              className="form-control"
+                              name="content_url"
+                              value={moduleFormData.link}
+                              placeholder=""
+                              onChange={handleModuleChange}
                             />
                           </div>
-                        ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {moduleFormData.content_type === "video" && (
+                      <div className="col-md-6 ps-0 pe-md-2 px-sm-0">
+                        <div className="form-group">
+                          <label htmlFor="module-duration">Duration (mins)</label>
+                          <input
+                            type="number"
+                            id="module-duration"
+                            className="form-control"
+                            name="duration"
+                            onChange={handleModuleChange}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="w-100">
-                      {moduleFormData.content_type === "text" ? <RichTextEditor /> : null}
-                    </div>
+                    )}
 
                     <div className="form-group">
                       <label htmlFor="cis_published">Publish</label>

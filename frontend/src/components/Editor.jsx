@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useRef } from "react";
 import "draft-js-static-toolbar-plugin/lib/plugin.css";
 
 import Editor, { createEditorStateWithText } from "draft-js-plugins-editor";
@@ -20,112 +20,87 @@ import {
 
 import "./editor/customtoolbar.css";
 
-class HeadlinesPicker extends Component {
-  componentDidMount() {
-    setTimeout(() => {
-      window.addEventListener("click", this.onWindowClick);
-    });
-  }
+const HeadlinesPicker = (props) => {
+  React.useEffect(() => {
+    const handleWindowClick = () => {
+      onWindowClick();
+    };
 
-  componentWillUnmount() {
-    window.removeEventListener("click", this.onWindowClick);
-  }
+    window.addEventListener("click", handleWindowClick);
 
-  onWindowClick = () =>
-    // Call `onOverrideContent` again with `undefined`
-    // so the toolbar can show its regular content again.
-    this.props.onOverrideContent(undefined);
+    return () => {
+      window.removeEventListener("click", handleWindowClick);
+    };
+  }, []);
 
-  render() {
-    const buttons = [HeadlineOneButton, HeadlineTwoButton, HeadlineThreeButton];
-    return (
-      <div>
-        {buttons.map(
-          (
-            Button,
-            i // eslint-disable-next-line
-          ) => (
-            <Button key={i} {...this.props} />
-          )
-        )}
-      </div>
-    );
-  }
-}
+  const onWindowClick = () => props.onOverrideContent(undefined);
 
-class HeadlinesButton extends Component {
-  onClick = () =>
-    // A button can call `onOverrideContent` to replace the content
-    // of the toolbar. This can be useful for displaying sub
-    // menus or requesting additional information from the user.
-    this.props.onOverrideContent(HeadlinesPicker);
+  const buttons = [HeadlineOneButton, HeadlineTwoButton, HeadlineThreeButton];
+  return (
+    <div>
+      {buttons.map((Button, i) => (
+        <Button key={i} {...props} />
+      ))}
+    </div>
+  );
+};
 
-  render() {
-    return (
-      <div className="headline-button-wrapper">
-        <button onClick={this.onClick} className="headline-button">
-          H
-        </button>
-      </div>
-    );
-  }
-}
+const HeadlinesButton = (props) => {
+  const onClick = () => {
+    props.onOverrideContent(HeadlinesPicker);
+  };
+
+  return (
+    <div className="headline-button-wrapper">
+      <button onClick={onClick} className="headline-button">
+        H
+      </button>
+    </div>
+  );
+};
 
 const toolbarPlugin = createToolbarPlugin();
 const { Toolbar } = toolbarPlugin;
 const plugins = [toolbarPlugin];
 const text = "";
 
-export default class CustomToolbarEditor extends Component {
-  state = {
-    editorState: createEditorStateWithText(text)
+const CustomToolbarEditor = () => {
+  const [editorState, setEditorState] = useState(createEditorStateWithText(text));
+  const editorRef = useRef(null);
+
+  const onChange = (newEditorState) => {
+    setEditorState(newEditorState);
   };
 
-  onChange = (editorState) => {
-    this.setState({
-      editorState
-    });
+  const focus = () => {
+    editorRef.current.focus();
   };
 
-  focus = () => {
-    this.editor.focus();
-  };
-
-  render() {
-    return (
-      <div className="editor-content">
-        <div className="editor" onClick={this.focus}>
-          <div className="custom-toolbar">
-            <Toolbar>
-              {
-                // may be use React.Fragment instead of div to improve perfomance after React 16
-                (externalProps) => (
-                  <div>
-                    <BoldButton {...externalProps} />
-                    <ItalicButton {...externalProps} />
-                    <UnderlineButton {...externalProps} />
-                    <CodeButton {...externalProps} />
-                    <Separator {...externalProps} />
-                    <HeadlinesButton {...externalProps} />
-                    <UnorderedListButton {...externalProps} />
-                    <OrderedListButton {...externalProps} />
-                    <BlockquoteButton {...externalProps} />
-                    <CodeBlockButton {...externalProps} />
-                  </div>
-                )
-              }
-            </Toolbar>
-          </div>
-          <Editor
-            editorState={this.state.editorState}
-            onChange={this.onChange}
-            plugins={plugins}
-            ref={(element) => {
-              this.editor = element;
-            }}
-          />
+  return (
+    <div className="editor-content">
+      <div className="editor" onClick={focus}>
+        <div className="custom-toolbar">
+          <Toolbar>
+            {(externalProps) => (
+              <div>
+                <BoldButton {...externalProps} />
+                <ItalicButton {...externalProps} />
+                <UnderlineButton {...externalProps} />
+                <CodeButton {...externalProps} />
+                <Separator {...externalProps} />
+                <HeadlinesButton {...externalProps} />
+                <UnorderedListButton {...externalProps} />
+                <OrderedListButton {...externalProps} />
+                <BlockquoteButton {...externalProps} />
+                <CodeBlockButton {...externalProps} />
+              </div>
+            )}
+          </Toolbar>
         </div>
+        <Editor editorState={editorState} onChange={onChange} plugins={plugins} ref={editorRef} />
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
+
+export default CustomToolbarEditor;
