@@ -170,15 +170,15 @@ const CreateContent = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        showToast(errorData.error || "Failed to create learning path", false);
+        showToast(errorData.error || "Failed to create course", false);
         return;
       }
 
       const result = await response.json();
-      showToast("Learning path created successfully!", true);
+      showToast("COurse created successfully!", true);
       window.location.href = `/admin/content-library/course/${result.id}`;
     } catch (error) {
-      console.error("Error creating COurse:", error);
+      console.error("Error creating Course:", error);
       showToast("Internal Server Error", false);
     }
   };
