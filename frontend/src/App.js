@@ -18,6 +18,7 @@ import CategoryManagement from "./adminPages/CategoryManagement";
 import AdminLearnPath from "./adminPages/LearnPath";
 import AdminProfile from "./adminPages/Profile";
 import AdminCourse from "./adminPages/Course";
+import AdminModuleCrud from "./adminPages/AdminModuleCrud";
 
 function App() {
   return (
@@ -38,6 +39,10 @@ function App() {
         <Route path="/admin/content-management" element={<ContentManagement />} />
         <Route path="/admin/content-management/create" element={<CreateContent />} />
         <Route path="/admin/content-management/course/:id" element={<AdminCourse />} />
+        <Route
+          path="/admin/content-management/course/:id/module/create"
+          element={<AdminModuleCrud />}
+        />
         <Route path="/admin/content-management/path/:id" element={<AdminLearnPath />} />
         <Route path="/admin/category-management" element={<CategoryManagement />} />
         <Route path="/admin/user-management" element={<UserManagement />} />

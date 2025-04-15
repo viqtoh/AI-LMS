@@ -18,7 +18,7 @@ ENV REACT_APP_IMAGE_HOST=$REACT_APP_IMAGE_HOST
 
 # Build the frontend
 WORKDIR /app/frontend
-RUN npm install
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 
