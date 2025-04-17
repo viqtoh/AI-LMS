@@ -2311,3 +2311,19 @@ iframe {
 .categorySearchCon input::placeholder {
   color: #333;
 }
+
+.sm-btn {
+  height: 30px !important;
+  width: 30px !important;
+  text-align: center;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  color: white !important;
+}
+
+.sm-btn svg {
+  margin: 0 !important;
+  font-size: 10px;
+}

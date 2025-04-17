@@ -818,7 +818,7 @@ app.post("/api/admin/learningpath/course/add", authenticateToken, async (req, re
 app.post("/api/admin/course/:courseId/module", authenticateToken, async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { title, content_type, content_url, duration, file, is_published } = req.body;
+    const { title, description, content_type, content_url, duration, file, is_published } = req.body;
 
     const mimeToExt = {
       "application/pdf": "pdf",
@@ -888,6 +888,7 @@ app.post("/api/admin/course/:courseId/module", authenticateToken, async (req, re
     // Create the module
     const module = await Module.create({
       title,
+      description,
       content_type,
       content_url,
       duration,

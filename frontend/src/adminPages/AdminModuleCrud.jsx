@@ -120,6 +120,7 @@ const AdminModuleCrud = () => {
 
   const [moduleFormData, setModuleFormData] = useState({
     title: "",
+    description: "",
     content_type: "",
     content_url: "",
     duration: "",
@@ -269,6 +270,17 @@ const AdminModuleCrud = () => {
                         value={moduleFormData.title}
                         onChange={handleModuleChange}
                       />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="course-title">Module Description</label>
+
+                      <textarea
+                        className="form-control"
+                        name="description"
+                        value={moduleFormData.description}
+                        onChange={handleModuleChange}
+                        placeholder="Enter module description"
+                      ></textarea>
                     </div>
                     <div className="row mx-0 w-100">
                       <div className="col-md-6 ps-0 pe-md-2 px-sm-0">
