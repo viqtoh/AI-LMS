@@ -815,10 +815,12 @@ app.post("/api/admin/learningpath/course/add", authenticateToken, async (req, re
   }
 });
 
+//create module in course
 app.post("/api/admin/course/:courseId/module", authenticateToken, async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { title, content_type, content_url, duration, file, is_published } = req.body;
+    const { title, description, content_type, content_url, duration, file, is_published } =
+      req.body;
 
     const mimeToExt = {
       "application/pdf": "pdf",
@@ -888,6 +890,7 @@ app.post("/api/admin/course/:courseId/module", authenticateToken, async (req, re
     // Create the module
     const module = await Module.create({
       title,
+      description,
       content_type,
       content_url,
       duration,
@@ -900,6 +903,89 @@ app.post("/api/admin/course/:courseId/module", authenticateToken, async (req, re
     res.status(201).json({ message: "Module created successfully.", module });
   } catch (error) {
     console.error("Error creating module:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//update module
+app.put("/api/admin/course/:courseId/module/:moduleId", authenticateToken, async (req, res) => {
+  try {
+    const { courseId, moduleId } = req.params;
+    const { title, description, content_type, content_url, duration, file, is_published } =
+      req.body;
+
+    const mimeToExt = {
+      "application/pdf": "pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+      "application/msword": "doc",
+      "application/vnd.ms-powerpoint": "ppt",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+      "video/mp4": "mp4",
+      "video/quicktime": "mov",
+      "image/png": "png",
+      "image/jpeg": "jpg"
+    };
+
+    // Check course exists
+    const course = await Course.findByPk(courseId);
+    if (!course) {
+      return res.status(404).json({ error: "Course not found." });
+    }
+
+    // Check module exists
+    const module = await Module.findOne({
+      where: { id: moduleId, courseId }
+    });
+
+    if (!module) {
+      return res.status(404).json({ error: "Module not found." });
+    }
+
+    if (module.content_type !== content_type) {
+      if (content_type !== "video" || !content_url) {
+        if (!file || file.startsWith("/media/")) {
+          return res.status(400).json({ error: "Content missing" });
+        }
+      }
+    }
+    let fullfile = module.file;
+
+    // Process file if new one is provided
+    if (file && !file.startsWith("/media/")) {
+      const matches = file.match(/^data:(.+);base64,/);
+      const mimeType = matches ? matches[1] : null;
+      const extension = mimeToExt[mimeType] || "bin";
+
+      const base64Data = file.replace(/^data:.+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+
+      const safeTitle = title.replace(/\s+/g, "_").replace(/[^\w\-]/g, "");
+      const fileName = `${safeTitle}_file_${Date.now()}.${extension}`;
+      const mediaDir = path.join(__dirname, "media");
+      const filePath = path.join(mediaDir, fileName);
+
+      if (!fs.existsSync(mediaDir)) {
+        fs.mkdirSync(mediaDir, { recursive: true });
+      }
+
+      fs.writeFileSync(filePath, buffer);
+      fullfile = `/media/${fileName}`;
+    }
+
+    // Update module
+    await module.update({
+      title,
+      description,
+      content_type,
+      content_url,
+      duration,
+      file: fullfile,
+      is_published
+    });
+
+    res.status(200).json({ message: "Module updated successfully.", module });
+  } catch (error) {
+    console.error("Error updating module:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

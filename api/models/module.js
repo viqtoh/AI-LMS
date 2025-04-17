@@ -14,6 +14,11 @@ const Module = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false
     },
+    description: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: ""
+    },
     content_type: {
       type: DataTypes.ENUM("video", "pdf", "text", "ppt", "docx", "assessment"),
       allowNull: false

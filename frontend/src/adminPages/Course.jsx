@@ -7,7 +7,7 @@ import Toast from "../components/Toast";
 import { faAngleDown, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams } from "react-router-dom";
-import Collapsible from "../components/Collapsible";
+import AdminCollapsible from "../components/AdminCollapsible";
 import AdminNavBar from "../components/AdminNavBar";
 import Select from "react-select";
 
@@ -15,6 +15,7 @@ const AdminCourse = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(true);
   const [course, setCourse] = useState(null);
+  const [modules, setModules] = useState([]);
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
   const showToast = React.useCallback((message, success = true) => {
@@ -52,7 +53,7 @@ const AdminCourse = () => {
         }
         const data = await response.json();
         setCourse(data);
-        console.log(data);
+        setModules(data.modules);
         console.log("log");
         setCourseFormData({
           title: data.title,
@@ -305,13 +306,23 @@ const AdminCourse = () => {
               {!course ? (
                 <div className="noObjects noObjects100 mt-4">Course not found</div>
               ) : (
-                <div className="adminCourseBody">
+                <div className="adminCourseBody w-100">
                   <div className="d-flex w-100 justify-content-end mb-5">
                     <a href={`/admin/content-management/course/${course.id}/module/create`}>
                       <button className="btn btn-theme"> Add Module</button>
                     </a>
                   </div>
-                  <Collapsible {...course} />
+                  <div className="text-center w-100 d-flex flex-column justify-content-center align-items-center">
+                    {modules.map((module) => (
+                      <AdminCollapsible {...module} />
+                    ))}
+
+                    {modules.length === 0 && (
+                      <div className="noObjects noObjects100 mt-4">
+                        There are no Modules in this Course yet.
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
