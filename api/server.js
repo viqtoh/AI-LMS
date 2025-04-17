@@ -519,13 +519,15 @@ app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Course not found." });
     }
 
+    let modules = await Module.findAll({ where: { courseId: id } });
     // Format response
     const response = {
       id: course.id,
       title: course.title,
       image: course.image,
       description: course.description,
-      categories: course.Categories?.map((cat) => cat.name) || []
+      categories: course.Categories?.map((cat) => cat.name) || [],
+      modules: modules?.map((mod) => ({ ...mod.dataValues })) || []
     };
 
     res.status(200).json(response);
@@ -1345,7 +1347,7 @@ app.get("/api/admin/course-full/:id", authenticateToken, async (req, res) => {
     if (!course) {
       return res.status(404).json({ error: "Course not found." });
     }
-    modules = await Module.findAll({ where: { courseId: id } });
+    let modules = await Module.findAll({ where: { courseId: id } });
     // Format response
     const response = {
       id: course.id,
