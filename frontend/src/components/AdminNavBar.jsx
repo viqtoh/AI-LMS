@@ -81,6 +81,7 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "", context = "" }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("isAdmin");
     window.location.href = "/admin";
   };
 

@@ -8,6 +8,7 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import LearnPath from "./pages/LearnPath";
 import Course from "./pages/Course";
+import CourseRead from "./pages/CourseRead";
 import AdminHome from "./adminPages/Home";
 import AdminDashboard from "./adminPages/Dashboard";
 import UserManagement from "./adminPages/UserManagement";
@@ -32,6 +33,8 @@ function App() {
         <Route path="/content-library/course/:id" element={<Course />} />
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/account/settings" element={<Profile />} />
+        <Route path="/content-library/path/:id/read" element={<CourseRead />} />
+        <Route path="/content-library/course/:id/read" element={<CourseRead />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminHome />} />
@@ -39,6 +42,7 @@ function App() {
         <Route path="/admin/content-management" element={<ContentManagement />} />
         <Route path="/admin/content-management/create" element={<CreateContent />} />
         <Route path="/admin/content-management/course/:id" element={<AdminCourse />} />
+        <Route path="/admin/content-management/path/:pathId/course/:id" element={<AdminCourse />} />
         <Route
           path="/admin/content-management/course/:id/module/create"
           element={<AdminModuleCrud />}

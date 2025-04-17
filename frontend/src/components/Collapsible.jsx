@@ -10,7 +10,13 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimesCircle } from "@fortawesome/free-regular-svg-icons";
 
-const Collapsible = ({ title, percentage = 0, desc = "", score = 0, isLocked = false }) => {
+export const CourseCollapsible = ({
+  title,
+  percentage = 0,
+  description = "",
+  score = 0,
+  isLocked = false
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -72,7 +78,7 @@ const Collapsible = ({ title, percentage = 0, desc = "", score = 0, isLocked = f
             )}
           </div>
           <div className="collapseText">
-            <p>{desc}</p>
+            <p>{description}</p>
             <span>{score}% My Score</span>
           </div>
         </div>
@@ -81,4 +87,49 @@ const Collapsible = ({ title, percentage = 0, desc = "", score = 0, isLocked = f
   );
 };
 
-export default Collapsible;
+export const ModuleCollapsible = ({
+  title,
+  percentage = 0,
+  description = "",
+  score = 0,
+  isLocked = false
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="collapsible">
+      <div className="collapsible-header">
+        {!isLocked ? (
+          <button onClick={() => setIsOpen(!isOpen)} className="colbtn">
+            <div>
+              <FontAwesomeIcon icon={isOpen ? faAngleDown : faAngleRight} />
+            </div>
+            <span className="sectionTitle">{title}</span>
+          </button>
+        ) : (
+          <button className="colbtn">
+            <div>
+              <FontAwesomeIcon icon={faLock} />
+            </div>
+            <span className="sectionTitle">{title}</span>
+          </button>
+        )}
+      </div>
+
+      <div className={`collapsible-content ${isOpen ? "open" : ""}`}>
+        <div>
+          <div className="collapseIcon">
+            {percentage === 100 ? (
+              <FontAwesomeIcon icon={faCheckCircle} color="green" size="lg" />
+            ) : (
+              <FontAwesomeIcon icon={faCirclePlay} size="lg" />
+            )}
+          </div>
+          <div className="collapseText">
+            <p>{description}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

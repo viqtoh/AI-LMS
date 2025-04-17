@@ -2335,4 +2335,45 @@ iframe {
 }
 .collapseTextL {
   flex: 1;
+  text-align: justify;
+  padding: 0px 20px 0px 0px;
+}
+.green-noti-con {
+  background-color: #21883811;
+  padding: 3px 15px;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #21883822;
+}
+
+.green-noti {
+  height: 6px;
+  width: 6px;
+  background-color: #218838;
+  border-radius: 5px;
+  margin-right: 5px;
+}
+.green-noti-con p {
+  margin: 0px;
+  color: #218838;
+}
+
+.green-noti-con button {
+  color: #218838;
+  background-color: #21883822;
+  padding: auto;
+  margin: 0px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 10px;
+  border-radius: 4px;
+  height: 20px;
+  width: 20px;
+}
+
+.green-noti-con button:hover {
+  color: #10df40;
+  background-color: #20973a22;
 }

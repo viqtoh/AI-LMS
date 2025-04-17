@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { API_URL, IMAGE_HOST } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
-import { faAngleDown, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faAngleDown, faEye, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams } from "react-router-dom";
-import AdminCollapsible from "../components/AdminCollapsible";
+import { ModuleCollapsible } from "../components/AdminCollapsible";
 import AdminNavBar from "../components/AdminNavBar";
 import Select from "react-select";
 
@@ -307,14 +307,24 @@ const AdminCourse = () => {
                 <div className="noObjects noObjects100 mt-4">Course not found</div>
               ) : (
                 <div className="adminCourseBody w-100">
-                  <div className="d-flex w-100 justify-content-end mb-5">
+                  <div className="d-flex w-100 justify-content-between flex-wrap mb-5">
+                    <div className="green-noti-con">
+                      <div className="green-noti"></div>
+                      <p>
+                        This course is linked to {course.learningPaths.length}{" "}
+                        {course.learningPaths.length === 1 ? "learning path" : "learning paths"}.
+                      </p>
+                      <button>
+                        <FontAwesomeIcon icon={faEye} />
+                      </button>
+                    </div>
                     <a href={`/admin/content-management/course/${course.id}/module/create`}>
                       <button className="btn btn-theme"> Add Module</button>
                     </a>
                   </div>
                   <div className="text-center w-100 d-flex flex-column justify-content-center align-items-center">
                     {modules.map((module) => (
-                      <AdminCollapsible {...module} />
+                      <ModuleCollapsible {...module} />
                     ))}
 
                     {modules.length === 0 && (

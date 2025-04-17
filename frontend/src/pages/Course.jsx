@@ -7,13 +7,14 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
 import { faAngleDown, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useParams } from "react-router-dom";
-import Collapsible from "../components/Collapsible";
+import { useNavigate, useParams } from "react-router-dom";
+import { ModuleCollapsible } from "../components/Collapsible";
 
 const Course = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(true);
   const [course, setCourse] = useState(null);
+  const [modules, setModules] = useState([]);
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -23,6 +24,8 @@ const Course = () => {
     console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
+
+  const navigate = useNavigate();
 
   const { id } = useParams();
   useEffect(() => {
@@ -40,6 +43,7 @@ const Course = () => {
         }
         const data = await response.json();
         setCourse(data);
+        setModules(data.modules);
       } catch (err) {
         showToast(err.message, false);
       } finally {
@@ -131,7 +135,12 @@ const Course = () => {
                     <div className="headerDesc">
                       <span>{course.description}</span>
                     </div>
-                    <button className="btn continueBtn">
+                    <button
+                      className="btn continueBtn"
+                      onClick={() => {
+                        navigate(`/content-library/course/${course.id}/read`);
+                      }}
+                    >
                       <span>Continue this course</span>
                     </button>
                   </div>
@@ -259,7 +268,12 @@ const Course = () => {
               {!course ? (
                 <div className="noObjects noObjects100 mt-4">Course not found</div>
               ) : (
-                <Collapsible {...course} />
+                modules.map((module) => <ModuleCollapsible {...module} />)
+              )}
+              {course && modules.length === 0 && (
+                <div className="noObjects noObjects100 mt-4">
+                  There are no Modules in this Course yet.
+                </div>
               )}
             </div>
           </div>

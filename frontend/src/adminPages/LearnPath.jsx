@@ -7,7 +7,7 @@ import Toast from "../components/Toast";
 import { faAngleDown, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams } from "react-router-dom";
-import Collapsible from "../components/Collapsible";
+import { CourseCollapsible } from "../components/AdminCollapsible";
 import AdminNavBar from "../components/AdminNavBar";
 import Select from "react-select";
 
@@ -386,7 +386,7 @@ const AdminLearnPath = () => {
                 <div className="noObjects noObjects100 mt-4">No Courses here</div>
               ) : (
                 learningPath.courses.map((section, index) => (
-                  <Collapsible key={index} {...section} />
+                  <CourseCollapsible key={index} {...section} learnPathId={id} />
                 ))
               )}
             </div>
