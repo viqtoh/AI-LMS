@@ -50,6 +50,7 @@ const db = {
 };
 
 // Sync database
+sequelize.query(`UPDATE "Modules" SET "description" = '' WHERE "description" IS NULL`);
 sequelize
   .sync({ alter: true })
   .then(() => {

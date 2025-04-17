@@ -2327,3 +2327,12 @@ iframe {
   margin: 0 !important;
   font-size: 10px;
 }
+
+.collapseTextR {
+  width: fit-content;
+  margin-right: 10px;
+  gap: 5px;
+}
+.collapseTextL {
+  flex: 1;
+}

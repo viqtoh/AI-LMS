@@ -316,6 +316,12 @@ const AdminCourse = () => {
                     {modules.map((module) => (
                       <AdminCollapsible {...module} />
                     ))}
+
+                    {modules.length === 0 && (
+                      <div className="noObjects noObjects100 mt-4">
+                        There are no Modules in this Course yet.
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -13,14 +13,20 @@ import { useParams } from "react-router-dom";
 const AdminModuleCrud = () => {
   const token = localStorage.getItem("token");
   const { id } = useParams();
+  const { moduleId } = useParams();
   const [isLoading, setIsLoading] = useState(true);
   const [cisCollapsed, setCisCollapsed] = useState(false);
   const [risCollapsed, setRisCollapsed] = useState(false);
   const [fisCollapsed, setFisCollapsed] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [course, setCourse] = useState(null);
+  const [contentType, setContentType] = useState("");
+  const [iniContentType, setIniContentType] = useState("");
+  const [showFile, setShowFile] = useState(true);
 
   const [method, setMethod] = useState("");
+
+  const [file, setFile] = useState("");
 
   const customStyles = {
     container: (base) => ({
@@ -107,7 +113,26 @@ const AdminModuleCrud = () => {
         }
         const data = await response.json();
         setCourse(data);
-        setSelectedCategories2(data.categories.map((category) => category.id));
+        for (let i = 0; i < data.modules.length; i++) {
+          if (data.modules[i].id === parseInt(moduleId)) {
+            setModuleFormData(data.modules[i]);
+            setIniContentType(data.modules[i].content_type);
+            const matchedOption = typeOptions.find(
+              (opt) => opt.value === data.modules[i].content_type
+            );
+            if (data.modules[i].file) {
+              setFile(data.modules[i].file);
+            }
+            setContentType(matchedOption || null);
+            if (data.modules[i].content_type === "video") {
+              if (!data.modules[i].content_url) {
+                setMethod("file");
+              } else {
+                setMethod("link");
+              }
+            }
+          }
+        }
       } catch (err) {
         showToast(err.message, false);
       } finally {
@@ -128,10 +153,6 @@ const AdminModuleCrud = () => {
     is_published: true
   });
 
-  const handleEditorChange = (e) => {
-    console.log(e);
-  };
-
   const fileInputRef = useRef(null);
 
   const clearFile = () => {
@@ -141,6 +162,13 @@ const AdminModuleCrud = () => {
   };
 
   const handleContentChange = (e) => {
+    const matchedOption = typeOptions.find((opt) => opt.value === e.value);
+    if (e.value !== iniContentType) {
+      setShowFile(false);
+    } else {
+      setShowFile(true);
+    }
+    setContentType(matchedOption || null);
     setModuleFormData((prevData) => ({
       ...prevData,
       content_type: e.value
@@ -171,7 +199,6 @@ const AdminModuleCrud = () => {
         [name]: value
       }));
     }
-    console.log(moduleFormData);
   };
 
   const [isSuccess, setIsSuccess] = React.useState(true);
@@ -182,60 +209,57 @@ const AdminModuleCrud = () => {
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
 
-  const [categories, setCategories] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedCategories2, setSelectedCategories2] = useState([]);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/admin/category`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error("Failed to fetch categories");
-        }
-        const data = await response.json();
-        setCategories(data);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        showToast("Failed to load categories", false);
-        setIsLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, [token, showToast]);
-
   const handleModuleSubmit = async (e) => {
     e.preventDefault();
 
     const formData = moduleFormData;
-    console.log(JSON.stringify(formData));
+    let response;
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/course/${course.id}/module`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      });
+      if (moduleId) {
+        response = await fetch(`${API_URL}/api/admin/course/${course.id}/module/${moduleId}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(formData)
+        });
+      } else {
+        response = await fetch(`${API_URL}/api/admin/course/${course.id}/module`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(formData)
+        });
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
-        showToast(errorData.error || "Error creating Module", false);
+        if (moduleId) {
+          showToast(errorData.error || "Error updating Module", false);
+        } else {
+          showToast(errorData.error || "Error creating Module", false);
+        }
         return;
       }
 
       const result = await response.json();
-      showToast("Module created successfully!", true);
+      if (moduleId) {
+        showToast("Module updated successfully!", true);
+      } else {
+        showToast("Module created successfully!", true);
+      }
+
       window.location.href = `/admin/content-management/course/${id}`;
     } catch (error) {
+      if (moduleId) {
+        console.error("Error updating Module:", error);
+      } else {
+        console.error("Error creating Module:", error);
+      }
       console.error("Error creating Module:", error);
       showToast("Internal Server Error", false);
     }
@@ -244,7 +268,10 @@ const AdminModuleCrud = () => {
   return (
     <div>
       <div className="navHeader">
-        <AdminNavBar title="Content Management" subTitle="course/module/create" />
+        <AdminNavBar
+          title="Content Management"
+          subTitle={`course/module/${moduleId ? "edit" : "create"}`}
+        />
       </div>
       <div className="main-body5 main-body main-body3 main-body4">
         {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
@@ -255,7 +282,7 @@ const AdminModuleCrud = () => {
         ) : (
           <div className="sub-body">
             <div className="tab-container h-100">
-              <h2 className="tab-title">Create Module</h2>
+              <h2 className="tab-title">{moduleId ? "Edit" : "Create"} Module</h2>
               <div className="tab-content">
                 <div className="course-tab">
                   <form id="courseForm" onSubmit={handleModuleSubmit}>
@@ -285,13 +312,15 @@ const AdminModuleCrud = () => {
                     <div className="row mx-0 w-100">
                       <div className="col-md-6 ps-0 pe-md-2 px-sm-0">
                         <div className="form-group">
-                          <label htmlFor="show-outside">Module Type</label>
+                          <label htmlFor="content_type">Module Type</label>
                           <Select
+                            id="content_type"
                             styles={customStyles}
                             options={typeOptions}
                             placeholder={"Select Type"}
                             onChange={handleContentChange}
-                            name={"content_type"}
+                            value={contentType}
+                            name="content_type"
                           />
                         </div>
                       </div>
@@ -320,7 +349,10 @@ const AdminModuleCrud = () => {
                         moduleFormData.content_type !== "text") ? (
                         <div className="col-md-6 ps-0 pe-md-2 px-sm-0">
                           <div className="form-group">
-                            <label htmlFor="show-outside">Upload File</label>
+                            <label htmlFor="module-file">
+                              {file !== "" ? "Change" : "Upload"} File
+                            </label>
+                            {file !== "" && showFile && <p className="text-success m-0">{file}</p>}
                             <input
                               type="file"
                               id="module-file"
@@ -348,7 +380,6 @@ const AdminModuleCrud = () => {
                                       ...prevData,
                                       file: reader.result // base64 string or data URL
                                     }));
-                                    console.log(reader.result); // works here!
                                   };
 
                                   // Choose appropriate read method
