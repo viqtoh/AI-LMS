@@ -1332,8 +1332,12 @@ app.get("/api/admin/course-full/:id", authenticateToken, async (req, res) => {
       include: [
         {
           model: Category,
-          through: { attributes: [] }, // Exclude join table attributes
+          through: { attributes: [] },
           as: "Categories"
+        },
+        {
+          model: LearningPath,
+          through: { attributes: [] }
         }
       ]
     });
@@ -1351,7 +1355,12 @@ app.get("/api/admin/course-full/:id", authenticateToken, async (req, res) => {
       show_outside: course.show_outside,
       is_published: course.is_published,
       categories: course.Categories?.map((cat) => ({ id: cat.id, name: cat.name })) || [],
-      modules: modules?.map((mod) => ({ ...mod.dataValues })) || []
+      modules: modules?.map((mod) => ({ ...mod.dataValues })) || [],
+      learningPaths:
+        course.LearningPaths?.map((lp) => ({
+          id: lp.id,
+          title: lp.title
+        })) || []
     };
 
     res.status(200).json(response);

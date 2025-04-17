@@ -73,6 +73,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("isAdmin");
     window.location.href = "/";
   };
 

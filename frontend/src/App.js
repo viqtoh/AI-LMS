@@ -39,6 +39,7 @@ function App() {
         <Route path="/admin/content-management" element={<ContentManagement />} />
         <Route path="/admin/content-management/create" element={<CreateContent />} />
         <Route path="/admin/content-management/course/:id" element={<AdminCourse />} />
+        <Route path="/admin/content-management/path/:pathId/course/:id" element={<AdminCourse />} />
         <Route
           path="/admin/content-management/course/:id/module/create"
           element={<AdminModuleCrud />}
