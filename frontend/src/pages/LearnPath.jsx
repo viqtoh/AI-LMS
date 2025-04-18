@@ -7,7 +7,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
 import { faAngleDown, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { CourseCollapsible } from "../components/Collapsible";
 
 const LearnPath = () => {
@@ -23,6 +23,8 @@ const LearnPath = () => {
     console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
+
+  const navigate = useNavigate();
 
   const { id } = useParams();
   useEffect(() => {
@@ -131,7 +133,12 @@ const LearnPath = () => {
                     <div className="headerDesc">
                       <span>{learningPath.description}</span>
                     </div>
-                    <button className="btn continueBtn">
+                    <button
+                      className="btn continueBtn"
+                      onClick={() => {
+                        navigate(`/content-library/path/${learningPath.id}/read`);
+                      }}
+                    >
                       <span>Continue this learning path</span>
                     </button>
                   </div>

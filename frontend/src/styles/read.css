@@ -1,0 +1,160 @@
+.sidebar2 {
+  position: fixed;
+  top: 0;
+  left: 0; /* Always positioned left, but moved out with transform */
+  width: 350px;
+  height: 100vh;
+  background-color: #212529;
+  color: white;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 1050; /* Higher than navbar and overlay */
+  padding: 1rem;
+  padding-top: 200px;
+}
+
+.sidebar2.open {
+  transform: translateX(0);
+}
+
+.sidebar2 a {
+  color: white;
+  display: block;
+  padding: 10px 0;
+  text-decoration: none;
+}
+
+.sidebar2 a:hover {
+  background-color: #495057;
+  padding-left: 10px;
+  transition: all 0.2s;
+}
+
+.hamburger2 {
+  margin-left: 350px;
+  background-color: transparent;
+}
+.hamburger2:hover,
+.hamburger2:active,
+.hamburger3:hover,
+.hamburger3:active {
+  background-color: transparent !important;
+  color: white !important;
+}
+
+.hamburgerclosed {
+  margin-left: 0px;
+}
+
+.hamburger3 {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  .sidebar2 {
+    width: 250px;
+    height: 100vh;
+    max-width: 90%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translateX(-100%);
+    z-index: 1050;
+    padding: 1rem;
+    padding-top: 20px;
+    background-color: #212529;
+    color: white;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .hamburger2 {
+    margin-left: 0px;
+  }
+
+  .hamburger3 {
+    display: block;
+    align-self: flex-end;
+    justify-self: flex-start;
+    margin-bottom: 100px;
+    border: none;
+  }
+}
+
+.sideCourse {
+  display: block;
+  width: 100%;
+  margin-bottom: 25px;
+}
+.sideCourseSub {
+  display: flex;
+  border-bottom: 1px solid #77777799;
+  width: 100%;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 5px;
+}
+
+.sideCourseSub p {
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 0px !important;
+  color: white;
+  width: calc(100% - 30px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  line-height: 1.1;
+}
+
+.sideCourseSub p:hover {
+  white-space: inherit;
+  background-color: #212529;
+}
+.learnPresent {
+  margin-left: 30px;
+  width: calc(100% - 30px);
+}
+.sideModule {
+  padding-left: 40px;
+  background-color: #49505722;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  transition: height 5s ease;
+}
+
+.sideModule span {
+  font-size: 12px;
+}
+
+.h-0 {
+  height: 0 !important;
+  padding: 0px !important;
+  overflow: hidden !important;
+}
+
+.readLearnPath span,
+.readLearnPath p {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
+.menu {
+  font-size: 12px;
+  font-family: monospace;
+  color: white;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+}
+.headerRead {
+  display: flex;
+  gap: 2;
+}
+.headerRead p {
+  margin-left: 20px;
+  margin-bottom: 0px;
+}
