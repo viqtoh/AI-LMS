@@ -33,7 +33,7 @@ function App() {
         <Route path="/content-library/course/:id" element={<Course />} />
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/account/settings" element={<Profile />} />
-        <Route path="/content-library/path/:id/read" element={<CourseRead />} />
+        <Route path="/content-library/path/:pathId/read" element={<CourseRead />} />
         <Route path="/content-library/course/:id/read" element={<CourseRead />} />
 
         {/* Admin Routes */}

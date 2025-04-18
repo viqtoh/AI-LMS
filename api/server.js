@@ -475,7 +475,6 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
     if (!learningPath) {
       return res.status(404).json({ error: "Learning path not found." });
     }
-
     // Format response
     const response = {
       id: learningPath.id,
@@ -483,14 +482,25 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
       image: learningPath.image,
       description: learningPath.description,
       categories: learningPath.Categories?.map((cat) => cat.name) || [],
-      courses:
-        learningPath.Courses?.map((course) => ({
+      courses: []
+    };
+
+    // Fetch modules asynchronously for each course
+    const coursesWithModules = await Promise.all(
+      learningPath.Courses?.map(async (course) => {
+        const modules = await Module.findAll({ where: { courseId: course.id } });
+
+        return {
           id: course.id,
           title: course.title,
           description: course.description,
-          categories: course.Categories?.map((cat) => cat.name) || []
-        })) || []
-    };
+          categories: course.Categories?.map((cat) => cat.name) || [],
+          modules: modules || [] // Ensure modules are always an array
+        };
+      }) || []
+    );
+
+    response.courses = coursesWithModules;
 
     res.status(200).json(response);
   } catch (error) {
@@ -841,7 +851,11 @@ app.post("/api/admin/course/:courseId/module", authenticateToken, async (req, re
       return res.status(400).json({ error: "All fields are required." });
     }
 
-    if (content_type === "video" && (!content_url || !file || !duration)) {
+    if (
+      (content_type === "video" && !content_url && !file) ||
+      (content_type === "video" && !duration)
+    ) {
+      console.log(content_type);
       return res.status(400).json({ error: "All fields are required." });
     }
 
@@ -855,7 +869,6 @@ app.post("/api/admin/course/:courseId/module", authenticateToken, async (req, re
       return res.status(404).json({ error: "Course not found." });
     }
     let fullfile = "";
-    console.log(file);
     // Process file Upload (if provided)
     if (file && !file.startsWith("/media/")) {
       const matches = file.match(/^data:(.+);base64,/);
@@ -879,7 +892,6 @@ app.post("/api/admin/course/:courseId/module", authenticateToken, async (req, re
 
       fullfile = `/media/${fileName}`;
     }
-    console.log(fullfile);
 
     // Get the last module for the course with the highest order field
     const lastModule = await Module.findOne({
