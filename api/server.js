@@ -487,17 +487,21 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
 
     // Fetch modules asynchronously for each course
     const coursesWithModules = await Promise.all(
-      learningPath.Courses?.map(async (course) => {
-        const modules = await Module.findAll({ where: { courseId: course.id } });
+      (learningPath.Courses || [])
+        .filter((course) => course.is_published)
+        .map(async (course) => {
+          if (course.is_published) {
+            const modules = await Module.findAll({ where: { courseId: course.id } });
 
-        return {
-          id: course.id,
-          title: course.title,
-          description: course.description,
-          categories: course.Categories?.map((cat) => cat.name) || [],
-          modules: modules || [] // Ensure modules are always an array
-        };
-      }) || []
+            return {
+              id: course.id,
+              title: course.title,
+              description: course.description,
+              categories: course.Categories?.map((cat) => cat.name) || [],
+              modules: modules || []
+            };
+          }
+        }) || []
     );
 
     response.courses = coursesWithModules;
@@ -1430,7 +1434,8 @@ app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res)
           id: course.id,
           title: course.title,
           description: course.description,
-          categories: course.Categories?.map((cat) => ({ id: cat.id, name: cat.name })) || []
+          categories: course.Categories?.map((cat) => ({ id: cat.id, name: cat.name })) || [],
+          is_published: course.is_published
         })) || []
     };
 
