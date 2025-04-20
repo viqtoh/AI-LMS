@@ -344,3 +344,11 @@
     width: 110px;
   }
 }
+
+#proxy-renderer {
+  height: 100%;
+}
+
+#msdoc-renderer {
+  height: 100%;
+}
