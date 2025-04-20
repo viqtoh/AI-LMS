@@ -7,13 +7,14 @@ import Toast from "../components/Toast";
 import { faAngleDown, faAngleUp, faList, faStar, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams } from "react-router-dom";
+import DocRenderer from "../components/DocRenderer";
 
 const CourseRead = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(true);
   const [courses, setCourses] = useState([]);
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoaded, setIsLoaded] = React.useState(false);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -130,6 +131,10 @@ const CourseRead = () => {
     fetchCourse();
   }, [id, token]);
 
+  const activateModule = (module) => {
+    setActiveModule(module);
+  };
+
   const toggleCourse = (courseId) => {
     setCoursesState((prevState) => ({
       ...prevState,
@@ -216,7 +221,7 @@ const CourseRead = () => {
               </div>
             ) : courses !== null ? (
               <div className="readerBody">
-                {activeCourse && (
+                {!activeModule && activeCourse && (
                   <div>
                     <div className="activeCourseBanner">
                       <img src="/images/default_course_banner.png" />
@@ -244,7 +249,11 @@ const CourseRead = () => {
                       </div>
                       <div className="activeCourseModules">
                         {activeCourse.modules.map((module) => (
-                          <div className="activeIntroModule">
+                          <div
+                            className="activeIntroModule"
+                            key={`momdule-${module.title}`}
+                            onClick={() => activateModule(module)}
+                          >
                             <div>
                               <FontAwesomeIcon icon={faList} />
                               <span>{module.title}</span>
@@ -257,6 +266,12 @@ const CourseRead = () => {
                     </div>
                   </div>
                 )}
+
+                {activeModule &&
+                  activeModule.content_type == "video" &&
+                  activeModule.content_type == "assessment" && (
+                    <DocRenderer url={`${API_URL}${activeModule.file}`} />
+                  )}
               </div>
             ) : (
               <div className="noObjects">Object not Found!</div>
