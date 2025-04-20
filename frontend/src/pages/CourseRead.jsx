@@ -1,10 +1,10 @@
 import React, { useRef } from "react";
 import "../styles/read.css";
 import { useState, useEffect } from "react";
-import { API_URL, IMAGE_HOST } from "../constants";
+import { API_URL } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
-import { faAngleDown, faAngleUp, faList, faStar, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faAngleDown, faAngleUp, faList, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams } from "react-router-dom";
 import DocRenderer from "../components/DocRenderer";
@@ -15,15 +15,14 @@ const CourseRead = () => {
   const [courses, setCourses] = useState([]);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isLoaded, setIsLoaded] = React.useState(false);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const [isLoaded, setIsLoaded] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
 
@@ -72,7 +71,7 @@ const CourseRead = () => {
     };
 
     fetchUserDetails();
-  }, []);
+  });
 
   const { id, pathId } = useParams();
 
@@ -129,7 +128,7 @@ const CourseRead = () => {
     };
 
     fetchCourse();
-  }, [id, token]);
+  }, [id, token, pathId, showToast]);
 
   const activateModule = (module) => {
     setActiveModule(module);
@@ -268,8 +267,8 @@ const CourseRead = () => {
                 )}
 
                 {activeModule &&
-                  activeModule.content_type == "video" &&
-                  activeModule.content_type == "assessment" && (
+                  activeModule.content_type !== "video" &&
+                  activeModule.content_type !== "assessment" && (
                     <DocRenderer url={`${API_URL}${activeModule.file}`} />
                   )}
               </div>

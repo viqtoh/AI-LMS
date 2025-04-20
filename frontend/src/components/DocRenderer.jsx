@@ -1,6 +1,7 @@
+import React, { memo } from "react";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 
-const DocRenderer = ({ url }) => {
+const DocRenderer = memo(({ url }) => {
   console.log(url);
 
   return (
@@ -20,6 +21,6 @@ const DocRenderer = ({ url }) => {
       />
     </div>
   );
-};
+});
 
 export default DocRenderer;
