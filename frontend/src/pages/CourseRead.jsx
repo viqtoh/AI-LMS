@@ -1,13 +1,26 @@
 import React, { useRef } from "react";
 import "../styles/read.css";
 import { useState, useEffect } from "react";
-import { API_URL } from "../constants";
+import { API_URL, IMAGE_HOST } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
 import { faAngleDown, faAngleUp, faList, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import DocRenderer from "../components/DocRenderer";
+import videojs from "video.js";
+import "video.js/dist/video-js.css";
+
+import "@videojs/themes/dist/city/index.css";
+
+// Fantasy
+import "@videojs/themes/dist/fantasy/index.css";
+
+// Forest
+import "@videojs/themes/dist/forest/index.css";
+
+// Sea
+import "@videojs/themes/dist/sea/index.css";
 
 const CourseRead = () => {
   const token = localStorage.getItem("token");
@@ -33,6 +46,75 @@ const CourseRead = () => {
   const [activeModule, setActiveModule] = useState(null);
 
   const descriptionRef = useRef();
+
+  const videoRef = useRef(null);
+  const playerRef = useRef(null);
+  const { id, pathId } = useParams();
+  const navigate = useNavigate();
+  const lastTimeRef = useRef(0);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (videoRef.current && activeModule && activeModule.content_type === "video") {
+      const timeoutId = setTimeout(() => {
+        if (videoRef.current) {
+          if (playerRef.current) {
+            playerRef.current.dispose();
+          }
+
+          playerRef.current = videojs(videoRef.current, {
+            controls: true,
+            autoplay: false,
+            preload: "auto",
+            userActions: {
+              hotkeys: false,
+              doubleClick: false,
+              click: false
+            },
+            sources: [
+              {
+                src: `${activeModule.file ? `${IMAGE_HOST}${activeModule.file}` : activeModule.content_url}`,
+                type: "video/mp4"
+              }
+            ]
+          });
+
+          const player = playerRef.current;
+
+          player.ready(function () {
+            const pipButton = player.controlBar.getChild("PictureInPictureToggle");
+            if (pipButton) {
+              player.controlBar.removeChild(pipButton);
+            }
+          });
+
+          player.on("seeking", function () {
+            if (player.currentTime() > lastTimeRef.current + 0.01) {
+              player.currentTime(lastTimeRef.current);
+            }
+          });
+
+          player.on("timeupdate", function () {
+            lastTimeRef.current = player.currentTime();
+          });
+
+          playerRef.current.ready(() => {
+            const controlBar = playerRef.current.controlBar;
+            if (controlBar?.progressControl) {
+              controlBar.progressControl.disable();
+              const progressEl = controlBar.progressControl.el();
+              if (progressEl) {
+                progressEl.style.pointerEvents = "none";
+              }
+            }
+          });
+        }
+      }, 2000);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [activeModule]);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -73,7 +155,28 @@ const CourseRead = () => {
     fetchUserDetails();
   });
 
-  const { id, pathId } = useParams();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const moduleId = params.get("module");
+
+    if (moduleId) {
+      let foundModule = null;
+
+      for (const course of courses) {
+        const match = course.modules.find((m) => m.id === parseInt(moduleId));
+
+        if (match) {
+          foundModule = match;
+          setActiveCourse(course);
+          break;
+        }
+      }
+
+      if (foundModule) {
+        setActiveModule(foundModule);
+      }
+    }
+  }, [location.search, courses]);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -132,6 +235,7 @@ const CourseRead = () => {
 
   const activateModule = (module) => {
     setActiveModule(module);
+    navigate(`?module=${module.id}`);
   };
 
   const toggleCourse = (courseId) => {
@@ -267,10 +371,25 @@ const CourseRead = () => {
                 )}
 
                 {activeModule &&
+                  activeCourse &&
                   activeModule.content_type !== "video" &&
                   activeModule.content_type !== "assessment" && (
                     <DocRenderer url={`${API_URL}${activeModule.file}`} />
                   )}
+
+                {activeModule && activeModule.content_type === "video" ? (
+                  <div className="d-flex justify-content-center align-items-center h-100 w-100 bg-dark">
+                    <div data-vjs-player>
+                      <video
+                        className="video-js vjs-theme-fantasy"
+                        ref={videoRef}
+                        controls
+                        disablePictureInPicture
+                        controlsList="noplaybackrate nodownload nofullscreen noremoteplayback"
+                      />
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="noObjects">Object not Found!</div>
