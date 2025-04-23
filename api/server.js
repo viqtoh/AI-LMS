@@ -11,7 +11,8 @@ const {
   Course,
   Module,
   UserProgress,
-  LearningPathCourse
+  LearningPathCourse,
+  UserModuleProgress
 } = require("./models");
 const { Op } = require("sequelize");
 
@@ -42,6 +43,7 @@ async function getUserByToken(token) {
     }
 
     return {
+      id: user.id,
       email: user.email,
       first_name: user.first_name,
       last_name: user.last_name,
@@ -448,6 +450,20 @@ app.get("/api/contents", authenticateToken, async (req, res) => {
 app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "Token missing" });
+    }
+
+    const user = await getUserByToken(token);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const userId = user.id;
 
     // Fetch learning path
     const learningPath = await LearningPath.findOne({
@@ -490,18 +506,54 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
       (learningPath.Courses || [])
         .filter((course) => course.is_published)
         .map(async (course) => {
-          if (course.is_published) {
-            const modules = await Module.findAll({ where: { courseId: course.id } });
+          const modules = await Module.findAll({ where: { courseId: course.id } });
 
-            return {
-              id: course.id,
-              title: course.title,
-              description: course.description,
-              categories: course.Categories?.map((cat) => cat.name) || [],
-              modules: modules || []
+          const moduleIds = modules.map((m) => m.id);
+          const progressRecords = await UserModuleProgress.findAll({
+            where: {
+              userId,
+              moduleId: moduleIds
+            }
+          });
+
+          const progressMap = {};
+          progressRecords.forEach((record) => {
+            progressMap[record.moduleId] = {
+              status: record.status,
+              progress: record.progress,
+              last_accessed_at: record.last_accessed_at,
+              last_second: record.last_second
             };
-          }
-        }) || []
+          });
+
+          const enrichedModules = modules.map((module) => {
+            const progress = progressMap[module.id];
+            return {
+              ...module.toJSON(),
+              userProgress: progress || {
+                status: "not_started",
+                progress: 0,
+                last_accessed_at: null,
+                last_second: null
+              }
+            };
+          });
+
+          // Determine course progress status
+          const statuses = enrichedModules.map((m) => m.userProgress.status);
+          let courseProgress = "not_started";
+          if (statuses.every((s) => s === "completed")) courseProgress = "completed";
+          else if (statuses.some((s) => s !== "not_started")) courseProgress = "in_progress";
+
+          return {
+            id: course.id,
+            title: course.title,
+            description: course.description,
+            categories: course.Categories?.map((cat) => cat.name) || [],
+            modules: enrichedModules,
+            courseProgress
+          };
+        })
     );
 
     response.courses = coursesWithModules;
@@ -512,18 +564,26 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
 
-    // Fetch course
+    if (!token) return res.status(401).json({ error: "Token missing" });
+
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const userId = user.id;
+
+    // Fetch course with categories
     const course = await Course.findOne({
       where: { id },
       include: [
         {
           model: Category,
-          through: { attributes: [] }, // Exclude join table attributes
+          through: { attributes: [] },
           as: "Categories"
         }
       ]
@@ -533,20 +593,103 @@ app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Course not found." });
     }
 
-    let modules = await Module.findAll({ where: { courseId: id } });
-    // Format response
+    // Fetch modules
+    const modules = await Module.findAll({ where: { courseId: id } });
+
+    const moduleIds = modules.map((m) => m.id);
+
+    const progressRecords = await UserModuleProgress.findAll({
+      where: {
+        userId,
+        moduleId: moduleIds
+      }
+    });
+
+    const progressMap = {};
+    progressRecords.forEach((record) => {
+      progressMap[record.moduleId] = {
+        status: record.status,
+        progress: record.progress,
+        last_accessed_at: record.last_accessed_at,
+        last_second: record.last_second
+      };
+    });
+
+    const enrichedModules = modules.map((mod) => {
+      const userProgress = progressMap[mod.id] || {
+        status: "not_started",
+        progress: 0,
+        last_accessed_at: null,
+        last_second: null
+      };
+
+      return {
+        ...mod.toJSON(),
+        userProgress
+      };
+    });
+
+    // Determine overall courseProgress
+    const statuses = enrichedModules.map((m) => m.userProgress.status);
+    let courseProgress = "not_started";
+    if (statuses.every((s) => s === "completed")) courseProgress = "completed";
+    else if (statuses.some((s) => s !== "not_started")) courseProgress = "in_progress";
+
     const response = {
       id: course.id,
       title: course.title,
       image: course.image,
       description: course.description,
       categories: course.Categories?.map((cat) => cat.name) || [],
-      modules: modules?.map((mod) => ({ ...mod.dataValues })) || []
+      modules: enrichedModules,
+      courseProgress
     };
 
     res.status(200).json(response);
   } catch (error) {
     console.error("Error fetching course:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//region module progress
+
+app.post("/api/module-progress/:moduleId", authenticateToken, async (req, res) => {
+  try {
+    const { moduleId } = req.params;
+    const { status, progress, last_second } = req.body;
+
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token missing" });
+
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const userId = user.id;
+
+    // Find or create progress record
+    let [record, created] = await UserModuleProgress.findOrCreate({
+      where: { userId, moduleId },
+      defaults: {
+        status: status || "in_progress",
+        progress: progress || 0,
+        last_second: last_second || 0,
+        last_accessed_at: new Date()
+      }
+    });
+
+    if (!created) {
+      // Update existing record
+      record.status = status || record.status;
+      record.progress = typeof progress === "number" ? progress : record.progress;
+      record.last_second = typeof last_second === "number" ? last_second : record.last_second;
+      record.last_accessed_at = new Date();
+      await record.save();
+    }
+
+    res.status(200).json({ message: "Progress updated", data: record });
+  } catch (error) {
+    console.error("Error updating module progress:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

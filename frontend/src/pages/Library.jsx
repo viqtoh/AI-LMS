@@ -483,7 +483,7 @@ const Library = () => {
                         <div className="searchTitle">
                           <a
                             href={
-                              content.type == "Course"
+                              content.type === "Course"
                                 ? `/content-library/course/${content.id}`
                                 : `/content-library/path/${content.id}`
                             }
