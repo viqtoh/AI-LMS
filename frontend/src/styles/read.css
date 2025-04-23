@@ -352,3 +352,40 @@
 #msdoc-renderer {
   height: 100%;
 }
+
+.videoReaderDiv {
+  height: 100%;
+  width: 100%;
+}
+
+.startdiv {
+  width: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 600px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+}
+
+.startdiv button {
+  background-color: #44444444;
+  color: white;
+  border-radius: 10px;
+  padding: 10px 25px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.startdiv button svg {
+  margin-right: 10px;
+}
+
+.startdiv button span {
+  font-size: 20px;
+  color: white;
+}

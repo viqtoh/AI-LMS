@@ -4,7 +4,14 @@ import { useState, useEffect } from "react";
 import { API_URL, IMAGE_HOST } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
-import { faAngleDown, faAngleUp, faList, faTimes } from "@fortawesome/free-solid-svg-icons";
+import {
+  faAngleDown,
+  faAngleUp,
+  faList,
+  faPlay,
+  faRedo,
+  faTimes
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import DocRenderer from "../components/DocRenderer";
@@ -26,6 +33,7 @@ const CourseRead = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(true);
   const [courses, setCourses] = useState([]);
+  const [isVideoReady, setIsVideoReady] = useState(false);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -44,6 +52,7 @@ const CourseRead = () => {
 
   const [activeCourse, setActiveCourse] = useState(null);
   const [activeModule, setActiveModule] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const descriptionRef = useRef();
 
@@ -52,8 +61,10 @@ const CourseRead = () => {
   const { id, pathId } = useParams();
   const navigate = useNavigate();
   const lastTimeRef = useRef(0);
-
+  const intervalRef = useRef(null);
   const location = useLocation();
+  const [currentProgress, setCurrentProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
     if (videoRef.current && activeModule && activeModule.content_type === "video") {
@@ -83,15 +94,12 @@ const CourseRead = () => {
           const player = playerRef.current;
 
           player.ready(function () {
+            if (currentTime > 0) {
+              setIsVideoReady(true);
+            }
             const pipButton = player.controlBar.getChild("PictureInPictureToggle");
             if (pipButton) {
               player.controlBar.removeChild(pipButton);
-            }
-          });
-
-          player.on("seeking", function () {
-            if (player.currentTime() > lastTimeRef.current + 0.01) {
-              player.currentTime(lastTimeRef.current);
             }
           });
 
@@ -99,7 +107,16 @@ const CourseRead = () => {
             lastTimeRef.current = player.currentTime();
           });
 
-          playerRef.current.ready(() => {
+          player.on("timeupdate", () => {
+            const current = player.currentTime();
+            const duration = player.duration();
+            if (current != 0) {
+              setCurrentTime(Math.floor(current));
+              setCurrentProgress(duration ? current / duration : 0);
+            }
+          });
+
+          player.ready(() => {
             const controlBar = playerRef.current.controlBar;
             if (controlBar?.progressControl) {
               controlBar.progressControl.disable();
@@ -115,6 +132,18 @@ const CourseRead = () => {
       return () => clearTimeout(timeoutId);
     }
   }, [activeModule]);
+
+  useEffect(() => {}, [currentTime]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      intervalRef.current = setInterval(updateProgress, 10000); // 10 seconds
+    } else {
+      clearInterval(intervalRef.current);
+    }
+
+    return () => clearInterval(intervalRef.current);
+  }, [isPlaying]);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -163,6 +192,7 @@ const CourseRead = () => {
       let foundModule = null;
 
       for (const course of courses) {
+        console.log(course);
         const match = course.modules.find((m) => m.id === parseInt(moduleId));
 
         if (match) {
@@ -174,6 +204,9 @@ const CourseRead = () => {
 
       if (foundModule) {
         setActiveModule(foundModule);
+        setCurrentTime(foundModule.userProgress.last_second | 0);
+        setCurrentProgress(foundModule.userProgress.progress);
+        console.log(foundModule.userProgress);
       }
     }
   }, [location.search, courses]);
@@ -233,6 +266,33 @@ const CourseRead = () => {
     fetchCourse();
   }, [id, token, pathId, showToast]);
 
+  const updateProgress = async () => {
+    const newCurrentTime = playerRef.current.currentTime();
+    const totalTime = playerRef.current.duration;
+
+    try {
+      const response = await fetch(`${API_URL}/api/module-progress/${activeModule.id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`, // If authentication is required
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: "in_progress",
+          progress: (newCurrentTime / totalTime) * 100,
+          last_second: Math.floor(newCurrentTime)
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch object");
+      }
+      const data = await response.json();
+    } catch (err) {
+      showToast(err.message, false);
+    }
+  };
+
   const activateModule = (module) => {
     setActiveModule(module);
     navigate(`?module=${module.id}`);
@@ -243,7 +303,21 @@ const CourseRead = () => {
       ...prevState,
       [courseId]: !prevState[courseId] // Toggle the state for the specific course by its id
     }));
-    console.log(coursesState);
+  };
+
+  const startVideo = () => {
+    playerRef.current.currentTime(0);
+    setCurrentTime(0);
+    playerRef.current.play();
+    updateProgress();
+    setIsVideoReady(false);
+  };
+
+  const resumeVideo = () => {
+    playerRef.current.currentTime(currentTime);
+    playerRef.current.play();
+    updateProgress();
+    setIsVideoReady(false);
   };
 
   return (
@@ -378,15 +452,40 @@ const CourseRead = () => {
                   )}
 
                 {activeModule && activeModule.content_type === "video" ? (
-                  <div className="d-flex justify-content-center align-items-center h-100 w-100 bg-dark">
-                    <div data-vjs-player>
-                      <video
-                        className="video-js vjs-theme-fantasy"
-                        ref={videoRef}
-                        controls
-                        disablePictureInPicture
-                        controlsList="noplaybackrate nodownload nofullscreen noremoteplayback"
-                      />
+                  <div className="videoReaderDiv">
+                    {isVideoReady && currentTime > 0 ? (
+                      <div className="startdiv">
+                        <button onClick={() => resumeVideo()}>
+                          <FontAwesomeIcon icon={faRedo} />
+                          <span>Resume</span>
+                        </button>
+                        <button onClick={() => startVideo()}>
+                          <FontAwesomeIcon icon={faPlay} />
+                          <span>Start Over</span>
+                        </button>
+                      </div>
+                    ) : null}
+
+                    <div className="d-flex justify-content-center align-items-center h-100 w-100 bg-dark">
+                      <div data-vjs-player>
+                        <video
+                          className="video-js vjs-theme-fantasy"
+                          ref={videoRef}
+                          onPlay={() => setIsPlaying(true)}
+                          onPause={() => setIsPlaying(false)}
+                          onEnded={() => setIsPlaying(false)}
+                          controls
+                          disablePictureInPicture
+                          controlsList="nodownload nofullscreen noremoteplayback"
+                        />
+                        <style>
+                          {`
+          .vjs-big-play-button {
+            visibility: ${!isVideoReady ? "visible" : "hidden"} !important;
+          }
+        `}
+                        </style>
+                      </div>
                     </div>
                   </div>
                 ) : null}
