@@ -905,3 +905,27 @@ li svg {
   width: 100%;
   text-align: center;
 }
+
+.addOptionBtn {
+  background-color: #3a7dc9;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 200px;
+}
+
+.examcard {
+  background-color: #f2f3f7;
+  border-radius: 20px;
+}
+
+.AssessmentCon {
+  background-color: #fff;
+  padding: 50px 20px;
+  border-radius: 20px;
+}
