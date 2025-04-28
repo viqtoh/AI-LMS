@@ -5,13 +5,13 @@ const DocRenderer = memo(({ url }) => {
   console.log(url);
 
   return (
-    <div style={{ height: "100vh" }}>
+    <div style={{ height: "90vh" }}>
       {" "}
       {/* Ensure parent container has height */}
       <DocViewer
         pluginRenderers={DocViewerRenderers}
         documents={[{ uri: url }]}
-        style={{ height: "100vh" }} // Make viewer fill its parent
+        style={{ height: "90vh" }} // Make viewer fill its parent
         config={{
           header: {
             disableHeader: true,

@@ -397,7 +397,7 @@ const CourseRead = () => {
                 <div className="loader"></div>
               </div>
             ) : courses !== null ? (
-              <div className="readerBody">
+              <div className="readerBody bg-dark">
                 {!activeModule && activeCourse && (
                   <div>
                     <div className="activeCourseBanner">
@@ -466,7 +466,7 @@ const CourseRead = () => {
                       </div>
                     ) : null}
 
-                    <div className="d-flex justify-content-center align-items-center h-100 w-100 bg-dark">
+                    <div className="d-flex justify-content-center align-items-center h-100 w-100 ">
                       <div data-vjs-player>
                         <video
                           className="video-js vjs-theme-fantasy"
