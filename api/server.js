@@ -697,6 +697,59 @@ app.post("/api/module-progress/:moduleId", authenticateToken, async (req, res) =
   }
 });
 
+//region user test
+//get assessment by module id
+app.get("/api/assessment/module/:moduleId", authenticateToken, async (req, res) => {
+  const { moduleId } = req.params;
+
+  try {
+    const module = await Module.findByPk(moduleId, {
+      include: {
+        model: Assessment,
+        include: {
+          model: Question,
+          include: Option
+        }
+      }
+    });
+
+    if (!module) {
+      return res.status(404).json({ message: "Module not found." });
+    }
+
+    const assessment = module.Assessment;
+
+    if (!assessment) {
+      return res.json({
+        moduleName: module.title,
+        assessment: null,
+        questions: []
+      });
+    }
+
+    const formattedQuestions = assessment.Questions.sort((a, b) => a.id - b.id) // Sort questions by id
+      .map((q) => ({
+        id: q.aid,
+        question: q.text,
+        answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
+          .map((opt) => ({
+            id: opt.qid,
+            text: opt.text
+          }))
+      }));
+
+    res.json({
+      moduleName: module.title,
+      assessmentId: assessment.id,
+      title: assessment.title,
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error fetching module and assessment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 //region Admin Apis
 
 app.post("/api/admin/login", async (req, res) => {
@@ -1394,8 +1447,8 @@ app.get("/api/admin/category", authenticateToken, async (req, res) => {
   }
 });
 
-//region set test
-app.get("/api/admin/assessment/module/:moduleId", async (req, res) => {
+//region admin set test
+app.get("/api/admin/assessment/module/:moduleId", authenticateToken, async (req, res) => {
   const { moduleId } = req.params;
 
   try {
@@ -1448,7 +1501,7 @@ app.get("/api/admin/assessment/module/:moduleId", async (req, res) => {
 });
 
 //update questions
-app.put("/api/admin/assessment/module/:moduleId", async (req, res) => {
+app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req, res) => {
   const { moduleId } = req.params;
   const questionsPayload = req.body;
   console.log("Received Payload:", questionsPayload);

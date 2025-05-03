@@ -28,6 +28,7 @@ import "@videojs/themes/dist/forest/index.css";
 
 // Sea
 import "@videojs/themes/dist/sea/index.css";
+import AssessmentHandler from "./AssessmentHandler";
 
 const CourseRead = () => {
   const token = localStorage.getItem("token");
@@ -489,6 +490,10 @@ const CourseRead = () => {
                     </div>
                   </div>
                 ) : null}
+
+                {activeModule && activeModule.content_type === "assessment" && (
+                  <AssessmentHandler assessment={activeModule} />
+                )}
               </div>
             ) : (
               <div className="noObjects">Object not Found!</div>

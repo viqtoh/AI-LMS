@@ -969,3 +969,22 @@ li svg {
   border-color: #417df7;
   margin-right: 7px;
 }
+
+.assessment-handler {
+  height: 100%;
+  width: 100%;
+  background-color: #aaa;
+}
+
+.form-check-label {
+  position: inherit;
+  transform: none;
+}
+
+.btn-unvisited {
+  background-color: #d3d4d5;
+}
+
+.btn-unvisited:hover {
+  background-color: #8c8f92 !important;
+}
