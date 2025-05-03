@@ -1448,6 +1448,42 @@ app.get("/api/admin/category", authenticateToken, async (req, res) => {
 });
 
 //region admin set test
+
+app.put(
+  "/api/admin/assessment/module/:moduleId/update/descriptions",
+  authenticateToken,
+  async (req, res) => {
+    const { moduleId } = req.params;
+
+    const { title, description, duration } = req.body;
+
+    try {
+      const module = await Module.findByPk(moduleId, {
+        include: {
+          model: Assessment
+        }
+      });
+
+      if (!module) {
+        return res.status(404).json({ message: "Module not found." });
+      }
+
+      const assessment = module.Assessment;
+
+      if (!assessment) {
+        res.status(500).json({ message: "Assessment not found." });
+      }
+
+      await assessment.update({ title, description, duration });
+
+      res.status(200).json({ message: "Assessment updated successfully." });
+    } catch (error) {
+      console.error("Error updating assessment:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
+
 app.get("/api/admin/assessment/module/:moduleId", authenticateToken, async (req, res) => {
   const { moduleId } = req.params;
 
@@ -1488,10 +1524,14 @@ app.get("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
           }))
       }));
 
+    console.log(assessment);
+
     res.json({
       moduleName: module.title,
       assessmentId: assessment.id,
       title: assessment.title,
+      description: assessment.description,
+      duration: assessment.duration,
       questions: formattedQuestions
     });
   } catch (error) {
@@ -1504,7 +1544,6 @@ app.get("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
 app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req, res) => {
   const { moduleId } = req.params;
   const questionsPayload = req.body;
-  console.log("Received Payload:", questionsPayload);
 
   try {
     const module = await Module.findByPk(moduleId);
@@ -1574,7 +1613,6 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
       const questionInPayload = questionsPayload.find((q) => q.id === existingQuestion.aid);
       if (!questionInPayload) {
         // Delete the question and its options
-        console.log("deleting");
         await Option.destroy({ where: { QuestionId: existingQuestion.id } });
         await existingQuestion.destroy();
       } else {

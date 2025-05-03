@@ -966,7 +966,9 @@ li svg {
 .small-loader {
   height: 20px !important;
   width: 20px !important;
-  border-color: #417df7;
+  border-color: #417df7 !important;
+}
+.saving-text .small-loader {
   margin-right: 7px;
 }
 

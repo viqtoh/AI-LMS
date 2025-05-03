@@ -51,6 +51,12 @@ const AdminSetAssessment = () => {
       if (data.questions.length > 0) {
         setQuestions(data.questions);
       }
+
+      setFormData({
+        title: data.title,
+        description: data.description || "",
+        duration: data.duration || ""
+      });
     } catch (error) {
       console.error("Error fetching user details:", error);
     } finally {
@@ -111,6 +117,49 @@ const AdminSetAssessment = () => {
     ]);
   };
 
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({ title: "", description: "", duration: "" });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/assessment/module/${id}/update/descriptions`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(formData)
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update category");
+      }
+
+      const data = await response.json();
+      if (data.error) {
+        showToast(data.error, false);
+      } else {
+        showToast("Assessment updated successfully", true);
+        setShowModal(false);
+      }
+    } catch (error) {
+      console.error("Error updating category:", error);
+      showToast("Failed to update category", false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div>
       <div className="navHeader">
@@ -124,7 +173,10 @@ const AdminSetAssessment = () => {
           </div>
         ) : (
           <div className="sub-body">
-            <div className="w-100 d-flex justify-content-end mb-5">
+            <div className="w-100 d-flex justify-content-between mb-5">
+              <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                Edit Assessment
+              </button>
               {!isSaving ? (
                 <span className="saved-text">
                   <div />
@@ -155,6 +207,71 @@ const AdminSetAssessment = () => {
           </div>
         )}
       </div>
+
+      {showModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3 className="mb-5">Edit Assessment</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="description">Title</label>
+
+                <input
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="description">Description</label>
+
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="duration">Duration (mins)</label>
+                <input
+                  type="number"
+                  id="duration"
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="form-actions justify-content-between w-100 d-flex">
+                {isSaving ? (
+                  <button className="btn btn-theme" disabled>
+                    <div className="loader small-loader"></div>
+                  </button>
+                ) : (
+                  <button type="submit" className="btn btn-theme">
+                    Save
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
