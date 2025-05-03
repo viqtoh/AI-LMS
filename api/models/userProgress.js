@@ -12,7 +12,7 @@ const UserProgress = sequelize.define(
       primaryKey: true
     },
     progress: {
-      type: DataTypes.INTEGER, // Example: 50% completion
+      type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0
     }

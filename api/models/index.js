@@ -10,6 +10,11 @@ const Module = require("./module");
 const UserProgress = require("./userProgress");
 const LearningPathCourse = require("./learningpathcourse");
 const UserModuleProgress = require("./usermoduleprogress");
+const Assessment = require("./Assessment");
+const AssessmentAttempt = require("./AssessmentAttempt");
+const Question = require("./Question");
+const Option = require("./Option");
+const UserAnswer = require("./UserAnswer");
 
 // Define junction tables (before associations)
 const LearningPathCategory = sequelize.define("LearningPathCategory", {}, { timestamps: false });
@@ -41,6 +46,18 @@ User.hasMany(UserModuleProgress, { foreignKey: "userId" });
 UserModuleProgress.belongsTo(Module, { foreignKey: "moduleId", onDelete: "CASCADE" });
 Module.hasMany(UserModuleProgress, { foreignKey: "moduleId" });
 
+Assessment.hasMany(AssessmentAttempt);
+User.hasMany(AssessmentAttempt);
+
+Module.hasOne(Assessment, { foreignKey: "moduleId", onDelete: "CASCADE" });
+
+Question.hasMany(Option);
+Assessment.hasMany(Question);
+
+AssessmentAttempt.hasMany(UserAnswer);
+Question.hasMany(UserAnswer);
+Option.hasMany(UserAnswer);
+
 // Create an object to store models
 const db = {
   sequelize,
@@ -54,7 +71,12 @@ const db = {
   LearningPathCategory,
   CourseCategory,
   LearningPathCourse,
-  UserModuleProgress
+  UserModuleProgress,
+  Assessment,
+  AssessmentAttempt,
+  Question,
+  Option,
+  UserAnswer
 };
 
 // Sync database
