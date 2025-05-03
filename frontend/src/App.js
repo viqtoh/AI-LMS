@@ -20,6 +20,7 @@ import AdminLearnPath from "./adminPages/LearnPath";
 import AdminProfile from "./adminPages/Profile";
 import AdminCourse from "./adminPages/Course";
 import AdminModuleCrud from "./adminPages/AdminModuleCrud";
+import AdminSetAssessment from "./adminPages/AdminSetAssessment";
 
 function App() {
   return (
@@ -56,6 +57,11 @@ function App() {
         <Route path="/admin/user-management" element={<UserManagement />} />
         <Route path="/admin/staff-management" element={<StaffManagement />} />
         <Route path="/admin/account/settings" element={<AdminProfile />} />
+
+        <Route
+          path="/admin/content-management/course/module/:id/assessment"
+          element={<AdminSetAssessment />}
+        />
       </Routes>
     </Router>
   );

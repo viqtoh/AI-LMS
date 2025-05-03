@@ -106,6 +106,10 @@ const AdminCourse = () => {
     }));
   };
 
+  useEffect(() => {
+    console.log(modules);
+  }, [modules]);
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setIsLoading2(true);

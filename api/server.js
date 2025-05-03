@@ -12,7 +12,10 @@ const {
   Module,
   UserProgress,
   LearningPathCourse,
-  UserModuleProgress
+  UserModuleProgress,
+  Assessment,
+  Question,
+  Option
 } = require("./models");
 const { Op } = require("sequelize");
 
@@ -850,9 +853,9 @@ app.post("/api/admin/course", authenticateToken, async (req, res) => {
       await course.addCategories(categories);
     }
 
-    res.status(201).json({ learningPath });
+    res.status(201).json({ course });
   } catch (error) {
-    console.error("Error creating learning path:", error);
+    console.error("Error creating course:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -1388,6 +1391,185 @@ app.get("/api/admin/category", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Error fetching categories:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//region set test
+app.get("/api/admin/assessment/module/:moduleId", async (req, res) => {
+  const { moduleId } = req.params;
+
+  try {
+    const module = await Module.findByPk(moduleId, {
+      include: {
+        model: Assessment,
+        include: {
+          model: Question,
+          include: Option
+        }
+      }
+    });
+
+    if (!module) {
+      return res.status(404).json({ message: "Module not found." });
+    }
+
+    const assessment = module.Assessment;
+
+    if (!assessment) {
+      return res.json({
+        moduleName: module.title,
+        assessment: null,
+        questions: []
+      });
+    }
+
+    const formattedQuestions = assessment.Questions.sort((a, b) => a.id - b.id) // Sort questions by id
+      .map((q) => ({
+        id: q.aid,
+        question: q.text,
+        answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
+          .map((opt) => ({
+            id: opt.qid,
+            text: opt.text,
+            correct: opt.isCorrect
+          }))
+      }));
+
+    res.json({
+      moduleName: module.title,
+      assessmentId: assessment.id,
+      title: assessment.title,
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error fetching module and assessment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//update questions
+app.put("/api/admin/assessment/module/:moduleId", async (req, res) => {
+  const { moduleId } = req.params;
+  const questionsPayload = req.body;
+  console.log("Received Payload:", questionsPayload);
+
+  try {
+    const module = await Module.findByPk(moduleId);
+    if (!module) return res.status(404).json({ message: "Module not found" });
+
+    let assessment = await Assessment.findOne({ where: { moduleId } });
+
+    if (!assessment) {
+      assessment = await Assessment.create({ moduleId, title: "Default Title" });
+    }
+
+    // First, update or create questions and options based on the payload
+    for (const q of questionsPayload) {
+      let question;
+
+      if (q.id) {
+        // Try to update existing question
+        question = await Question.findOne({ where: { aid: q.id, AssessmentId: assessment.id } });
+        if (question) {
+          question.text = q.question;
+          await question.save();
+        } else {
+          question = await Question.create({
+            aid: q.id,
+            text: q.question,
+            AssessmentId: assessment.id
+          });
+        }
+
+        // Update existing options or create new ones
+        for (const opt of q.answers) {
+          if (opt.id) {
+            const existingOpt = await Option.findOne({
+              where: { qid: opt.id, QuestionId: question.id }
+            });
+            if (existingOpt) {
+              existingOpt.text = opt.text;
+              existingOpt.isCorrect = opt.correct;
+              await existingOpt.save();
+            } else {
+              await Option.create({
+                qid: opt.id,
+                text: opt.text,
+                isCorrect: opt.correct,
+                QuestionId: question.id
+              });
+            }
+          } else {
+            await Option.create({
+              qid: opt.id,
+              text: opt.text,
+              isCorrect: opt.correct,
+              QuestionId: question.id
+            });
+          }
+        }
+      }
+    }
+
+    // Now, check and delete questions or options that are no longer in the payload
+    const existingQuestions = await Question.findAll({
+      where: { AssessmentId: assessment.id }
+    });
+
+    // Delete questions not in the payload
+    for (const existingQuestion of existingQuestions) {
+      const questionInPayload = questionsPayload.find((q) => q.id === existingQuestion.aid);
+      if (!questionInPayload) {
+        // Delete the question and its options
+        console.log("deleting");
+        await Option.destroy({ where: { QuestionId: existingQuestion.id } });
+        await existingQuestion.destroy();
+      } else {
+        // Delete options not in the payload
+        const existingOptions = await Option.findAll({
+          where: { QuestionId: existingQuestion.id }
+        });
+        for (const existingOption of existingOptions) {
+          const optionInPayload = questionInPayload.answers.find(
+            (opt) => opt.id === existingOption.qid
+          );
+          if (!optionInPayload) {
+            await existingOption.destroy();
+          }
+        }
+      }
+    }
+
+    // Fetch all the questions and their options after saving and deleting
+    const updatedQuestions = await Question.findAll({
+      where: { AssessmentId: assessment.id },
+      include: {
+        model: Option
+      }
+    });
+
+    // Format the data to match the response payload format
+    const formattedQuestions = updatedQuestions
+      .sort((a, b) => a.id - b.id) // Sort questions by id
+      .map((q) => ({
+        id: q.aid,
+        question: q.text,
+        answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
+          .map((opt) => ({
+            id: opt.qid,
+            text: opt.text,
+            correct: opt.isCorrect
+          }))
+      }));
+
+    // Send back a response with the message and updated questions
+    res.json({
+      message: "Assessment questions/answers saved successfully",
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error saving questions and options:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

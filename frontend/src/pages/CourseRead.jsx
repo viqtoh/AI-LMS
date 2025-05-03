@@ -218,7 +218,7 @@ const CourseRead = () => {
                 <div className="loader"></div>
               </div>
             ) : courses !== null ? (
-              <div className="readerBody">
+              <div className="readerBody bg-dark">
                 {!activeModule && activeCourse && (
                   <div>
                     <div className="activeCourseBanner">
@@ -270,6 +270,45 @@ const CourseRead = () => {
                   activeModule.content_type === "assessment" && (
                     <DocRenderer url={`${API_URL}${activeModule.file}`} />
                   )}
+
+                {activeModule && activeModule.content_type === "video" ? (
+                  <div className="videoReaderDiv">
+                    {isVideoReady && currentTime > 0 ? (
+                      <div className="startdiv">
+                        <button onClick={() => resumeVideo()}>
+                          <FontAwesomeIcon icon={faRedo} />
+                          <span>Resume</span>
+                        </button>
+                        <button onClick={() => startVideo()}>
+                          <FontAwesomeIcon icon={faPlay} />
+                          <span>Start Over</span>
+                        </button>
+                      </div>
+                    ) : null}
+
+                    <div className="d-flex justify-content-center align-items-center h-100 w-100 ">
+                      <div data-vjs-player>
+                        <video
+                          className="video-js vjs-theme-fantasy"
+                          ref={videoRef}
+                          onPlay={() => setIsPlaying(true)}
+                          onPause={() => setIsPlaying(false)}
+                          onEnded={() => setIsPlaying(false)}
+                          controls
+                          disablePictureInPicture
+                          controlsList="nodownload nofullscreen noremoteplayback"
+                        />
+                        <style>
+                          {`
+          .vjs-big-play-button {
+            visibility: ${!isVideoReady ? "visible" : "hidden"} !important;
+          }
+        `}
+                        </style>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="noObjects">Object not Found!</div>

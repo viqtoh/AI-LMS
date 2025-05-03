@@ -905,3 +905,67 @@ li svg {
   width: 100%;
   text-align: center;
 }
+
+.addOptionBtn {
+  background-color: #3a7dc9;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 200px;
+}
+
+.examcard {
+  background-color: #f2f3f7;
+  border-radius: 20px;
+}
+
+.AssessmentCon {
+  background-color: #fff;
+  padding: 50px 20px;
+  border-radius: 20px;
+}
+
+.saved-text {
+  color: #28a745;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.saved-text div {
+  width: 3px;
+  height: 3px;
+  background-color: #28a745;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.saving-text {
+  color: #0057ff;
+  background-color: #83a6ec;
+  border: 1px solid #6a96ee;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+}
+.small-loader {
+  height: 20px !important;
+  width: 20px !important;
+  border-color: #417df7;
+  margin-right: 7px;
+}

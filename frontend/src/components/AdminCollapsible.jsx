@@ -13,7 +13,14 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimesCircle } from "@fortawesome/free-regular-svg-icons";
 
-export const ModuleCollapsible = ({ title, description = "", id, courseId, is_published }) => {
+export const ModuleCollapsible = ({
+  title,
+  description = "",
+  id,
+  courseId,
+  is_published,
+  content_type = ""
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="collapsible">
@@ -26,6 +33,16 @@ export const ModuleCollapsible = ({ title, description = "", id, courseId, is_pu
         </button>
 
         <div className="d-flex gap-2 align-items-center">
+          {content_type === "assessment" && (
+            <button
+              className="bg-danger text-white py-1 px-3 rounded"
+              onClick={() => {
+                window.location.href = `/admin/content-management/course/module/${id}/assessment`;
+              }}
+            >
+              Set Assessment
+            </button>
+          )}
           <button
             className="btn btn-primary sm-btn"
             onClick={() => {
@@ -106,6 +123,7 @@ export const CourseCollapsible = ({ title, description = "", id, is_published, l
             <div className="collapseTextL">
               <p>{description}</p>
             </div>
+
             <div className={`collapseTextR ${is_published ? "text-success" : "text-danger"}`}>
               {is_published ? (
                 <FontAwesomeIcon icon={faCheckCircle} />
