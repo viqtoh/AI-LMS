@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const authenticateToken = require("./middleware/auth");
 const pool = require("./db");
+const { Sequelize } = require("sequelize");
 const {
   User,
   LearningPath,
@@ -15,7 +16,9 @@ const {
   UserModuleProgress,
   Assessment,
   Question,
-  Option
+  Option,
+  AttemptQuestion,
+  AssessmentAttempt
 } = require("./models");
 const { Op } = require("sequelize");
 
@@ -750,6 +753,188 @@ app.get("/api/assessment/module/:moduleId", authenticateToken, async (req, res) 
   }
 });
 
+// check test
+app.get("/api/assessment-attempt/check/:assessmentId", authenticateToken, async (req, res) => {
+  const { assessmentId } = req.params;
+
+  try {
+    if (!assessmentId) {
+      return res.status(400).json({ message: "Assessment ID is required" });
+    }
+
+    const token = req.headers["authorization"]?.split(" ")[1];
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const attempt = await AssessmentAttempt.findOne({
+      where: {
+        AssessmentId: assessmentId,
+        UserId: user.id
+      },
+      include: [{ model: Assessment }],
+      order: [["createdAt", "DESC"]]
+    });
+
+    if (!attempt) {
+      return res.status(200).json({ exists: false, hasTimeLeft: false });
+    }
+
+    const startTime = new Date(attempt.startTime);
+    const now = new Date();
+    const elapsedSeconds = Math.floor((now - startTime) / 1000); // milliseconds to seconds
+    const totalDurationSeconds = attempt.Assessment.duration * 60;
+
+    const hasTimeLeft = elapsedSeconds < totalDurationSeconds;
+
+    return res.status(200).json({
+      exists: true,
+      hasTimeLeft,
+      timeUsed: elapsedSeconds,
+      timeRemaining: Math.max(0, totalDurationSeconds - elapsedSeconds),
+      assessmentAttemptId: attempt.id
+    });
+  } catch (err) {
+    console.error("Error checking assessment attempt:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//start test
+
+app.post("/api/assessment-attempt", authenticateToken, async (req, res) => {
+  const { assessmentId } = req.body;
+
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token missing" });
+
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    // Validate input
+    if (!assessmentId) {
+      return res.status(400).json({ message: "Assessment not found" });
+    }
+
+    // Get the assessment and number of questions
+    const assessment = await Assessment.findByPk(assessmentId);
+    if (!assessment) {
+      return res.status(404).json({ message: "Assessment not found" });
+    }
+
+    const numberToSelect = assessment.numberOfQuestions;
+    const userId = user.id;
+    // Fetch random questions from the assessment
+    const allQuestions = await Question.findAll({
+      where: { AssessmentId: assessmentId },
+      include: [{ model: Option }],
+      order: Sequelize.literal("RANDOM()"),
+      limit: numberToSelect
+    });
+
+    // Create the attempt
+    const attempt = await AssessmentAttempt.create({
+      UserId: userId,
+      AssessmentId: assessmentId,
+      startTime: new Date()
+    });
+
+    // Associate the selected questions to the attempt
+    for (const question of allQuestions) {
+      await AttemptQuestion.create({
+        AttemptId: attempt.id,
+        QuestionId: question.id
+      });
+    }
+
+    // Return the attempt and questions
+    const formattedQuestions = allQuestions.map((q) => ({
+      id: q.id,
+      question: q.text,
+      answers: q.Options.sort((a, b) => a.id - b.id).map((opt) => ({
+        id: opt.id,
+        text: opt.text
+      }))
+    }));
+
+    res.status(201).json({
+      message: "Assessment attempt created",
+      attemptId: attempt.id,
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error creating assessment attempt:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+app.post("/api/assessment-attempt/resume", authenticateToken, async (req, res) => {
+  const { assessmentAttemptId } = req.body;
+
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token missing" });
+
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (!assessmentAttemptId) {
+      return res.status(400).json({ message: "AssessmentAttempt ID is required" });
+    }
+
+    const assessmentAttempt = await AssessmentAttempt.findOne({
+      where: {
+        id: assessmentAttemptId,
+        UserId: user.id
+      }
+    });
+
+    if (!assessmentAttempt) {
+      return res.status(404).json({ message: "Assessment attempt not found" });
+    }
+
+    // Step 1: Get AttemptQuestions in the order they were created
+    const attemptQuestions = await AttemptQuestion.findAll({
+      where: { AttemptId: assessmentAttemptId },
+      order: [["createdAt", "ASC"]] // <-- This preserves original question order
+    });
+
+    const questionIds = attemptQuestions.map((aq) => aq.QuestionId);
+
+    // Step 2: Fetch all related questions + their options
+    const questions = await Question.findAll({
+      where: { id: questionIds },
+      include: [{ model: Option }]
+    });
+
+    // Step 3: Create a map for quick lookup
+    const questionMap = {};
+    questions.forEach((q) => {
+      questionMap[q.id] = q;
+    });
+
+    // Step 4: Format the questions preserving order
+    const formattedQuestions = attemptQuestions.map((aq) => {
+      const q = questionMap[aq.QuestionId];
+      return {
+        id: q.id,
+        question: q.text,
+        answers: q.Options.sort((a, b) => a.id - b.id).map((opt) => ({
+          id: opt.id,
+          text: opt.text
+        }))
+      };
+    });
+
+    res.status(200).json({
+      message: "Assessment resumed",
+      attemptId: assessmentAttempt.id,
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error resuming assessment attempt:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 //region Admin Apis
 
 app.post("/api/admin/login", async (req, res) => {
@@ -1455,7 +1640,7 @@ app.put(
   async (req, res) => {
     const { moduleId } = req.params;
 
-    const { title, description, duration } = req.body;
+    const { title, description, duration, numberOfQuestions } = req.body;
 
     try {
       const module = await Module.findByPk(moduleId, {
@@ -1474,7 +1659,7 @@ app.put(
         res.status(500).json({ message: "Assessment not found." });
       }
 
-      await assessment.update({ title, description, duration });
+      await assessment.update({ title, description, duration, numberOfQuestions });
 
       res.status(200).json({ message: "Assessment updated successfully." });
     } catch (error) {

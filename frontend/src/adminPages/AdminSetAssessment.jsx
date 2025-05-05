@@ -55,7 +55,8 @@ const AdminSetAssessment = () => {
       setFormData({
         title: data.title,
         description: data.description || "",
-        duration: data.duration || ""
+        duration: data.duration || "",
+        numberOfQuestions: data.numberOfQuestions || ""
       });
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -118,7 +119,12 @@ const AdminSetAssessment = () => {
   };
 
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ title: "", description: "", duration: "" });
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    duration: "",
+    numberOfQuestions: ""
+  });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -232,6 +238,18 @@ const AdminSetAssessment = () => {
                   id="description"
                   name="description"
                   value={formData.description}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="duration">Number of questions</label>
+                <input
+                  type="number"
+                  id="numberOfQuestions"
+                  name="numberOfQuestions"
+                  value={formData.numberOfQuestions}
                   onChange={handleInputChange}
                   className="form-control"
                   required

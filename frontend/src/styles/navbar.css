@@ -990,3 +990,9 @@ li svg {
 .btn-unvisited:hover {
   background-color: #8c8f92 !important;
 }
+
+.testdesc p {
+  color: white;
+  font-size: 15px;
+  text-shadow: #000;
+}
