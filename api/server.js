@@ -18,7 +18,8 @@ const {
   Question,
   Option,
   AttemptQuestion,
-  AssessmentAttempt
+  AssessmentAttempt,
+  UserAnswer
 } = require("./models");
 const { Op } = require("sequelize");
 
@@ -902,6 +903,8 @@ app.post("/api/assessment-attempt/resume", authenticateToken, async (req, res) =
 
     const questionIds = attemptQuestions.map((aq) => aq.QuestionId);
 
+    console.log(attemptQuestions);
+
     // Step 2: Fetch all related questions + their options
     const questions = await Question.findAll({
       where: { id: questionIds },
@@ -914,19 +917,24 @@ app.post("/api/assessment-attempt/resume", authenticateToken, async (req, res) =
       questionMap[q.id] = q;
     });
 
-    console.log(questionMap);
-    console.log(attemptQuestions);
+    const answers = await UserAnswer.findAll({
+      where: { AttemptId: assessmentAttemptId }
+    });
+
     // Step 4: Format the questions preserving order
     const formattedQuestions = attemptQuestions
       .map((aq) => {
         const q = questionMap[questionIds.find((indexElement) => indexElement === aq.QuestionId)];
         if (q) {
+          const isMulti = q.Options.filter((opt) => opt.isCorrect).length > 1;
           return {
             id: q.id,
             question: q.text,
+            isMulti: isMulti,
             answers: q.Options.sort((a, b) => a.id - b.id).map((opt) => ({
               id: opt.id,
-              text: opt.text
+              text: opt.text,
+              selected: answers.some((answer) => answer.OptionId === opt.id)
             }))
           };
         }
@@ -941,6 +949,138 @@ app.post("/api/assessment-attempt/resume", authenticateToken, async (req, res) =
     });
   } catch (error) {
     console.error("Error resuming assessment attempt:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.post("/api/assessment-attempt/setAnswer", authenticateToken, async (req, res) => {
+  const { assessmentAttemptId, answerId, remove } = req.body;
+
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token missing" });
+
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (!assessmentAttemptId) {
+      return res.status(400).json({ message: "AssessmentAttempt ID is required" });
+    }
+
+    const option = await Option.findOne({
+      where: { id: answerId }
+    });
+
+    if (!option) {
+      return res.status(404).json({ message: "Option not found" });
+    }
+
+    const question = await Question.findOne({
+      where: { id: option.QuestionId },
+      include: [{ model: Option }]
+    });
+
+    if (!question) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+
+    let userAnswer = await UserAnswer.findOne({
+      where: {
+        AttemptId: assessmentAttemptId,
+        OptionId: answerId
+      }
+    });
+
+    const isMultiple = question.Options.filter((opt) => opt.isCorrect).length > 1;
+
+    if (remove) {
+      if (userAnswer) {
+        await userAnswer.destroy();
+      }
+    } else {
+      if (!userAnswer) {
+        userAnswer = await UserAnswer.create({
+          OptionId: answerId,
+          QuestionId: question.id,
+          AttemptId: assessmentAttemptId
+        });
+      }
+    }
+
+    if (!isMultiple) {
+      const otherAnswers = await UserAnswer.findAll({
+        where: {
+          AttemptId: assessmentAttemptId,
+          QuestionId: question.id
+        }
+      });
+
+      otherAnswers.forEach((answer) => {
+        if (answer.OptionId !== userAnswer.OptionId) {
+          answer.destroy();
+        }
+      });
+    }
+
+    const assessmentAttempt = await AssessmentAttempt.findOne({
+      where: {
+        id: assessmentAttemptId,
+        UserId: user.id
+      }
+    });
+
+    if (!assessmentAttempt) {
+      return res.status(404).json({ message: "Assessment attempt not found" });
+    }
+
+    const attemptQuestions = await AttemptQuestion.findAll({
+      where: { AttemptId: assessmentAttemptId },
+      order: [["createdAt", "ASC"]]
+    });
+
+    const questionIds = attemptQuestions.map((aq) => aq.QuestionId);
+
+    const questions = await Question.findAll({
+      where: { id: questionIds },
+      include: [{ model: Option }]
+    });
+
+    const questionMap = {};
+    questions.forEach((q) => {
+      questionMap[q.id] = q;
+    });
+
+    const answers = await UserAnswer.findAll({
+      where: { AttemptId: assessmentAttemptId }
+    });
+
+    const formattedQuestions = attemptQuestions
+      .map((aq) => {
+        const q = questionMap[questionIds.find((indexElement) => indexElement === aq.QuestionId)];
+        if (q) {
+          const isMulti = q.Options.filter((opt) => opt.isCorrect).length > 1;
+          return {
+            id: q.id,
+            question: q.text,
+            isMulti: isMulti,
+            answers: q.Options.sort((a, b) => a.id - b.id).map((opt) => ({
+              id: opt.id,
+              text: opt.text,
+              selected: answers.some((answer) => answer.OptionId === opt.id)
+            }))
+          };
+        }
+        return null;
+      })
+      .filter((q) => q !== null);
+
+    res.status(200).json({
+      message: "Assessment resumed",
+      attemptId: assessmentAttempt.id,
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error setting answer:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

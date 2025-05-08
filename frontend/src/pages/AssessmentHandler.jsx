@@ -114,7 +114,7 @@ const AssessmentHandler = ({ assessment }) => {
 
       if (data.questions.length > 0) {
         setQuestions(data.questions);
-        setActiveQuestion(data.questions[0]);
+        setActiveIndex(0);
         setStarted(true);
       }
     } catch (error) {
@@ -125,7 +125,8 @@ const AssessmentHandler = ({ assessment }) => {
   };
 
   const [questions, setQuestions] = useState([]);
-  const [activeQuestion, setActiveQuestion] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeQuestion = questions[activeIndex];
 
   const setStatus = () => {
     setQuestions((prevQuestions) =>
@@ -134,6 +135,76 @@ const AssessmentHandler = ({ assessment }) => {
         status: "not-visited"
       }))
     );
+  };
+
+  const handleOptionChange = (option, question) => {
+    setQuestions((prevQuestions) =>
+      prevQuestions.map((q) =>
+        q.id === question.id
+          ? {
+              ...q,
+              answers: q.answers.map((ans) =>
+                ans.id === option.id ? { ...ans, selected: true } : { ...ans, selected: false }
+              )
+            }
+          : q
+      )
+    );
+    setAnswer(option.id);
+  };
+
+  const handleMultiOptionChange = (option, question) => {
+    setQuestions((prevQuestions) =>
+      prevQuestions.map((q) =>
+        q.id === question.id
+          ? {
+              ...q,
+              answers: q.answers.map((ans) =>
+                ans.id === option.id ? { ...ans, selected: !ans.selected } : { ...ans }
+              )
+            }
+          : q
+      )
+    );
+    setAnswer(option.id, !option.selected);
+  };
+
+  const setAnswer = async (answer, remove = false) => {
+    try {
+      let response;
+      if (resume) {
+        response = await fetch(`${API_URL}/api/assessment-attempt/setanswer`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          },
+          body: JSON.stringify({
+            assessmentAttemptId: assessmentAttemptId,
+            answerId: answer,
+            remove: remove
+          })
+        });
+      } else {
+        response = await fetch(`${API_URL}/api/assessment-attempt`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          },
+          body: JSON.stringify({ assessmentId: assessment.id })
+        });
+      }
+      const data = await response.json();
+
+      if (data.questions.length > 0) {
+        setQuestions(data.questions);
+      }
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    } finally {
+      setIsLoading2(false);
+    }
   };
 
   useEffect(() => {
@@ -222,16 +293,31 @@ const AssessmentHandler = ({ assessment }) => {
                     </div>
                     <div className="questionOptions">
                       <Form>
-                        {activeQuestion &&
-                          activeQuestion.answers.map((opt, idx) => (
-                            <Form.Check
-                              key={idx}
-                              type="radio"
-                              label={`${String.fromCharCode(65 + idx)}. ${opt.text}`}
-                              name="option"
-                              className="mb-2 optionText"
-                            />
-                          ))}
+                        {activeQuestion && !activeQuestion.isMulti
+                          ? activeQuestion.answers.map((opt, idx) => (
+                              <Form.Check
+                                key={idx}
+                                type="radio"
+                                label={`${String.fromCharCode(65 + idx)}. ${opt.text}`}
+                                name="option"
+                                className="mb-2 optionText"
+                                id={`option-${activeQuestion.id}-${opt.id}`}
+                                checked={opt.selected}
+                                onChange={() => handleOptionChange(opt, activeQuestion)}
+                              />
+                            ))
+                          : activeQuestion.answers.map((opt, idx) => (
+                              <Form.Check
+                                key={idx}
+                                type="checkbox"
+                                label={`${String.fromCharCode(65 + idx)}. ${opt.text}`}
+                                name="option"
+                                className="mb-2 optionText"
+                                id={`option-${activeQuestion.id}-${opt.id}`}
+                                checked={opt.selected}
+                                onChange={() => handleMultiOptionChange(opt, activeQuestion)}
+                              />
+                            ))}
                       </Form>
                       <button className="optionsBtn">
                         Next <FontAwesomeIcon icon={faArrowRight} size="md" className="pt-1" />
@@ -283,7 +369,7 @@ const AssessmentHandler = ({ assessment }) => {
                         ) : (
                           <Button
                             variant={getStatusColor(q.status)}
-                            onClick={() => setActiveQuestion(q)}
+                            onClick={() => setActiveIndex(index)}
                             size="sm"
                             className="w-100"
                           >
