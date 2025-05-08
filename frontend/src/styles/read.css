@@ -398,3 +398,57 @@
   margin: 0;
   text-indent: 0px;
 }
+
+.questionCon {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  height: 100%;
+}
+.questionBody {
+  width: 100%;
+  height: fit-content;
+  background-color: #fff;
+  padding: 20px;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.questionText {
+  font-size: 20px;
+  text-align: justify;
+  color: #050505;
+}
+.questionOptions {
+  width: 40%;
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  height: fit-content;
+}
+
+.fullQuestionBody {
+  height: 100%;
+}
+
+.questionCard {
+  height: 100%;
+  background-color: #f3f3f3;
+}
+
+.optionText label {
+  font-size: 15px !important;
+}
+
+.optionsBtn {
+  border-radius: 7px;
+  background-color: #007bff; /* A vibrant blue color for the next question button */
+  padding: 8px 14px;
+  color: white;
+  font-weight: bold;
+  margin-top: 50px;
+}

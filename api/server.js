@@ -745,7 +745,8 @@ app.get("/api/assessment/module/:moduleId", authenticateToken, async (req, res) 
       moduleName: module.title,
       assessmentId: assessment.id,
       title: assessment.title,
-      questions: formattedQuestions
+      questions: formattedQuestions,
+      duration: assessment.duration
     });
   } catch (error) {
     console.error("Error fetching module and assessment:", error);
@@ -791,7 +792,8 @@ app.get("/api/assessment-attempt/check/:assessmentId", authenticateToken, async 
       hasTimeLeft,
       timeUsed: elapsedSeconds,
       timeRemaining: Math.max(0, totalDurationSeconds - elapsedSeconds),
-      assessmentAttemptId: attempt.id
+      assessmentAttemptId: attempt.id,
+      duration: attempt.Assessment.duration
     });
   } catch (err) {
     console.error("Error checking assessment attempt:", err);
@@ -866,6 +868,7 @@ app.post("/api/assessment-attempt", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
 app.post("/api/assessment-attempt/resume", authenticateToken, async (req, res) => {
   const { assessmentAttemptId } = req.body;
 

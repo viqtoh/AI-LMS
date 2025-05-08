@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Container,
   Row,
@@ -11,16 +11,22 @@ import {
   Spinner
 } from "react-bootstrap";
 import { API_URL } from "../constants";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { FaArrowRight } from "react-icons/fa";
+import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 const AssessmentHandler = ({ assessment }) => {
-  const [isLoaded, setIsLoaded] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [timeLeft, setTimeLeft] = React.useState(null);
-  const [isTimeUp, setIsTimeUp] = React.useState(false);
-  const [resume, setResume] = React.useState(false);
-  const [restart, setRestart] = React.useState(false);
-  const [assessmentAttemptId, setAssessmentAttemptId] = React.useState(null);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [isTimeUp, setIsTimeUp] = useState(false);
+  const [endTime, setEndTime] = useState(null);
+  const [resume, setResume] = useState(false);
+  const [restart, setRestart] = useState(false);
+  const [assessmentAttemptId, setAssessmentAttemptId] = useState(null);
+  const [percent, setPercent] = useState(0);
+  const [timerColor, setTimerColor] = useState("#10b981");
 
   const checkAssessment = async () => {
     try {
@@ -36,6 +42,10 @@ const AssessmentHandler = ({ assessment }) => {
         if (data.hasTimeLeft) {
           setResume(true);
           setAssessmentAttemptId(data.assessmentAttemptId);
+          let perc = (data.timeRemaining / (data.duration * 60)) * 100;
+          setPercent(perc);
+          const end = new Date(Date.now() + data.timeRemaining * 1000);
+          setEndTime(end);
           const minutes = Math.floor(data.timeRemaining / 60)
             .toString()
             .padStart(2, "0");
@@ -51,9 +61,30 @@ const AssessmentHandler = ({ assessment }) => {
       setIsLoading(false);
     }
   };
+  useEffect(() => {
+    if (!endTime) return;
 
-  const [started, setStarted] = React.useState(false);
-  const [isLoading2, setIsLoading2] = React.useState(false);
+    const timer = setInterval(() => {
+      const diff = Math.max(0, Math.floor((endTime.getTime() - Date.now()) / 1000));
+
+      if (diff === 0) {
+        clearInterval(timer);
+        setIsTimeUp(true);
+      }
+
+      const newTime = new Date(diff * 1000).toISOString().substr(14, 5);
+      setTimeLeft(newTime);
+
+      if (diff < 300) {
+        setTimerColor("#f87171");
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [endTime]);
+
+  const [started, setStarted] = useState(false);
+  const [isLoading2, setIsLoading2] = useState(false);
 
   const handleStart = async () => {
     setIsLoading2(true);
@@ -93,8 +124,8 @@ const AssessmentHandler = ({ assessment }) => {
     }
   };
 
-  const [questions, setQuestions] = React.useState([]);
-  const [activeQuestion, setActiveQuestion] = React.useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [activeQuestion, setActiveQuestion] = useState(null);
 
   const setStatus = () => {
     setQuestions((prevQuestions) =>
@@ -173,33 +204,70 @@ const AssessmentHandler = ({ assessment }) => {
           </div>
         </div>
       ) : (
-        <Container fluid className="p-4">
-          <Row>
-            <Col md={8}>
-              <Card>
+        <Container fluid className="p-4 fullQuestionBody">
+          <Row style={{ height: "100%" }}>
+            <Col md={8} style={{ height: "100%" }}>
+              <Card style={{ height: "100%" }}>
                 {activeQuestion && (
                   <Card.Header>
                     Question: {questions.findIndex((q) => q.id === activeQuestion.id) + 1}
                   </Card.Header>
                 )}
-                <Card.Body>
-                  {activeQuestion && <Card.Text>{activeQuestion.question}</Card.Text>}
-                  <Form>
-                    {activeQuestion &&
-                      activeQuestion.answers.map((opt, idx) => (
-                        <Form.Check
-                          key={idx}
-                          type="radio"
-                          label={`${String.fromCharCode(65 + idx)}. ${opt.text}`}
-                          name="option"
-                          className="mb-2"
-                        />
-                      ))}
-                  </Form>
+                <Card.Body className="questionCard">
+                  <div className="questionCon">
+                    <div className="questionBody">
+                      {activeQuestion && (
+                        <Card.Text className="questionText">{activeQuestion.question}</Card.Text>
+                      )}
+                    </div>
+                    <div className="questionOptions">
+                      <Form>
+                        {activeQuestion &&
+                          activeQuestion.answers.map((opt, idx) => (
+                            <Form.Check
+                              key={idx}
+                              type="radio"
+                              label={`${String.fromCharCode(65 + idx)}. ${opt.text}`}
+                              name="option"
+                              className="mb-2 optionText"
+                            />
+                          ))}
+                      </Form>
+                      <button className="optionsBtn">
+                        Next <FontAwesomeIcon icon={faArrowRight} size="md" className="pt-1" />
+                      </button>
+                    </div>
+                  </div>
                 </Card.Body>
               </Card>
             </Col>
             <Col md={4}>
+              <Card className="mb-5 d-flex justify-content-center align-items-center p-4">
+                <div className="position-relative" style={{ width: "96px", height: "96px" }}>
+                  <svg
+                    className="position-absolute top-0 start-0 w-100 h-100"
+                    viewBox="0 0 96 96"
+                    style={{ transform: "rotate(-90deg)" }}
+                  >
+                    <circle cx="48" cy="48" r="42" stroke="#e5e7eb" strokeWidth="8" fill="none" />
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="42"
+                      stroke={timerColor}
+                      strokeWidth="8"
+                      fill="none"
+                      strokeDasharray="264"
+                      strokeDashoffset={264 - (percent / 100) * 264}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="position-absolute top-50 start-50 translate-middle fw-bold text-dark">
+                    {timeLeft}
+                  </div>
+                </div>
+              </Card>
+
               <Card>
                 <Card.Header>
                   <strong>Questions</strong>
