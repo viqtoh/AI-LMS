@@ -911,18 +911,25 @@ app.post("/api/assessment-attempt/resume", authenticateToken, async (req, res) =
       questionMap[q.id] = q;
     });
 
+    console.log(questionMap);
+    console.log(attemptQuestions);
     // Step 4: Format the questions preserving order
-    const formattedQuestions = attemptQuestions.map((aq) => {
-      const q = questionMap[aq.QuestionId];
-      return {
-        id: q.id,
-        question: q.text,
-        answers: q.Options.sort((a, b) => a.id - b.id).map((opt) => ({
-          id: opt.id,
-          text: opt.text
-        }))
-      };
-    });
+    const formattedQuestions = attemptQuestions
+      .map((aq) => {
+        const q = questionMap[questionIds.find((indexElement) => indexElement === aq.QuestionId)];
+        if (q) {
+          return {
+            id: q.id,
+            question: q.text,
+            answers: q.Options.sort((a, b) => a.id - b.id).map((opt) => ({
+              id: opt.id,
+              text: opt.text
+            }))
+          };
+        }
+        return null; // Return null for undefined questions
+      })
+      .filter((q) => q !== null); // Filter out null values
 
     res.status(200).json({
       message: "Assessment resumed",

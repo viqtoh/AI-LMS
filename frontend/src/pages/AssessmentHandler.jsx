@@ -177,7 +177,11 @@ const AssessmentHandler = ({ assessment }) => {
           <Row>
             <Col md={8}>
               <Card>
-                {activeQuestion && <Card.Header>Question: {activeQuestion.id}</Card.Header>}
+                {activeQuestion && (
+                  <Card.Header>
+                    Question: {questions.findIndex((q) => q.id === activeQuestion.id) + 1}
+                  </Card.Header>
+                )}
                 <Card.Body>
                   {activeQuestion && <Card.Text>{activeQuestion.question}</Card.Text>}
                   <Form>
@@ -202,11 +206,11 @@ const AssessmentHandler = ({ assessment }) => {
                 </Card.Header>
                 <Card.Body>
                   <Row className="g-2">
-                    {questions.map((q) => (
+                    {questions.map((q, index) => (
                       <Col xs={3} key={q.number}>
                         {q.id === activeQuestion.id ? (
                           <Button variant={"danger"} size="sm" className="w-100">
-                            {q.id}
+                            {index + 1}
                           </Button>
                         ) : (
                           <Button
@@ -215,7 +219,7 @@ const AssessmentHandler = ({ assessment }) => {
                             size="sm"
                             className="w-100"
                           >
-                            {q.id}
+                            {index + 1}
                           </Button>
                         )}
                       </Col>
