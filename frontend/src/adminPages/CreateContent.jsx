@@ -145,7 +145,7 @@ const CreateContent = () => {
       const result = await response.json();
       console.log(result);
       showToast("Learning path created successfully!", true);
-      window.location.href = `/admin/content-library/path/${result.learningPath.id}`;
+      window.location.href = `/admin/content-management/path/${result.learningPath.id}`;
     } catch (error) {
       console.error("Error creating Learning path:", error);
       showToast("Internal Server Error", false);

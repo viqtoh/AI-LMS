@@ -38,39 +38,39 @@ const AdminCourse = () => {
   const [selectedCategories2, setSelectedCategories2] = useState([]);
 
   const { id } = useParams();
-  useEffect(() => {
-    const fetchCourse = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/admin/course-full/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`, // If authentication is required
-            "Content-Type": "application/json"
-          }
-        });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch course");
+  const fetchCourse = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/course-full/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // If authentication is required
+          "Content-Type": "application/json"
         }
-        const data = await response.json();
-        setCourse(data);
-        setModules(data.modules);
-        console.log("log");
-        setCourseFormData({
-          title: data.title,
-          description: data.description,
-          image: data.image,
-          show_outside: data.show_outside,
-          is_published: data.is_published
-        });
-        setSelectedCategories2(data.categories.map((category) => category.id));
-        console.log(data.categories);
-      } catch (err) {
-        showToast(err.message, false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      });
 
+      if (!response.ok) {
+        throw new Error("Failed to fetch course");
+      }
+      const data = await response.json();
+      setCourse(data);
+      setModules(data.modules);
+      console.log("log");
+      setCourseFormData({
+        title: data.title,
+        description: data.description,
+        image: data.image,
+        show_outside: data.show_outside,
+        is_published: data.is_published
+      });
+      setSelectedCategories2(data.categories.map((category) => category.id));
+      console.log(data.categories);
+    } catch (err) {
+      showToast(err.message, false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchCourse();
   }, [id, token]);
 
@@ -86,6 +86,12 @@ const AdminCourse = () => {
           throw new Error("Failed to fetch categories");
         }
         const data = await response.json();
+        if (data.error) {
+          showToast(data.error, false);
+        }
+        if (data.message) {
+          showToast(data.message, true);
+        }
         setCategories(data);
         setIsLoading(false);
       } catch (error) {
@@ -109,6 +115,25 @@ const AdminCourse = () => {
   useEffect(() => {
     console.log(modules);
   }, [modules]);
+
+  const moveUp = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/course/${course.id}/move-up/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      console.log(data);
+      setIsLoading(false);
+      fetchCourse();
+    } catch (error) {
+      console.error("Error moving module:", error);
+      showToast("Failed to move module", false);
+      setIsLoading(false);
+    }
+  };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -328,7 +353,7 @@ const AdminCourse = () => {
                   </div>
                   <div className="text-center w-100 d-flex flex-column justify-content-center align-items-center">
                     {modules.map((module) => (
-                      <ModuleCollapsible {...module} />
+                      <ModuleCollapsible {...module} onMoveUp={moveUp} />
                     ))}
 
                     {modules.length === 0 && (

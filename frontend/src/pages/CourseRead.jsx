@@ -147,6 +147,12 @@ const CourseRead = () => {
   }, [isPlaying]);
 
   useEffect(() => {
+    if (activeModule && activeModule.content_type !== "video") {
+      startProgress();
+    }
+  }, [activeModule]);
+
+  useEffect(() => {
     const fetchUserDetails = async () => {
       try {
         const response = await fetch(`${API_URL}/api/user/details`, {
@@ -239,6 +245,7 @@ const CourseRead = () => {
           throw new Error("Failed to fetch object");
         }
         const data = await response.json();
+        console.log(data);
         let datas;
         if (mode === "course") {
           setCourses([data]);
@@ -282,6 +289,50 @@ const CourseRead = () => {
           status: "in_progress",
           progress: (newCurrentTime / totalTime) * 100,
           last_second: Math.floor(newCurrentTime)
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch object");
+      }
+      const data = await response.json();
+    } catch (err) {
+      showToast(err.message, false);
+    }
+  };
+
+  const startProgress = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/module-progress/${activeModule.id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`, // If authentication is required
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: "in_progress"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch object");
+      }
+      const data = await response.json();
+    } catch (err) {
+      showToast(err.message, false);
+    }
+  };
+
+  const endProgress = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/api/module-progress/${id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`, // If authentication is required
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: "completed"
         })
       });
 

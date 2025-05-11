@@ -1670,6 +1670,98 @@ app.put("/api/admin/course/:id", authenticateToken, async (req, res) => {
   }
 });
 
+app.get("/api/admin/course/:courseId/move-up/:moduleId", authenticateToken, async (req, res) => {
+  const { moduleId, courseId } = req.params;
+
+  try {
+    // Find the current course entry
+    const currentEntry = await Module.findOne({
+      where: { id: moduleId }
+    });
+
+    if (!currentEntry) {
+      return res.status(404).json({ error: "Module not found in Course" });
+    }
+
+    if (currentEntry.order === 0) {
+      return res.status(400).json({ message: "Module is already at the top" });
+    }
+
+    // Find the course above
+    const aboveEntry = await Module.findOne({
+      where: {
+        courseId,
+        order: currentEntry.order - 1
+      }
+    });
+
+    if (!aboveEntry) {
+      return res.status(400).json({ error: "No module above to swap with" });
+    }
+
+    // Swap orderIndexes
+    const tempIndex = currentEntry.order;
+    currentEntry.order = aboveEntry.order;
+    aboveEntry.order = tempIndex;
+
+    await currentEntry.save();
+    await aboveEntry.save();
+
+    res.json({ message: "Module moved up successfully" });
+  } catch (error) {
+    console.error("Move up error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get(
+  "/api/admin/learning-path/:learningPathId/move-up/:courseId",
+  authenticateToken,
+  async (req, res) => {
+    const { learningPathId, courseId } = req.params;
+
+    try {
+      // Find the current course entry
+      const currentEntry = await LearningPathCourse.findOne({
+        where: { learningPathId, courseId }
+      });
+
+      if (!currentEntry) {
+        return res.status(404).json({ error: "Course not found in learning path" });
+      }
+
+      if (currentEntry.orderIndex === 0) {
+        return res.status(400).json({ message: "Course is already at the top" });
+      }
+
+      // Find the course above
+      const aboveEntry = await LearningPathCourse.findOne({
+        where: {
+          learningPathId,
+          orderIndex: currentEntry.orderIndex - 1
+        }
+      });
+
+      if (!aboveEntry) {
+        return res.status(400).json({ error: "No course above to swap with" });
+      }
+
+      // Swap orderIndexes
+      const tempIndex = currentEntry.orderIndex;
+      currentEntry.orderIndex = aboveEntry.orderIndex;
+      aboveEntry.orderIndex = tempIndex;
+
+      await currentEntry.save();
+      await aboveEntry.save();
+
+      res.json({ message: "Course moved up successfully" });
+    } catch (error) {
+      console.error("Move up error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 app.post("/api/admin/category", authenticateToken, async (req, res) => {
   try {
     const { name } = req.body;
@@ -2206,7 +2298,11 @@ app.get("/api/admin/course-full/:id", authenticateToken, async (req, res) => {
     if (!course) {
       return res.status(404).json({ error: "Course not found." });
     }
-    let modules = await Module.findAll({ where: { courseId: id } });
+    let modules = await Module.findAll({
+      where: { courseId: id },
+      order: [["order", "ASC"]]
+    });
+
     // Format response
     const response = {
       id: course.id,
@@ -2241,11 +2337,12 @@ app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res)
       include: [
         {
           model: Category,
-          through: { attributes: [] }, // Exclude join table attributes
+          through: { attributes: [] },
           as: "Categories"
         },
         {
           model: Course,
+          as: "Courses",
           include: [
             {
               model: Category,
@@ -2253,7 +2350,7 @@ app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res)
               as: "Categories"
             }
           ],
-          as: "Courses"
+          through: { attributes: ["orderIndex"] }
         }
       ]
     });
@@ -2261,6 +2358,10 @@ app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res)
     if (!learningPath) {
       return res.status(404).json({ error: "Learning path not found." });
     }
+
+    learningPath.Courses.sort((a, b) => {
+      return a.LearningPathCourse.orderIndex - b.LearningPathCourse.orderIndex;
+    });
 
     // Format response
     const response = {
