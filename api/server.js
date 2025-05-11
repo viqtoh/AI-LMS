@@ -1898,13 +1898,13 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
 
       if (q.id) {
         // Try to update existing question
-        question = await Question.findOne({ where: { aid: q.id, AssessmentId: assessment.id } });
+        question = await Question.findOne({ where: { id: q.id } });
         if (question) {
           question.text = q.question;
           await question.save();
         } else {
           question = await Question.create({
-            aid: q.id,
+            aid: q.aid,
             text: q.question,
             AssessmentId: assessment.id
           });
@@ -1914,7 +1914,7 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
         for (const opt of q.answers) {
           if (opt.id) {
             const existingOpt = await Option.findOne({
-              where: { qid: opt.id, QuestionId: question.id }
+              where: { id: opt.id }
             });
             if (existingOpt) {
               existingOpt.text = opt.text;
@@ -1922,7 +1922,7 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
               await existingOpt.save();
             } else {
               await Option.create({
-                qid: opt.id,
+                qid: opt.qid,
                 text: opt.text,
                 isCorrect: opt.correct,
                 QuestionId: question.id
@@ -1930,7 +1930,7 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
             }
           } else {
             await Option.create({
-              qid: opt.id,
+              qid: opt.qid,
               text: opt.text,
               isCorrect: opt.correct,
               QuestionId: question.id

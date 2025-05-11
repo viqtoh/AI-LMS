@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AdminNavBar from "../components/AdminNavBar";
 import "../styles/home.css";
 import { API_URL, IMAGE_HOST } from "../constants";
@@ -16,7 +16,8 @@ const AdminSetAssessment = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { id } = useParams();
   const [isSaving, setIsSaving] = useState(false);
-
+  const [saved, setSaved] = useState(true);
+  const debounceTimer = useRef(null);
   const [questions, setQuestions] = useState([
     {
       id: 1,
@@ -58,6 +59,7 @@ const AdminSetAssessment = () => {
         duration: data.duration || "",
         numberOfQuestions: data.numberOfQuestions || ""
       });
+      setIsLoaded(true);
     } catch (error) {
       console.error("Error fetching user details:", error);
     } finally {
@@ -65,17 +67,38 @@ const AdminSetAssessment = () => {
     }
   };
 
+  const handleQuestionChange = (updatedQuestion) => {
+    setQuestions((prev) => prev.map((q) => (q.id === updatedQuestion.id ? updatedQuestion : q)));
+    setSaved(false); // Mark unsaved
+  };
+
   useEffect(() => {
     if (!isLoaded) {
       fetchAssessment();
-      setIsLoaded(true);
-    } else {
-      updateAssessment();
     }
   }, [isLoaded]);
 
+  useEffect(() => {
+    // Clear any pending save
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    // Set new 3-second delay to save
+    debounceTimer.current = setTimeout(() => {
+      if (!saved) {
+        updateAssessment();
+        setSaved(true); // Mark as saved
+      }
+    }, 3000);
+
+    // Cleanup on unmount or before new effect
+    return () => clearTimeout(debounceTimer.current);
+  }, [questions]);
+
   const updateAssessment = async () => {
     setIsSaving(true);
+    console.log("sending");
     try {
       const response = await fetch(`${API_URL}/api/admin/assessment/module/${id}`, {
         method: "PUT",
@@ -86,10 +109,13 @@ const AdminSetAssessment = () => {
         body: JSON.stringify(questions)
       });
       const data = await response.json();
+      console.log(questions);
 
       if (data.questions.length > 0) {
         setQuestions(data.questions);
       }
+
+      setSaved(true);
 
       console.log(data);
     } catch (error) {
@@ -151,10 +177,6 @@ const AdminSetAssessment = () => {
     }
   };
 
-  const handleQuestionChange = (updatedQuestion) => {
-    setQuestions((prev) => prev.map((q) => (q.id === updatedQuestion.id ? updatedQuestion : q)));
-  };
-
   const handleDeleteQuestion = (id) => {
     deleteQuestion(id);
   };
@@ -168,11 +190,11 @@ const AdminSetAssessment = () => {
     setQuestions((prev) => [
       ...prev,
       {
-        id: newId,
+        aid: newId,
         question: "",
         answers: [
-          { id: 1, text: "", correct: false },
-          { id: 2, text: "", correct: false }
+          { qid: 1, text: "", correct: false },
+          { qid: 2, text: "", correct: false }
         ]
       }
     ]);

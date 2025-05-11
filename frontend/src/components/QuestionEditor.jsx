@@ -21,7 +21,7 @@ function QuestionEditor({ index, data, onChange, onDelete, onOptDelete }) {
   const addAnswer = () => {
     const newId = Math.max(0, ...data.answers.map((a) => a.id)) + 1;
     const newAnswer = {
-      id: newId,
+      qid: newId,
       text: "",
       correct: false
     };
