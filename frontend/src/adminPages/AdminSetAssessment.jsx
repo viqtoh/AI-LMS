@@ -72,7 +72,7 @@ const AdminSetAssessment = () => {
     } else {
       updateAssessment();
     }
-  }, [isLoaded, questions]);
+  }, [isLoaded]);
 
   const updateAssessment = async () => {
     setIsSaving(true);
@@ -87,9 +87,65 @@ const AdminSetAssessment = () => {
       });
       const data = await response.json();
 
+      if (data.questions.length > 0) {
+        setQuestions(data.questions);
+      }
+
       console.log(data);
     } catch (error) {
-      console.error("Error fetching user details:", error);
+      console.error("Error:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const deleteQuestion = async (questionId) => {
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/assessment/module/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          questionId: questionId
+        })
+      });
+      const data = await response.json();
+      if (data.questions.length > 0) {
+        setQuestions(data.questions);
+      }
+
+      console.log(data);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const deleteOption = async (optionId) => {
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/assessment/module/option/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          optionId: optionId
+        })
+      });
+      const data = await response.json();
+      if (data.questions.length > 0) {
+        setQuestions(data.questions);
+      }
+
+      console.log(data);
+    } catch (error) {
+      console.error("Error:", error);
     } finally {
       setIsSaving(false);
     }
@@ -100,7 +156,11 @@ const AdminSetAssessment = () => {
   };
 
   const handleDeleteQuestion = (id) => {
-    setQuestions((prev) => prev.filter((q) => q.id !== id));
+    deleteQuestion(id);
+  };
+
+  const handleOptionDelete = (id) => {
+    deleteOption(id);
   };
 
   const addNewQuestion = () => {
@@ -203,6 +263,7 @@ const AdminSetAssessment = () => {
                   data={question}
                   onChange={handleQuestionChange}
                   onDelete={handleDeleteQuestion}
+                  onOptDelete={handleOptionDelete}
                 />
               ))}
 

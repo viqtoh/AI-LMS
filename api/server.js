@@ -1849,11 +1849,13 @@ app.get("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
 
     const formattedQuestions = assessment.Questions.sort((a, b) => a.id - b.id) // Sort questions by id
       .map((q) => ({
-        id: q.aid,
+        id: q.id,
+        aid: q.aid,
         question: q.text,
         answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
           .map((opt) => ({
-            id: opt.qid,
+            id: opt.id,
+            qid: opt.qid,
             text: opt.text,
             correct: opt.isCorrect
           }))
@@ -1938,34 +1940,6 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
       }
     }
 
-    // Now, check and delete questions or options that are no longer in the payload
-    const existingQuestions = await Question.findAll({
-      where: { AssessmentId: assessment.id }
-    });
-
-    // Delete questions not in the payload
-    for (const existingQuestion of existingQuestions) {
-      const questionInPayload = questionsPayload.find((q) => q.id === existingQuestion.aid);
-      if (!questionInPayload) {
-        // Delete the question and its options
-        await Option.destroy({ where: { QuestionId: existingQuestion.id } });
-        await existingQuestion.destroy();
-      } else {
-        // Delete options not in the payload
-        const existingOptions = await Option.findAll({
-          where: { QuestionId: existingQuestion.id }
-        });
-        for (const existingOption of existingOptions) {
-          const optionInPayload = questionInPayload.answers.find(
-            (opt) => opt.id === existingOption.qid
-          );
-          if (!optionInPayload) {
-            await existingOption.destroy();
-          }
-        }
-      }
-    }
-
     // Fetch all the questions and their options after saving and deleting
     const updatedQuestions = await Question.findAll({
       where: { AssessmentId: assessment.id },
@@ -1978,11 +1952,13 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
     const formattedQuestions = updatedQuestions
       .sort((a, b) => a.id - b.id) // Sort questions by id
       .map((q) => ({
-        id: q.aid,
+        id: q.id,
+        aid: q.aid,
         question: q.text,
         answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
           .map((opt) => ({
-            id: opt.qid,
+            id: opt.id,
+            qid: opt.qid,
             text: opt.text,
             correct: opt.isCorrect
           }))
@@ -1991,6 +1967,122 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
     // Send back a response with the message and updated questions
     res.json({
       message: "Assessment questions/answers saved successfully",
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error saving questions and options:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//delete questions
+app.delete("/api/admin/assessment/module/:moduleId", authenticateToken, async (req, res) => {
+  const { moduleId } = req.params;
+  const { questionId } = req.body;
+  try {
+    const question = await Question.findOne({ where: { id: questionId } });
+    if (!question) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+
+    console.log(question);
+
+    await question.destroy();
+
+    console.log("deleted");
+
+    const module = await Module.findByPk(moduleId);
+    if (!module) return res.status(404).json({ message: "Module not found" });
+
+    let assessment = await Assessment.findOne({ where: { moduleId } });
+
+    if (!assessment) {
+      assessment = await Assessment.create({ moduleId, title: "Default Title" });
+    }
+
+    const updatedQuestions = await Question.findAll({
+      where: { AssessmentId: assessment.id },
+      include: {
+        model: Option
+      }
+    });
+
+    // Format the data to match the response payload format
+    const formattedQuestions = updatedQuestions
+      .sort((a, b) => a.id - b.id) // Sort questions by id
+      .map((q) => ({
+        id: q.id,
+        aid: q.aid,
+        question: q.text,
+        answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
+          .map((opt) => ({
+            id: opt.id,
+            qid: opt.qid,
+            text: opt.text,
+            correct: opt.isCorrect
+          }))
+      }));
+
+    // Send back a response with the message and updated questions
+    res.json({
+      message: "Question deleted successfully",
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error saving questions and options:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//delete options
+app.delete("/api/admin/assessment/module/option/:moduleId", authenticateToken, async (req, res) => {
+  const { moduleId } = req.params;
+  const { optionId } = req.body;
+  try {
+    const option = await Option.findOne({ where: { id: optionId } });
+    if (!option) {
+      return res.status(404).json({ message: "Option not found" });
+    }
+
+    await option.destroy();
+
+    console.log("deleted");
+
+    const module = await Module.findByPk(moduleId);
+    if (!module) return res.status(404).json({ message: "Module not found" });
+
+    let assessment = await Assessment.findOne({ where: { moduleId } });
+
+    if (!assessment) {
+      assessment = await Assessment.create({ moduleId, title: "Default Title" });
+    }
+
+    const updatedQuestions = await Question.findAll({
+      where: { AssessmentId: assessment.id },
+      include: {
+        model: Option
+      }
+    });
+
+    // Format the data to match the response payload format
+    const formattedQuestions = updatedQuestions
+      .sort((a, b) => a.id - b.id) // Sort questions by id
+      .map((q) => ({
+        id: q.id,
+        aid: q.aid,
+        question: q.text,
+        answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
+          .map((opt) => ({
+            id: opt.id,
+            qid: opt.qid,
+            text: opt.text,
+            correct: opt.isCorrect
+          }))
+      }));
+
+    // Send back a response with the message and updated questions
+    res.json({
+      message: "Question deleted successfully",
       questions: formattedQuestions
     });
   } catch (error) {
