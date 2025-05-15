@@ -61,7 +61,7 @@ const ContentManagement = () => {
         console.log(queryParams.toString());
         const response = await fetch(`${API_URL}/api/admin/contents?${queryParams.toString()}`, {
           headers: {
-            Authorization: `Bearer ${token}` // If authentication is required
+            Authorization: `Bearer ${token}`
           }
         });
         const data = await response.json();
@@ -165,7 +165,7 @@ const ContentManagement = () => {
 
       const response = await fetch(`${API_URL}/api/admin/contents?${queryParams.toString()}`, {
         headers: {
-          Authorization: `Bearer ${token}` // If authentication is required
+          Authorization: `Bearer ${token}`
         }
       });
       const data = await response.json();

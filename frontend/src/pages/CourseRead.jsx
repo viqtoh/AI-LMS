@@ -1,22 +1,45 @@
 import React, { useRef } from "react";
 import "../styles/read.css";
 import { useState, useEffect } from "react";
-import { API_URL } from "../constants";
+import { API_URL, IMAGE_HOST } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
-import { faAngleDown, faAngleUp, faList, faTimes } from "@fortawesome/free-solid-svg-icons";
+import {
+  faAngleDown,
+  faAngleUp,
+  faList,
+  faPlay,
+  faRedo,
+  faTimes
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import DocRenderer from "../components/DocRenderer";
+import videojs from "video.js";
+import "video.js/dist/video-js.css";
+
+import "@videojs/themes/dist/city/index.css";
+
+// Fantasy
+import "@videojs/themes/dist/fantasy/index.css";
+
+// Forest
+import "@videojs/themes/dist/forest/index.css";
+
+// Sea
+import "@videojs/themes/dist/sea/index.css";
+import AssessmentHandler from "./AssessmentHandler";
 
 const CourseRead = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(true);
   const [courses, setCourses] = useState([]);
+  const [isVideoReady, setIsVideoReady] = useState(false);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const [isLoaded, setIsLoaded] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
   const showToast = React.useCallback((message, success = true) => {
@@ -30,8 +53,104 @@ const CourseRead = () => {
 
   const [activeCourse, setActiveCourse] = useState(null);
   const [activeModule, setActiveModule] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const descriptionRef = useRef();
+
+  const videoRef = useRef(null);
+  const playerRef = useRef(null);
+  const { id, pathId } = useParams();
+  const navigate = useNavigate();
+  const lastTimeRef = useRef(0);
+  const intervalRef = useRef(null);
+  const location = useLocation();
+  const [currentProgress, setCurrentProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  useEffect(() => {
+    if (videoRef.current && activeModule && activeModule.content_type === "video") {
+      const timeoutId = setTimeout(() => {
+        if (videoRef.current) {
+          if (playerRef.current) {
+            playerRef.current.dispose();
+          }
+
+          playerRef.current = videojs(videoRef.current, {
+            controls: true,
+            autoplay: false,
+            preload: "auto",
+            userActions: {
+              hotkeys: false,
+              doubleClick: false,
+              click: false
+            },
+            sources: [
+              {
+                src: `${activeModule.file ? `${IMAGE_HOST}${activeModule.file}` : activeModule.content_url}`,
+                type: "video/mp4"
+              }
+            ]
+          });
+
+          const player = playerRef.current;
+
+          player.ready(function () {
+            if (currentTime > 0) {
+              setIsVideoReady(true);
+            }
+            const pipButton = player.controlBar.getChild("PictureInPictureToggle");
+            if (pipButton) {
+              player.controlBar.removeChild(pipButton);
+            }
+          });
+
+          player.on("timeupdate", function () {
+            lastTimeRef.current = player.currentTime();
+          });
+
+          player.on("timeupdate", () => {
+            const current = player.currentTime();
+            const duration = player.duration();
+            if (current != 0) {
+              setCurrentTime(Math.floor(current));
+              setCurrentProgress(duration ? current / duration : 0);
+            }
+          });
+
+          player.ready(() => {
+            const controlBar = playerRef.current.controlBar;
+            if (controlBar?.progressControl) {
+              controlBar.progressControl.disable();
+              const progressEl = controlBar.progressControl.el();
+              if (progressEl) {
+                progressEl.style.pointerEvents = "none";
+              }
+            }
+          });
+        }
+      }, 2000);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [activeModule]);
+
+  useEffect(() => {}, [currentTime]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      intervalRef.current = setInterval(updateProgress, 10000); // 10 seconds
+    } else {
+      clearInterval(intervalRef.current);
+    }
+
+    return () => clearInterval(intervalRef.current);
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (activeModule && activeModule.content_type !== "video") {
+      startProgress();
+    }
+  }, [activeModule]);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -72,7 +191,32 @@ const CourseRead = () => {
     fetchUserDetails();
   });
 
-  const { id, pathId } = useParams();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const moduleId = params.get("module");
+
+    if (moduleId) {
+      let foundModule = null;
+
+      for (const course of courses) {
+        console.log(course);
+        const match = course.modules.find((m) => m.id === parseInt(moduleId));
+
+        if (match) {
+          foundModule = match;
+          setActiveCourse(course);
+          break;
+        }
+      }
+
+      if (foundModule) {
+        setActiveModule(foundModule);
+        setCurrentTime(foundModule.userProgress.last_second | 0);
+        setCurrentProgress(foundModule.userProgress.progress);
+        console.log(foundModule.userProgress);
+      }
+    }
+  }, [location.search, courses]);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -82,7 +226,7 @@ const CourseRead = () => {
         if (id) {
           response = await fetch(`${API_URL}/api/course-full/${id}`, {
             headers: {
-              Authorization: `Bearer ${token}`, // If authentication is required
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json"
             }
           });
@@ -90,7 +234,7 @@ const CourseRead = () => {
         } else {
           response = await fetch(`${API_URL}/api/learning-path-full/${pathId}`, {
             headers: {
-              Authorization: `Bearer ${token}`, // If authentication is required
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json"
             }
           });
@@ -101,6 +245,7 @@ const CourseRead = () => {
           throw new Error("Failed to fetch object");
         }
         const data = await response.json();
+        console.log(data);
         let datas;
         if (mode === "course") {
           setCourses([data]);
@@ -129,8 +274,80 @@ const CourseRead = () => {
     fetchCourse();
   }, [id, token, pathId, showToast]);
 
+  const updateProgress = async () => {
+    const newCurrentTime = playerRef.current.currentTime();
+    const totalTime = playerRef.current.duration;
+
+    try {
+      const response = await fetch(`${API_URL}/api/module-progress/${activeModule.id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: "in_progress",
+          progress: (newCurrentTime / totalTime) * 100,
+          last_second: Math.floor(newCurrentTime)
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch object");
+      }
+      const data = await response.json();
+    } catch (err) {
+      showToast(err.message, false);
+    }
+  };
+
+  const startProgress = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/module-progress/${activeModule.id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: "in_progress"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch object");
+      }
+      const data = await response.json();
+    } catch (err) {
+      showToast(err.message, false);
+    }
+  };
+
+  const endProgress = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/api/module-progress/${id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status: "completed"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch object");
+      }
+      const data = await response.json();
+    } catch (err) {
+      showToast(err.message, false);
+    }
+  };
+
   const activateModule = (module) => {
     setActiveModule(module);
+    navigate(`?module=${module.id}`);
   };
 
   const toggleCourse = (courseId) => {
@@ -138,7 +355,21 @@ const CourseRead = () => {
       ...prevState,
       [courseId]: !prevState[courseId] // Toggle the state for the specific course by its id
     }));
-    console.log(coursesState);
+  };
+
+  const startVideo = () => {
+    playerRef.current.currentTime(0);
+    setCurrentTime(0);
+    playerRef.current.play();
+    updateProgress();
+    setIsVideoReady(false);
+  };
+
+  const resumeVideo = () => {
+    playerRef.current.currentTime(currentTime);
+    playerRef.current.play();
+    updateProgress();
+    setIsVideoReady(false);
   };
 
   return (
@@ -266,8 +497,9 @@ const CourseRead = () => {
                 )}
 
                 {activeModule &&
-                  activeModule.content_type === "video" &&
-                  activeModule.content_type === "assessment" && (
+                  activeCourse &&
+                  activeModule.content_type !== "video" &&
+                  activeModule.content_type !== "assessment" && (
                     <DocRenderer url={`${API_URL}${activeModule.file}`} />
                   )}
 
@@ -309,6 +541,10 @@ const CourseRead = () => {
                     </div>
                   </div>
                 ) : null}
+
+                {activeModule && activeModule.content_type === "assessment" && (
+                  <AssessmentHandler assessment={activeModule} />
+                )}
               </div>
             ) : (
               <div className="noObjects">Object not Found!</div>

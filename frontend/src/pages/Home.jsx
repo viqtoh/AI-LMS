@@ -3,6 +3,7 @@ import "../styles/home.css";
 import { API_URL } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast2";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -18,6 +19,9 @@ const Home = () => {
     email: localStorage.getItem("email") || "",
     password: ""
   });
+
+  const navigate = useNavigate();
+
   React.useEffect(() => {
     const error = localStorage.getItem("error");
     if (error) {
@@ -123,13 +127,13 @@ const Home = () => {
               </button>
             </div>
 
-            <a href="/" className="txt2">
+            <a onClick={() => navigate("/")} href="#" className="txt2">
               Forgot Password?
             </a>
             <br />
 
             <span className="txt1 me-2">Don’t have an account?</span>
-            <a href="/register" className="txt2">
+            <a onClick={() => navigate("/register")} href="#" className="txt2">
               Sign up
             </a>
           </form>

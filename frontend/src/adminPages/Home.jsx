@@ -3,11 +3,14 @@ import "../styles/home.css";
 import { API_URL } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast2";
+import { useNavigate } from "react-router-dom";
 
 const AdminHome = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
+
+  const navigate = useNavigate();
   const showToast = (message, success = true) => {
     setToast(message);
     setIsSuccess(success);
@@ -123,7 +126,7 @@ const AdminHome = () => {
               </button>
             </div>
 
-            <a href="/" className="txt2">
+            <a onClick={() => navigate("/")} href="#" className="txt2">
               Forgot Password?
             </a>
             <br />

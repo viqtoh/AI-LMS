@@ -51,40 +51,39 @@ const AdminLearnPath = () => {
   const [selectedCategories2, setSelectedCategories2] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  useEffect(() => {
-    const fetchLearningPath = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/admin/learning-path-full/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`, // If authentication is required
-            "Content-Type": "application/json"
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch learning path");
+  const fetchLearningPath = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/learning-path-full/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         }
-        const data = await response.json();
-        console.log(data);
-        setLearningPath(data);
-        setSelectedCategories(data.categories.map((category) => category.id));
+      });
 
-        setPathFormData((prevData) => ({
-          ...prevData,
-          title: data.title,
-          description: data.description,
-          image: data.image,
-          difficulty: data.difficulty,
-          estimated_time: data.estimated_time,
-          is_published: data.is_published
-        }));
-      } catch (err) {
-        showToast(err.message, false);
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error("Failed to fetch learning path");
       }
-    };
+      const data = await response.json();
+      console.log(data);
+      setLearningPath(data);
+      setSelectedCategories(data.categories.map((category) => category.id));
 
+      setPathFormData((prevData) => ({
+        ...prevData,
+        title: data.title,
+        description: data.description,
+        image: data.image,
+        difficulty: data.difficulty,
+        estimated_time: data.estimated_time,
+        is_published: data.is_published
+      }));
+    } catch (err) {
+      showToast(err.message, false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchLearningPath();
   }, [id, token]); // Refetch when id or token changes
 
@@ -114,6 +113,34 @@ const AdminLearnPath = () => {
       ...prevData,
       [name]: type === "checkbox" ? checked : value
     }));
+  };
+
+  const moveUp = async (id) => {
+    console.log("movinf");
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/learning-path/${learningPath.id}/move-up/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      const data = await response.json();
+      if (data.error) {
+        showToast(data.error, false);
+      }
+      if (data.message) {
+        showToast(data.message, true);
+      }
+      setIsLoading(false);
+      fetchLearningPath();
+    } catch (error) {
+      console.error("Error moving course:", error);
+      showToast("Failed to move course", false);
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -386,7 +413,7 @@ const AdminLearnPath = () => {
                 <div className="noObjects noObjects100 mt-4">No Courses here</div>
               ) : (
                 learningPath.courses.map((section, index) => (
-                  <CourseCollapsible key={index} {...section} learnPathId={id} />
+                  <CourseCollapsible key={index} {...section} learnPathId={id} onMoveUp={moveUp} />
                 ))
               )}
             </div>

@@ -32,7 +32,7 @@ const LearnPath = () => {
       try {
         const response = await fetch(`${API_URL}/api/learning-path-full/${id}`, {
           headers: {
-            Authorization: `Bearer ${token}`, // If authentication is required
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
           }
         });

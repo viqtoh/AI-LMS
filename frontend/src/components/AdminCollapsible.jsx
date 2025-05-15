@@ -19,7 +19,8 @@ export const ModuleCollapsible = ({
   id,
   courseId,
   is_published,
-  content_type = ""
+  content_type = "",
+  onMoveUp
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -52,7 +53,12 @@ export const ModuleCollapsible = ({
             <FontAwesomeIcon icon={faPen} />
           </button>
 
-          <button className="btn btn-primary sm-btn">
+          <button
+            className="btn btn-primary sm-btn"
+            onClick={() => {
+              onMoveUp(id);
+            }}
+          >
             <FontAwesomeIcon icon={faAngleDoubleUp} />
           </button>
         </div>
@@ -82,7 +88,14 @@ export const ModuleCollapsible = ({
   );
 };
 
-export const CourseCollapsible = ({ title, description = "", id, is_published, learnPathId }) => {
+export const CourseCollapsible = ({
+  title,
+  description = "",
+  id,
+  is_published,
+  learnPathId,
+  onMoveUp
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="collapsible">
@@ -108,7 +121,12 @@ export const CourseCollapsible = ({ title, description = "", id, is_published, l
             <FontAwesomeIcon icon={faEye} />
           </button>
 
-          <button className="btn btn-primary sm-btn">
+          <button
+            className="btn btn-primary sm-btn"
+            onClick={() => {
+              onMoveUp(id);
+            }}
+          >
             <FontAwesomeIcon icon={faAngleDoubleUp} />
           </button>
         </div>

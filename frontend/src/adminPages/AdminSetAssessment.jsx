@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AdminNavBar from "../components/AdminNavBar";
 import "../styles/home.css";
 import { API_URL, IMAGE_HOST } from "../constants";
@@ -16,7 +16,8 @@ const AdminSetAssessment = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { id } = useParams();
   const [isSaving, setIsSaving] = useState(false);
-
+  const [saved, setSaved] = useState(true);
+  const debounceTimer = useRef(null);
   const [questions, setQuestions] = useState([
     {
       id: 1,
@@ -51,6 +52,14 @@ const AdminSetAssessment = () => {
       if (data.questions.length > 0) {
         setQuestions(data.questions);
       }
+
+      setFormData({
+        title: data.title,
+        description: data.description || "",
+        duration: data.duration || "",
+        numberOfQuestions: data.numberOfQuestions || ""
+      });
+      setIsLoaded(true);
     } catch (error) {
       console.error("Error fetching user details:", error);
     } finally {
@@ -58,17 +67,38 @@ const AdminSetAssessment = () => {
     }
   };
 
+  const handleQuestionChange = (updatedQuestion) => {
+    setQuestions((prev) => prev.map((q) => (q.id === updatedQuestion.id ? updatedQuestion : q)));
+    setSaved(false); // Mark unsaved
+  };
+
   useEffect(() => {
     if (!isLoaded) {
       fetchAssessment();
-      setIsLoaded(true);
-    } else {
-      updateAssessment();
     }
-  }, [isLoaded, questions]);
+  }, [isLoaded]);
+
+  useEffect(() => {
+    // Clear any pending save
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    // Set new 3-second delay to save
+    debounceTimer.current = setTimeout(() => {
+      if (!saved) {
+        updateAssessment();
+        setSaved(true); // Mark as saved
+      }
+    }, 3000);
+
+    // Cleanup on unmount or before new effect
+    return () => clearTimeout(debounceTimer.current);
+  }, [questions]);
 
   const updateAssessment = async () => {
     setIsSaving(true);
+    console.log("sending");
     try {
       const response = await fetch(`${API_URL}/api/admin/assessment/module/${id}`, {
         method: "PUT",
@@ -79,21 +109,80 @@ const AdminSetAssessment = () => {
         body: JSON.stringify(questions)
       });
       const data = await response.json();
+      console.log(questions);
+
+      if (data.questions.length > 0) {
+        setQuestions(data.questions);
+      }
+
+      setSaved(true);
 
       console.log(data);
     } catch (error) {
-      console.error("Error fetching user details:", error);
+      console.error("Error:", error);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleQuestionChange = (updatedQuestion) => {
-    setQuestions((prev) => prev.map((q) => (q.id === updatedQuestion.id ? updatedQuestion : q)));
+  const deleteQuestion = async (questionId) => {
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/assessment/module/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          questionId: questionId
+        })
+      });
+      const data = await response.json();
+      if (data.questions.length > 0) {
+        setQuestions(data.questions);
+      }
+
+      console.log(data);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const deleteOption = async (optionId) => {
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/assessment/module/option/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          optionId: optionId
+        })
+      });
+      const data = await response.json();
+      if (data.questions.length > 0) {
+        setQuestions(data.questions);
+      }
+
+      console.log(data);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDeleteQuestion = (id) => {
-    setQuestions((prev) => prev.filter((q) => q.id !== id));
+    deleteQuestion(id);
+  };
+
+  const handleOptionDelete = (id) => {
+    deleteOption(id);
   };
 
   const addNewQuestion = () => {
@@ -101,14 +190,62 @@ const AdminSetAssessment = () => {
     setQuestions((prev) => [
       ...prev,
       {
-        id: newId,
+        aid: newId,
         question: "",
         answers: [
-          { id: 1, text: "", correct: false },
-          { id: 2, text: "", correct: false }
+          { qid: 1, text: "", correct: false },
+          { qid: 2, text: "", correct: false }
         ]
       }
     ]);
+  };
+
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    duration: "",
+    numberOfQuestions: ""
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/assessment/module/${id}/update/descriptions`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(formData)
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update category");
+      }
+
+      const data = await response.json();
+      if (data.error) {
+        showToast(data.error, false);
+      } else {
+        showToast("Assessment updated successfully", true);
+        setShowModal(false);
+      }
+    } catch (error) {
+      console.error("Error updating category:", error);
+      showToast("Failed to update category", false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -124,7 +261,10 @@ const AdminSetAssessment = () => {
           </div>
         ) : (
           <div className="sub-body">
-            <div className="w-100 d-flex justify-content-end mb-5">
+            <div className="w-100 d-flex justify-content-between mb-5">
+              <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                Edit Assessment
+              </button>
               {!isSaving ? (
                 <span className="saved-text">
                   <div />
@@ -145,6 +285,7 @@ const AdminSetAssessment = () => {
                   data={question}
                   onChange={handleQuestionChange}
                   onDelete={handleDeleteQuestion}
+                  onOptDelete={handleOptionDelete}
                 />
               ))}
 
@@ -155,6 +296,83 @@ const AdminSetAssessment = () => {
           </div>
         )}
       </div>
+
+      {showModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3 className="mb-5">Edit Assessment</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="description">Title</label>
+
+                <input
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="description">Description</label>
+
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="duration">Number of questions</label>
+                <input
+                  type="number"
+                  id="numberOfQuestions"
+                  name="numberOfQuestions"
+                  value={formData.numberOfQuestions}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="duration">Duration (mins)</label>
+                <input
+                  type="number"
+                  id="duration"
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="form-actions justify-content-between w-100 d-flex">
+                {isSaving ? (
+                  <button className="btn btn-theme" disabled>
+                    <div className="loader small-loader"></div>
+                  </button>
+                ) : (
+                  <button type="submit" className="btn btn-theme">
+                    Save
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

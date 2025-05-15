@@ -33,7 +33,7 @@ const Course = () => {
       try {
         const response = await fetch(`${API_URL}/api/course-full/${id}`, {
           headers: {
-            Authorization: `Bearer ${token}`, // If authentication is required
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
           }
         });

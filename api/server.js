@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const authenticateToken = require("./middleware/auth");
 const pool = require("./db");
+const { Sequelize } = require("sequelize");
 const {
   User,
   LearningPath,
@@ -15,9 +16,15 @@ const {
   UserModuleProgress,
   Assessment,
   Question,
-  Option
+  Option,
+  AttemptQuestion,
+  AssessmentAttempt,
+  UserAnswer,
+  LoginActivity
 } = require("./models");
-const { Op } = require("sequelize");
+const { Op, fn, col } = require("sequelize");
+
+const { startOfDay, endOfDay, subDays, startOfWeek, endOfWeek } = require("date-fns");
 
 require("dotenv").config();
 
@@ -111,6 +118,12 @@ app.post("/api/login", async (req, res) => {
 
         const lastLogin = new Date();
         await User.update({ token, lastLogin }, { where: { id: user.id } });
+
+        await LoginActivity.create({
+          userId: user.id,
+          ipAddress: req.ip,
+          userAgent: req.headers["user-agent"]
+        });
 
         return res.json({ message: "Login successful", token });
       }
@@ -697,6 +710,390 @@ app.post("/api/module-progress/:moduleId", authenticateToken, async (req, res) =
   }
 });
 
+//region user test
+//get assessment by module id
+app.get("/api/assessment/module/:moduleId", authenticateToken, async (req, res) => {
+  const { moduleId } = req.params;
+
+  try {
+    const module = await Module.findByPk(moduleId, {
+      include: {
+        model: Assessment,
+        include: {
+          model: Question,
+          include: Option
+        }
+      }
+    });
+
+    if (!module) {
+      return res.status(404).json({ message: "Module not found." });
+    }
+
+    const assessment = module.Assessment;
+
+    if (!assessment) {
+      return res.json({
+        moduleName: module.title,
+        assessment: null,
+        questions: []
+      });
+    }
+
+    const formattedQuestions = assessment.Questions.sort((a, b) => a.id - b.id) // Sort questions by id
+      .map((q) => ({
+        id: q.aid,
+        question: q.text,
+        answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
+          .map((opt) => ({
+            id: opt.qid,
+            text: opt.text
+          }))
+      }));
+
+    res.json({
+      moduleName: module.title,
+      assessmentId: assessment.id,
+      title: assessment.title,
+      questions: formattedQuestions,
+      duration: assessment.duration
+    });
+  } catch (error) {
+    console.error("Error fetching module and assessment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// check test
+app.get("/api/assessment-attempt/check/:assessmentId", authenticateToken, async (req, res) => {
+  const { assessmentId } = req.params;
+
+  try {
+    if (!assessmentId) {
+      return res.status(400).json({ message: "Assessment ID is required" });
+    }
+
+    const token = req.headers["authorization"]?.split(" ")[1];
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const attempt = await AssessmentAttempt.findOne({
+      where: {
+        AssessmentId: assessmentId,
+        UserId: user.id
+      },
+      include: [{ model: Assessment }],
+      order: [["createdAt", "DESC"]]
+    });
+
+    if (!attempt) {
+      return res.status(200).json({ exists: false, hasTimeLeft: false });
+    }
+
+    const startTime = new Date(attempt.startTime);
+    const now = new Date();
+    const elapsedSeconds = Math.floor((now - startTime) / 1000); // milliseconds to seconds
+    const totalDurationSeconds = attempt.Assessment.duration * 60;
+
+    const hasTimeLeft = elapsedSeconds < totalDurationSeconds;
+
+    return res.status(200).json({
+      exists: true,
+      hasTimeLeft,
+      timeUsed: elapsedSeconds,
+      timeRemaining: Math.max(0, totalDurationSeconds - elapsedSeconds),
+      assessmentAttemptId: attempt.id,
+      duration: attempt.Assessment.duration
+    });
+  } catch (err) {
+    console.error("Error checking assessment attempt:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//start test
+
+app.post("/api/assessment-attempt", authenticateToken, async (req, res) => {
+  const { assessmentId } = req.body;
+
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token missing" });
+
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    // Validate input
+    if (!assessmentId) {
+      return res.status(400).json({ message: "Assessment not found" });
+    }
+
+    // Get the assessment and number of questions
+    const assessment = await Assessment.findByPk(assessmentId);
+    if (!assessment) {
+      return res.status(404).json({ message: "Assessment not found" });
+    }
+
+    const numberToSelect = assessment.numberOfQuestions;
+    const userId = user.id;
+    // Fetch random questions from the assessment
+    const allQuestions = await Question.findAll({
+      where: { AssessmentId: assessmentId },
+      include: [{ model: Option }],
+      order: Sequelize.literal("RANDOM()"),
+      limit: numberToSelect
+    });
+
+    // Create the attempt
+    const attempt = await AssessmentAttempt.create({
+      UserId: userId,
+      AssessmentId: assessmentId,
+      startTime: new Date()
+    });
+
+    // Associate the selected questions to the attempt
+    for (const question of allQuestions) {
+      await AttemptQuestion.create({
+        AttemptId: attempt.id,
+        QuestionId: question.id
+      });
+    }
+
+    // Return the attempt and questions
+    const formattedQuestions = allQuestions.map((q) => ({
+      id: q.id,
+      question: q.text,
+      answers: q.Options.sort((a, b) => a.id - b.id).map((opt) => ({
+        id: opt.id,
+        text: opt.text
+      }))
+    }));
+
+    res.status(201).json({
+      message: "Assessment attempt created",
+      attemptId: attempt.id,
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error creating assessment attempt:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.post("/api/assessment-attempt/resume", authenticateToken, async (req, res) => {
+  const { assessmentAttemptId } = req.body;
+
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token missing" });
+
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (!assessmentAttemptId) {
+      return res.status(400).json({ message: "AssessmentAttempt ID is required" });
+    }
+
+    const assessmentAttempt = await AssessmentAttempt.findOne({
+      where: {
+        id: assessmentAttemptId,
+        UserId: user.id
+      }
+    });
+
+    if (!assessmentAttempt) {
+      return res.status(404).json({ message: "Assessment attempt not found" });
+    }
+
+    // Step 1: Get AttemptQuestions in the order they were created
+    const attemptQuestions = await AttemptQuestion.findAll({
+      where: { AttemptId: assessmentAttemptId },
+      order: [["createdAt", "ASC"]] // <-- This preserves original question order
+    });
+
+    const questionIds = attemptQuestions.map((aq) => aq.QuestionId);
+
+    console.log(attemptQuestions);
+
+    // Step 2: Fetch all related questions + their options
+    const questions = await Question.findAll({
+      where: { id: questionIds },
+      include: [{ model: Option }]
+    });
+
+    // Step 3: Create a map for quick lookup
+    const questionMap = {};
+    questions.forEach((q) => {
+      questionMap[q.id] = q;
+    });
+
+    const answers = await UserAnswer.findAll({
+      where: { AttemptId: assessmentAttemptId }
+    });
+
+    // Step 4: Format the questions preserving order
+    const formattedQuestions = attemptQuestions
+      .map((aq) => {
+        const q = questionMap[questionIds.find((indexElement) => indexElement === aq.QuestionId)];
+        if (q) {
+          const isMulti = q.Options.filter((opt) => opt.isCorrect).length > 1;
+          return {
+            id: q.id,
+            question: q.text,
+            isMulti: isMulti,
+            answers: q.Options.sort((a, b) => a.id - b.id).map((opt) => ({
+              id: opt.id,
+              text: opt.text,
+              selected: answers.some((answer) => answer.OptionId === opt.id)
+            }))
+          };
+        }
+        return null; // Return null for undefined questions
+      })
+      .filter((q) => q !== null); // Filter out null values
+
+    res.status(200).json({
+      message: "Assessment resumed",
+      attemptId: assessmentAttempt.id,
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error resuming assessment attempt:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.post("/api/assessment-attempt/setAnswer", authenticateToken, async (req, res) => {
+  const { assessmentAttemptId, answerId, remove } = req.body;
+
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token missing" });
+
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (!assessmentAttemptId) {
+      return res.status(400).json({ message: "AssessmentAttempt ID is required" });
+    }
+
+    const option = await Option.findOne({
+      where: { id: answerId }
+    });
+
+    if (!option) {
+      return res.status(404).json({ message: "Option not found" });
+    }
+
+    const question = await Question.findOne({
+      where: { id: option.QuestionId },
+      include: [{ model: Option }]
+    });
+
+    if (!question) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+
+    let userAnswer = await UserAnswer.findOne({
+      where: {
+        AttemptId: assessmentAttemptId,
+        OptionId: answerId
+      }
+    });
+
+    const isMultiple = question.Options.filter((opt) => opt.isCorrect).length > 1;
+
+    if (remove) {
+      if (userAnswer) {
+        await userAnswer.destroy();
+      }
+    } else {
+      if (!userAnswer) {
+        userAnswer = await UserAnswer.create({
+          OptionId: answerId,
+          QuestionId: question.id,
+          AttemptId: assessmentAttemptId
+        });
+      }
+    }
+
+    if (!isMultiple) {
+      const otherAnswers = await UserAnswer.findAll({
+        where: {
+          AttemptId: assessmentAttemptId,
+          QuestionId: question.id
+        }
+      });
+
+      otherAnswers.forEach((answer) => {
+        if (answer.OptionId !== userAnswer.OptionId) {
+          answer.destroy();
+        }
+      });
+    }
+
+    const assessmentAttempt = await AssessmentAttempt.findOne({
+      where: {
+        id: assessmentAttemptId,
+        UserId: user.id
+      }
+    });
+
+    if (!assessmentAttempt) {
+      return res.status(404).json({ message: "Assessment attempt not found" });
+    }
+
+    const attemptQuestions = await AttemptQuestion.findAll({
+      where: { AttemptId: assessmentAttemptId },
+      order: [["createdAt", "ASC"]]
+    });
+
+    const questionIds = attemptQuestions.map((aq) => aq.QuestionId);
+
+    const questions = await Question.findAll({
+      where: { id: questionIds },
+      include: [{ model: Option }]
+    });
+
+    const questionMap = {};
+    questions.forEach((q) => {
+      questionMap[q.id] = q;
+    });
+
+    const answers = await UserAnswer.findAll({
+      where: { AttemptId: assessmentAttemptId }
+    });
+
+    const formattedQuestions = attemptQuestions
+      .map((aq) => {
+        const q = questionMap[questionIds.find((indexElement) => indexElement === aq.QuestionId)];
+        if (q) {
+          const isMulti = q.Options.filter((opt) => opt.isCorrect).length > 1;
+          return {
+            id: q.id,
+            question: q.text,
+            isMulti: isMulti,
+            answers: q.Options.sort((a, b) => a.id - b.id).map((opt) => ({
+              id: opt.id,
+              text: opt.text,
+              selected: answers.some((answer) => answer.OptionId === opt.id)
+            }))
+          };
+        }
+        return null;
+      })
+      .filter((q) => q !== null);
+
+    res.status(200).json({
+      message: "Assessment resumed",
+      attemptId: assessmentAttempt.id,
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error setting answer:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 //region Admin Apis
 
 app.post("/api/admin/login", async (req, res) => {
@@ -734,6 +1131,105 @@ app.post("/api/admin/login", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.get("/api/admin/dashboard", async (req, res) => {
+  const now = new Date();
+
+  try {
+    const totalUsers = await User.count();
+    const totalCourses =
+      (await Course.count({ where: { show_outside: true } })) + (await LearningPath.count());
+    const totalStudents = await User.count({ where: { isAdmin: false } });
+    const totalStaffs = await User.count({ where: { isAdmin: true } });
+    // Summary stats
+    const [today, yesterday, thisWeek] = await Promise.all([
+      LoginActivity.count({
+        where: {
+          createdAt: {
+            [Op.between]: [startOfDay(now), endOfDay(now)]
+          }
+        }
+      }),
+      LoginActivity.count({
+        where: {
+          createdAt: {
+            [Op.between]: [startOfDay(subDays(now, 1)), endOfDay(subDays(now, 1))]
+          }
+        }
+      }),
+      LoginActivity.count({
+        where: {
+          createdAt: {
+            [Op.between]: [startOfWeek(now), endOfWeek(now)]
+          }
+        }
+      })
+    ]);
+
+    // Top 5 active users by login count
+    const activeUsers = await LoginActivity.findAll({
+      attributes: ["userId", [fn("COUNT", col("userId")), "loginCount"]],
+      include: {
+        model: User,
+        attributes: ["id", "first_name", "last_name"]
+      },
+      group: ["userId", "User.id"],
+      order: [[fn("COUNT", col("userId")), "DESC"]],
+      limit: 5
+    });
+
+    const topUsers = activeUsers.map((entry) => ({
+      name: entry.User.first_name + " " + entry.User.last_name,
+      logins: entry.dataValues.loginCount
+    }));
+
+    const progresses = await UserProgress.count();
+    const completedProgresses = await UserProgress.count({ where: { progress: 100 } });
+
+    const completedProgressesObj = await UserProgress.findAll({ where: { progress: 100 } });
+    const completedUsers = completedProgressesObj.map((entry) => entry.UserId);
+    const completedUsersCount = new Set(completedUsers).size;
+
+    // Top 3 most completed courses
+    const topCompletedCourses = await UserProgress.findAll({
+      attributes: ["courseId", [fn("COUNT", col("courseId")), "completionCount"]],
+      where: { progress: 100 },
+      group: ["UserProgress.courseId", "Course.id", "Course.title"],
+      order: [[fn("COUNT", col("UserProgress.courseId")), "DESC"]],
+      limit: 3,
+      include: {
+        model: Course, // adjust path if needed
+        attributes: ["id", "title"]
+      }
+    });
+
+    const topCourses = topCompletedCourses.map((entry) => ({
+      courseId: entry.course.id,
+      title: entry.Course.title,
+      completions: entry.dataValues.completionCount
+    }));
+
+    res.json({
+      totalUsers: totalUsers,
+      totalCourses: totalCourses,
+      totalStudents: totalStudents,
+      totalStaffs: totalStaffs,
+      totalProgresses: progresses,
+      completedProgresses: completedProgresses,
+      completedUsers: completedUsersCount,
+      topCompletedCourses: topCourses,
+      loginActivity: {
+        today,
+        yesterday,
+        thisWeek
+      },
+      activeUsers: topUsers
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to load dashboard data" });
   }
 });
 
@@ -1282,6 +1778,98 @@ app.put("/api/admin/course/:id", authenticateToken, async (req, res) => {
   }
 });
 
+app.get("/api/admin/course/:courseId/move-up/:moduleId", authenticateToken, async (req, res) => {
+  const { moduleId, courseId } = req.params;
+
+  try {
+    // Find the current course entry
+    const currentEntry = await Module.findOne({
+      where: { id: moduleId }
+    });
+
+    if (!currentEntry) {
+      return res.status(404).json({ error: "Module not found in Course" });
+    }
+
+    if (currentEntry.order === 0) {
+      return res.status(400).json({ message: "Module is already at the top" });
+    }
+
+    // Find the course above
+    const aboveEntry = await Module.findOne({
+      where: {
+        courseId,
+        order: currentEntry.order - 1
+      }
+    });
+
+    if (!aboveEntry) {
+      return res.status(400).json({ error: "No module above to swap with" });
+    }
+
+    // Swap orderIndexes
+    const tempIndex = currentEntry.order;
+    currentEntry.order = aboveEntry.order;
+    aboveEntry.order = tempIndex;
+
+    await currentEntry.save();
+    await aboveEntry.save();
+
+    res.json({ message: "Module moved up successfully" });
+  } catch (error) {
+    console.error("Move up error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get(
+  "/api/admin/learning-path/:learningPathId/move-up/:courseId",
+  authenticateToken,
+  async (req, res) => {
+    const { learningPathId, courseId } = req.params;
+
+    try {
+      // Find the current course entry
+      const currentEntry = await LearningPathCourse.findOne({
+        where: { learningPathId, courseId }
+      });
+
+      if (!currentEntry) {
+        return res.status(404).json({ error: "Course not found in learning path" });
+      }
+
+      if (currentEntry.orderIndex === 0) {
+        return res.status(400).json({ message: "Course is already at the top" });
+      }
+
+      // Find the course above
+      const aboveEntry = await LearningPathCourse.findOne({
+        where: {
+          learningPathId,
+          orderIndex: currentEntry.orderIndex - 1
+        }
+      });
+
+      if (!aboveEntry) {
+        return res.status(400).json({ error: "No course above to swap with" });
+      }
+
+      // Swap orderIndexes
+      const tempIndex = currentEntry.orderIndex;
+      currentEntry.orderIndex = aboveEntry.orderIndex;
+      aboveEntry.orderIndex = tempIndex;
+
+      await currentEntry.save();
+      await aboveEntry.save();
+
+      res.json({ message: "Course moved up successfully" });
+    } catch (error) {
+      console.error("Move up error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 app.post("/api/admin/category", authenticateToken, async (req, res) => {
   try {
     const { name } = req.body;
@@ -1394,8 +1982,44 @@ app.get("/api/admin/category", authenticateToken, async (req, res) => {
   }
 });
 
-//region set test
-app.get("/api/admin/assessment/module/:moduleId", async (req, res) => {
+//region admin set test
+
+app.put(
+  "/api/admin/assessment/module/:moduleId/update/descriptions",
+  authenticateToken,
+  async (req, res) => {
+    const { moduleId } = req.params;
+
+    const { title, description, duration, numberOfQuestions } = req.body;
+
+    try {
+      const module = await Module.findByPk(moduleId, {
+        include: {
+          model: Assessment
+        }
+      });
+
+      if (!module) {
+        return res.status(404).json({ message: "Module not found." });
+      }
+
+      const assessment = module.Assessment;
+
+      if (!assessment) {
+        res.status(500).json({ message: "Assessment not found." });
+      }
+
+      await assessment.update({ title, description, duration, numberOfQuestions });
+
+      res.status(200).json({ message: "Assessment updated successfully." });
+    } catch (error) {
+      console.error("Error updating assessment:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
+
+app.get("/api/admin/assessment/module/:moduleId", authenticateToken, async (req, res) => {
   const { moduleId } = req.params;
 
   try {
@@ -1425,20 +2049,26 @@ app.get("/api/admin/assessment/module/:moduleId", async (req, res) => {
 
     const formattedQuestions = assessment.Questions.sort((a, b) => a.id - b.id) // Sort questions by id
       .map((q) => ({
-        id: q.aid,
+        id: q.id,
+        aid: q.aid,
         question: q.text,
         answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
           .map((opt) => ({
-            id: opt.qid,
+            id: opt.id,
+            qid: opt.qid,
             text: opt.text,
             correct: opt.isCorrect
           }))
       }));
 
+    console.log(assessment);
+
     res.json({
       moduleName: module.title,
       assessmentId: assessment.id,
       title: assessment.title,
+      description: assessment.description,
+      duration: assessment.duration,
       questions: formattedQuestions
     });
   } catch (error) {
@@ -1448,10 +2078,9 @@ app.get("/api/admin/assessment/module/:moduleId", async (req, res) => {
 });
 
 //update questions
-app.put("/api/admin/assessment/module/:moduleId", async (req, res) => {
+app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req, res) => {
   const { moduleId } = req.params;
   const questionsPayload = req.body;
-  console.log("Received Payload:", questionsPayload);
 
   try {
     const module = await Module.findByPk(moduleId);
@@ -1469,13 +2098,13 @@ app.put("/api/admin/assessment/module/:moduleId", async (req, res) => {
 
       if (q.id) {
         // Try to update existing question
-        question = await Question.findOne({ where: { aid: q.id, AssessmentId: assessment.id } });
+        question = await Question.findOne({ where: { id: q.id } });
         if (question) {
           question.text = q.question;
           await question.save();
         } else {
           question = await Question.create({
-            aid: q.id,
+            aid: q.aid,
             text: q.question,
             AssessmentId: assessment.id
           });
@@ -1485,7 +2114,7 @@ app.put("/api/admin/assessment/module/:moduleId", async (req, res) => {
         for (const opt of q.answers) {
           if (opt.id) {
             const existingOpt = await Option.findOne({
-              where: { qid: opt.id, QuestionId: question.id }
+              where: { id: opt.id }
             });
             if (existingOpt) {
               existingOpt.text = opt.text;
@@ -1493,7 +2122,7 @@ app.put("/api/admin/assessment/module/:moduleId", async (req, res) => {
               await existingOpt.save();
             } else {
               await Option.create({
-                qid: opt.id,
+                qid: opt.qid,
                 text: opt.text,
                 isCorrect: opt.correct,
                 QuestionId: question.id
@@ -1501,40 +2130,11 @@ app.put("/api/admin/assessment/module/:moduleId", async (req, res) => {
             }
           } else {
             await Option.create({
-              qid: opt.id,
+              qid: opt.qid,
               text: opt.text,
               isCorrect: opt.correct,
               QuestionId: question.id
             });
-          }
-        }
-      }
-    }
-
-    // Now, check and delete questions or options that are no longer in the payload
-    const existingQuestions = await Question.findAll({
-      where: { AssessmentId: assessment.id }
-    });
-
-    // Delete questions not in the payload
-    for (const existingQuestion of existingQuestions) {
-      const questionInPayload = questionsPayload.find((q) => q.id === existingQuestion.aid);
-      if (!questionInPayload) {
-        // Delete the question and its options
-        console.log("deleting");
-        await Option.destroy({ where: { QuestionId: existingQuestion.id } });
-        await existingQuestion.destroy();
-      } else {
-        // Delete options not in the payload
-        const existingOptions = await Option.findAll({
-          where: { QuestionId: existingQuestion.id }
-        });
-        for (const existingOption of existingOptions) {
-          const optionInPayload = questionInPayload.answers.find(
-            (opt) => opt.id === existingOption.qid
-          );
-          if (!optionInPayload) {
-            await existingOption.destroy();
           }
         }
       }
@@ -1552,11 +2152,13 @@ app.put("/api/admin/assessment/module/:moduleId", async (req, res) => {
     const formattedQuestions = updatedQuestions
       .sort((a, b) => a.id - b.id) // Sort questions by id
       .map((q) => ({
-        id: q.aid,
+        id: q.id,
+        aid: q.aid,
         question: q.text,
         answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
           .map((opt) => ({
-            id: opt.qid,
+            id: opt.id,
+            qid: opt.qid,
             text: opt.text,
             correct: opt.isCorrect
           }))
@@ -1565,6 +2167,122 @@ app.put("/api/admin/assessment/module/:moduleId", async (req, res) => {
     // Send back a response with the message and updated questions
     res.json({
       message: "Assessment questions/answers saved successfully",
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error saving questions and options:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//delete questions
+app.delete("/api/admin/assessment/module/:moduleId", authenticateToken, async (req, res) => {
+  const { moduleId } = req.params;
+  const { questionId } = req.body;
+  try {
+    const question = await Question.findOne({ where: { id: questionId } });
+    if (!question) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+
+    console.log(question);
+
+    await question.destroy();
+
+    console.log("deleted");
+
+    const module = await Module.findByPk(moduleId);
+    if (!module) return res.status(404).json({ message: "Module not found" });
+
+    let assessment = await Assessment.findOne({ where: { moduleId } });
+
+    if (!assessment) {
+      assessment = await Assessment.create({ moduleId, title: "Default Title" });
+    }
+
+    const updatedQuestions = await Question.findAll({
+      where: { AssessmentId: assessment.id },
+      include: {
+        model: Option
+      }
+    });
+
+    // Format the data to match the response payload format
+    const formattedQuestions = updatedQuestions
+      .sort((a, b) => a.id - b.id) // Sort questions by id
+      .map((q) => ({
+        id: q.id,
+        aid: q.aid,
+        question: q.text,
+        answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
+          .map((opt) => ({
+            id: opt.id,
+            qid: opt.qid,
+            text: opt.text,
+            correct: opt.isCorrect
+          }))
+      }));
+
+    // Send back a response with the message and updated questions
+    res.json({
+      message: "Question deleted successfully",
+      questions: formattedQuestions
+    });
+  } catch (error) {
+    console.error("Error saving questions and options:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//delete options
+app.delete("/api/admin/assessment/module/option/:moduleId", authenticateToken, async (req, res) => {
+  const { moduleId } = req.params;
+  const { optionId } = req.body;
+  try {
+    const option = await Option.findOne({ where: { id: optionId } });
+    if (!option) {
+      return res.status(404).json({ message: "Option not found" });
+    }
+
+    await option.destroy();
+
+    console.log("deleted");
+
+    const module = await Module.findByPk(moduleId);
+    if (!module) return res.status(404).json({ message: "Module not found" });
+
+    let assessment = await Assessment.findOne({ where: { moduleId } });
+
+    if (!assessment) {
+      assessment = await Assessment.create({ moduleId, title: "Default Title" });
+    }
+
+    const updatedQuestions = await Question.findAll({
+      where: { AssessmentId: assessment.id },
+      include: {
+        model: Option
+      }
+    });
+
+    // Format the data to match the response payload format
+    const formattedQuestions = updatedQuestions
+      .sort((a, b) => a.id - b.id) // Sort questions by id
+      .map((q) => ({
+        id: q.id,
+        aid: q.aid,
+        question: q.text,
+        answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
+          .map((opt) => ({
+            id: opt.id,
+            qid: opt.qid,
+            text: opt.text,
+            correct: opt.isCorrect
+          }))
+      }));
+
+    // Send back a response with the message and updated questions
+    res.json({
+      message: "Question deleted successfully",
       questions: formattedQuestions
     });
   } catch (error) {
@@ -1688,7 +2406,11 @@ app.get("/api/admin/course-full/:id", authenticateToken, async (req, res) => {
     if (!course) {
       return res.status(404).json({ error: "Course not found." });
     }
-    let modules = await Module.findAll({ where: { courseId: id } });
+    let modules = await Module.findAll({
+      where: { courseId: id },
+      order: [["order", "ASC"]]
+    });
+
     // Format response
     const response = {
       id: course.id,
@@ -1723,11 +2445,12 @@ app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res)
       include: [
         {
           model: Category,
-          through: { attributes: [] }, // Exclude join table attributes
+          through: { attributes: [] },
           as: "Categories"
         },
         {
           model: Course,
+          as: "Courses",
           include: [
             {
               model: Category,
@@ -1735,7 +2458,7 @@ app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res)
               as: "Categories"
             }
           ],
-          as: "Courses"
+          through: { attributes: ["orderIndex"] }
         }
       ]
     });
@@ -1743,6 +2466,10 @@ app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res)
     if (!learningPath) {
       return res.status(404).json({ error: "Learning path not found." });
     }
+
+    learningPath.Courses.sort((a, b) => {
+      return a.LearningPathCourse.orderIndex - b.LearningPathCourse.orderIndex;
+    });
 
     // Format response
     const response = {

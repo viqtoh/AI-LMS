@@ -966,6 +966,33 @@ li svg {
 .small-loader {
   height: 20px !important;
   width: 20px !important;
-  border-color: #417df7;
+  border-color: #417df7 !important;
+}
+.saving-text .small-loader {
   margin-right: 7px;
+}
+
+.assessment-handler {
+  height: 100%;
+  width: 100%;
+  background-color: #aaa;
+}
+
+.form-check-label {
+  position: inherit;
+  transform: none;
+}
+
+.btn-unvisited {
+  background-color: #d3d4d5;
+}
+
+.btn-unvisited:hover {
+  background-color: #8c8f92 !important;
+}
+
+.testdesc p {
+  color: white;
+  font-size: 15px;
+  text-shadow: #000;
 }

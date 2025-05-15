@@ -11,6 +11,19 @@ const Assessment = sequelize.define("Assessment", {
   title: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  description: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  duration: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  numberOfQuestions: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
   }
 });
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { FaCheck, FaTimes, FaGripVertical } from "react-icons/fa";
 
-function QuestionEditor({ index, data, onChange, onDelete }) {
+function QuestionEditor({ index, data, onChange, onDelete, onOptDelete }) {
   const handleQuestionChange = (e) => {
     onChange({ ...data, question: e.target.value });
   };
@@ -21,7 +21,7 @@ function QuestionEditor({ index, data, onChange, onDelete }) {
   const addAnswer = () => {
     const newId = Math.max(0, ...data.answers.map((a) => a.id)) + 1;
     const newAnswer = {
-      id: newId,
+      qid: newId,
       text: "",
       correct: false
     };
@@ -29,8 +29,7 @@ function QuestionEditor({ index, data, onChange, onDelete }) {
   };
 
   const deleteAnswer = (answerId) => {
-    const updatedAnswers = data.answers.filter((a) => a.id !== answerId);
-    onChange({ ...data, answers: updatedAnswers });
+    onOptDelete(answerId);
   };
 
   return (

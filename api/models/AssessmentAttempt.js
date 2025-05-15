@@ -8,6 +8,19 @@ const AssessmentAttempt = sequelize.define("AssessmentAttempt", {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true
+  },
+  status: {
+    type: DataTypes.ENUM("in_progress", "completed"),
+    defaultValue: "in_progress"
+  },
+  score: {
+    type: DataTypes.FLOAT,
+    allowNull: true
+  },
+  startTime: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
   }
 });
 
