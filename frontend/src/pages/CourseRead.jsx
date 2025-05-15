@@ -226,7 +226,7 @@ const CourseRead = () => {
         if (id) {
           response = await fetch(`${API_URL}/api/course-full/${id}`, {
             headers: {
-              Authorization: `Bearer ${token}`, // If authentication is required
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json"
             }
           });
@@ -234,7 +234,7 @@ const CourseRead = () => {
         } else {
           response = await fetch(`${API_URL}/api/learning-path-full/${pathId}`, {
             headers: {
-              Authorization: `Bearer ${token}`, // If authentication is required
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json"
             }
           });
@@ -282,7 +282,7 @@ const CourseRead = () => {
       const response = await fetch(`${API_URL}/api/module-progress/${activeModule.id}`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`, // If authentication is required
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -306,7 +306,7 @@ const CourseRead = () => {
       const response = await fetch(`${API_URL}/api/module-progress/${activeModule.id}`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`, // If authentication is required
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -328,7 +328,7 @@ const CourseRead = () => {
       const response = await fetch(`${API_URL}/api/module-progress/${id}`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`, // If authentication is required
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({

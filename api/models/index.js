@@ -16,6 +16,7 @@ const Question = require("./Question");
 const Option = require("./Option");
 const UserAnswer = require("./UserAnswer");
 const AttemptQuestion = require("./AttemptQuestion");
+const LoginActivity = require("./LoginActivity");
 
 // Define junction tables (before associations)
 const LearningPathCategory = sequelize.define("LearningPathCategory", {}, { timestamps: false });
@@ -72,6 +73,9 @@ AssessmentAttempt.belongsToMany(Question, {
 AttemptQuestion.belongsTo(Question, { foreignKey: "QuestionId" });
 Question.hasMany(AttemptQuestion, { foreignKey: "QuestionId" });
 
+LoginActivity.belongsTo(User, { foreignKey: "userId", onDelete: "CASCADE" });
+User.hasMany(LoginActivity, { foreignKey: "userId" });
+
 // Create an object to store models
 const db = {
   sequelize,
@@ -91,7 +95,8 @@ const db = {
   Question,
   Option,
   UserAnswer,
-  AttemptQuestion
+  AttemptQuestion,
+  LoginActivity
 };
 
 // Sync database

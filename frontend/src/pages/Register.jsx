@@ -3,6 +3,7 @@ import "../styles/home.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast2";
 import { API_URL } from "../constants";
+import { useNavigate } from "react-router-dom";
 
 const Register = () => {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -14,6 +15,8 @@ const Register = () => {
     console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   };
+
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -167,7 +170,7 @@ const Register = () => {
             </div>
 
             <span className="txt1  pe-2 inline-block">Already have an account?</span>
-            <a href="/" className="txt2">
+            <a onClick={() => navigate("/")} href="#" className="txt2">
               Login
             </a>
           </form>

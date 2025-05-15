@@ -10,6 +10,7 @@ import { useParams } from "react-router-dom";
 import { ModuleCollapsible } from "../components/AdminCollapsible";
 import AdminNavBar from "../components/AdminNavBar";
 import Select from "react-select";
+import { useNavigate } from "react-router-dom";
 
 const AdminCourse = () => {
   const token = localStorage.getItem("token");
@@ -24,6 +25,8 @@ const AdminCourse = () => {
     console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
+
+  const navigate = useNavigate();
 
   const [courseFormData, setCourseFormData] = useState({
     title: "",
@@ -43,7 +46,7 @@ const AdminCourse = () => {
     try {
       const response = await fetch(`${API_URL}/api/admin/course-full/${id}`, {
         headers: {
-          Authorization: `Bearer ${token}`, // If authentication is required
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         }
       });
@@ -347,7 +350,12 @@ const AdminCourse = () => {
                         <FontAwesomeIcon icon={faEye} />
                       </button>
                     </div>
-                    <a href={`/admin/content-management/course/${course.id}/module/create`}>
+                    <a
+                      onClick={() =>
+                        navigate(`/admin/content-management/course/${course.id}/module/create`)
+                      }
+                      href="#"
+                    >
                       <button className="btn btn-theme"> Add Module</button>
                     </a>
                   </div>

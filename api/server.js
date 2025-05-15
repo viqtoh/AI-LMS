@@ -19,9 +19,12 @@ const {
   Option,
   AttemptQuestion,
   AssessmentAttempt,
-  UserAnswer
+  UserAnswer,
+  LoginActivity
 } = require("./models");
-const { Op } = require("sequelize");
+const { Op, fn, col } = require("sequelize");
+
+const { startOfDay, endOfDay, subDays, startOfWeek, endOfWeek } = require("date-fns");
 
 require("dotenv").config();
 
@@ -115,6 +118,12 @@ app.post("/api/login", async (req, res) => {
 
         const lastLogin = new Date();
         await User.update({ token, lastLogin }, { where: { id: user.id } });
+
+        await LoginActivity.create({
+          userId: user.id,
+          ipAddress: req.ip,
+          userAgent: req.headers["user-agent"]
+        });
 
         return res.json({ message: "Login successful", token });
       }
@@ -1122,6 +1131,105 @@ app.post("/api/admin/login", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.get("/api/admin/dashboard", async (req, res) => {
+  const now = new Date();
+
+  try {
+    const totalUsers = await User.count();
+    const totalCourses =
+      (await Course.count({ where: { show_outside: true } })) + (await LearningPath.count());
+    const totalStudents = await User.count({ where: { isAdmin: false } });
+    const totalStaffs = await User.count({ where: { isAdmin: true } });
+    // Summary stats
+    const [today, yesterday, thisWeek] = await Promise.all([
+      LoginActivity.count({
+        where: {
+          createdAt: {
+            [Op.between]: [startOfDay(now), endOfDay(now)]
+          }
+        }
+      }),
+      LoginActivity.count({
+        where: {
+          createdAt: {
+            [Op.between]: [startOfDay(subDays(now, 1)), endOfDay(subDays(now, 1))]
+          }
+        }
+      }),
+      LoginActivity.count({
+        where: {
+          createdAt: {
+            [Op.between]: [startOfWeek(now), endOfWeek(now)]
+          }
+        }
+      })
+    ]);
+
+    // Top 5 active users by login count
+    const activeUsers = await LoginActivity.findAll({
+      attributes: ["userId", [fn("COUNT", col("userId")), "loginCount"]],
+      include: {
+        model: User,
+        attributes: ["id", "first_name", "last_name"]
+      },
+      group: ["userId", "User.id"],
+      order: [[fn("COUNT", col("userId")), "DESC"]],
+      limit: 5
+    });
+
+    const topUsers = activeUsers.map((entry) => ({
+      name: entry.User.first_name + " " + entry.User.last_name,
+      logins: entry.dataValues.loginCount
+    }));
+
+    const progresses = await UserProgress.count();
+    const completedProgresses = await UserProgress.count({ where: { progress: 100 } });
+
+    const completedProgressesObj = await UserProgress.findAll({ where: { progress: 100 } });
+    const completedUsers = completedProgressesObj.map((entry) => entry.UserId);
+    const completedUsersCount = new Set(completedUsers).size;
+
+    // Top 3 most completed courses
+    const topCompletedCourses = await UserProgress.findAll({
+      attributes: ["courseId", [fn("COUNT", col("courseId")), "completionCount"]],
+      where: { progress: 100 },
+      group: ["UserProgress.courseId", "Course.id", "Course.title"],
+      order: [[fn("COUNT", col("UserProgress.courseId")), "DESC"]],
+      limit: 3,
+      include: {
+        model: Course, // adjust path if needed
+        attributes: ["id", "title"]
+      }
+    });
+
+    const topCourses = topCompletedCourses.map((entry) => ({
+      courseId: entry.course.id,
+      title: entry.Course.title,
+      completions: entry.dataValues.completionCount
+    }));
+
+    res.json({
+      totalUsers: totalUsers,
+      totalCourses: totalCourses,
+      totalStudents: totalStudents,
+      totalStaffs: totalStaffs,
+      totalProgresses: progresses,
+      completedProgresses: completedProgresses,
+      completedUsers: completedUsersCount,
+      topCompletedCourses: topCourses,
+      loginActivity: {
+        today,
+        yesterday,
+        thisWeek
+      },
+      activeUsers: topUsers
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to load dashboard data" });
   }
 });
 

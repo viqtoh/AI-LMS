@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/navbar.css";
 import { API_URL, IMAGE_HOST } from "../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -20,6 +21,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
   const [lastName, setLastName] = useState("");
   const [uimage, setUimage] = useState("");
   const [isloaded, setIsLoaded] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -95,7 +97,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
         </div>
         <ul>
           <li className={`${title === "Dashboard" ? "active" : ""}`}>
-            <a href="/dashboard" className="d-flex align-items-center">
+            <a onClick={() => navigate("/dashboard")} className="d-flex align-items-center">
               {title === "Dashboard" ? (
                 <div className="homeIconDiv">
                   <FontAwesomeIcon icon={faHouse} id="homeIcon" />
@@ -108,7 +110,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             </a>
           </li>
           <li className={`${title === "Content Library" ? "active" : ""}`}>
-            <a href="/content-library">
+            <a onClick={() => navigate("/content-library")} href="#">
               {title === "Content Library" ? (
                 <FontAwesomeIcon icon={faFolderOpen} id="folderIcon" />
               ) : (
@@ -118,7 +120,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             </a>
           </li>
           <li className={`${title === "Achievements" ? "active" : ""}`}>
-            <a href="/achievements">
+            <a onClick={() => navigate("/achievements")} href="#">
               <FontAwesomeIcon
                 icon={faTrophy}
                 className="mtrophy"
@@ -128,7 +130,11 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             </a>
           </li>
           <li className={`${title === "Profile" ? "active" : ""}`}>
-            <a href="/account/settings" className="d-flex align-items-center">
+            <a
+              onClick={() => navigate("/account/settings")}
+              href="#"
+              className="d-flex align-items-center"
+            >
               {title === "Profile" ? (
                 <div className="cogIconDiv">
                   <div className="lighteningDiv">
@@ -159,7 +165,11 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
         </div>
         <ul>
           <li className={`${title === "Dashboard" ? "active" : ""}`}>
-            <a href="/dashboard" className="d-flex align-items-center">
+            <a
+              onClick={() => navigate("/dashboard")}
+              href="#"
+              className="d-flex align-items-center"
+            >
               {title === "Dashboard" ? (
                 <div className="homeIconDiv">
                   <FontAwesomeIcon icon={faHouse} id="homeIcon" />
@@ -172,7 +182,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             </a>
           </li>
           <li className={`${title === "Content Library" ? "active" : ""}`}>
-            <a href="/content-library">
+            <a onClick={() => navigate("/content-library")} href="#">
               {title === "Content Library" ? (
                 <FontAwesomeIcon icon={faFolderOpen} id="folderIcon" />
               ) : (
@@ -182,7 +192,7 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             </a>
           </li>
           <li className={`${title === "Achievements" ? "active" : ""}`}>
-            <a href="/achievements">
+            <a onClick={() => navigate("/achievements")} href="#">
               <FontAwesomeIcon
                 icon={faTrophy}
                 id={`${title === "Achievements" ? "trophyIcon" : ""}`}
@@ -191,7 +201,11 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             </a>
           </li>
           <li className={`${title === "Profile" ? "active" : ""}`}>
-            <a href="/account/settings" className="d-flex align-items-center">
+            <a
+              onClick={() => navigate("/account/settings")}
+              href="#"
+              className="d-flex align-items-center"
+            >
               {title === "Profile" ? (
                 <div className="cogIconDiv">
                   <div className="lighteningDiv">
@@ -225,13 +239,17 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
             </div>
           </div>
           <div className="nav-right">
-            <a href="/" className="nav-noti">
+            <a onClick={() => navigate("/")} href="#" className="nav-noti">
               <FontAwesomeIcon icon={faBell} />
             </a>
             <div className="nav-divider">
               <span className="vertical-line"></span>
             </div>
-            <a href="/account/settings" className="d-flex text-decoration-none align-items-center">
+            <a
+              onClick={() => navigate("/account/settings")}
+              href="#"
+              className="d-flex text-decoration-none align-items-center"
+            >
               {firstName && lastName ? (
                 <span>
                   Hi, {firstName} <span className="nameForTab">{lastName}</span>

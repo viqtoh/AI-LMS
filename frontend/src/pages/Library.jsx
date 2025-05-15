@@ -125,7 +125,7 @@ const Library = () => {
         console.log(queryParams.toString());
         const response = await fetch(`${API_URL}/api/contents?${queryParams.toString()}`, {
           headers: {
-            Authorization: `Bearer ${token}` // If authentication is required
+            Authorization: `Bearer ${token}`
           }
         });
         const data = await response.json();
@@ -215,7 +215,7 @@ const Library = () => {
 
       const response = await fetch(`${API_URL}/api/contents?${queryParams.toString()}`, {
         headers: {
-          Authorization: `Bearer ${token}` // If authentication is required
+          Authorization: `Bearer ${token}`
         }
       });
       const data = await response.json();
