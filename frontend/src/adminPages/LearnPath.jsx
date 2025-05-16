@@ -230,7 +230,7 @@ const AdminLearnPath = () => {
       setIsModalOpen(false);
       window.location.reload();
     } catch (error) {
-      console.error("Error creating COurse:", error);
+      console.error("Error creating Course:", error);
       showToast("Internal Server Error", false);
     } finally {
       setIsLoading2(false);

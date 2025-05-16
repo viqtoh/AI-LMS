@@ -234,8 +234,13 @@ const LearnPath = () => {
                     <div className="headerDesc">
                       <span>{learningPath.description}</span>
                     </div>
-                    <button className="btn continueBtn">
-                      <span>COntinue this learning path</span>
+                    <button
+                      className="btn continueBtn"
+                      onClick={() => {
+                        navigate(`/content-library/path/${learningPath.id}/read`);
+                      }}
+                    >
+                      <span>Continue this learning path</span>
                     </button>
                   </div>
 

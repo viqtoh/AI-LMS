@@ -33,6 +33,34 @@ const Dashboard = () => {
     }));
   };
 
+  const [data, setData] = useState({});
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/dashboard`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch");
+        }
+        const data = await response.json();
+        console.log(data);
+        setData(data);
+      } catch (err) {
+        showToast(err.message, false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <div>
       <div className="navHeader">
@@ -169,7 +197,7 @@ const Dashboard = () => {
                           ></path>
                         </g>
                       </svg>
-                      <span>Not Started (1)</span>
+                      <span>Completed (1)</span>
                     </div>
                     <div className="dashBody mt-2">
                       <CourseCard
@@ -217,13 +245,6 @@ const Dashboard = () => {
                           <span>Completed</span>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="dCon">
-                  <div className="learnProgressCon">
-                    <div className="dashTitle">
-                      <span>News</span>
                     </div>
                   </div>
                 </div>
