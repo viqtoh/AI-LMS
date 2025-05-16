@@ -274,6 +274,47 @@ const CourseRead = () => {
     fetchCourse();
   }, [id, token, pathId, showToast]);
 
+  useEffect(() => {
+    if (activeModule) {
+      const updateProgress = async () => {
+        try {
+          let response;
+          if (id) {
+            response = await fetch(`${API_URL}/api/set/active/module`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ courseId: id, moduleId: activeModule.id })
+            });
+          } else {
+            response = await fetch(`${API_URL}/api/set/active/module`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                learningPathId: pathId,
+                courseId: activeCourse.id,
+                moduleId: activeModule.id
+              })
+            });
+          }
+          const data = await response.json();
+          console.log(data);
+        } catch (err) {
+          showToast(err.message, false);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      updateProgress();
+    }
+  }, [activeModule]);
+
   const updateProgress = async () => {
     const newCurrentTime = playerRef.current.currentTime();
     const totalTime = playerRef.current.duration;

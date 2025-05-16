@@ -36,8 +36,8 @@ const fs = require("fs");
 const path = require("path");
 
 // Increase the payload size limit
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+app.use(bodyParser.json({ limit: "100mb" }));
+app.use(bodyParser.urlencoded({ limit: "100mb", extended: true }));
 
 app.use(express.json());
 
@@ -130,6 +130,232 @@ app.post("/api/login", async (req, res) => {
     }
 
     res.status(401).json({ error: "Invalid credentials" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.get("/api/dashboard", authenticateToken, async (req, res) => {
+  const now = new Date();
+
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "Token missing" });
+    }
+
+    const chuser = await getUserByToken(token);
+
+    if (!chuser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const user = await User.findOne({ where: { email: chuser.email } });
+
+    const progresses = await UserProgress.findAll({ userId: user.id });
+    const completedCourses = progresses.filter((progress) => progress.progress === 100).length;
+    // Merge completed courses and paths, sort by latest updatedAt
+    const completedCoursesArr = await Promise.all(
+      progresses
+        .filter((progress) => progress.progress === 100 && progress.courseId)
+        .map(async (progress) => {
+          const course = await Course.findOne({ where: { id: progress.courseId } });
+          return course
+            ? { ...course.toJSON(), type: "Course", updatedAt: course.updatedAt }
+            : null;
+        })
+    );
+
+    const completedPathsArr = await Promise.all(
+      progresses
+        .filter((progress) => progress.progress === 100 && progress.learningPathId)
+        .map(async (progress) => {
+          const path = await LearningPath.findOne({ where: { id: progress.learningPathId } });
+          return path
+            ? { ...path.toJSON(), type: "LearningPath", updatedAt: path.updatedAt }
+            : null;
+        })
+    );
+
+    const completedCoursesObj = [...completedCoursesArr, ...completedPathsArr]
+      .filter((item) => item !== null)
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+    // Get incomplete courses and paths, merge and sort by latest updatedAt
+    const inCompletedCoursesArr = (
+      await Promise.all(
+        progresses
+          .filter((progress) => progress.progress !== 100 && progress.courseId)
+          .map(
+            async (progress) =>
+              await Course.findOne({ where: { id: progress.courseId, show_outside: true } })
+          )
+      )
+    )
+      .filter((course) => course !== null)
+      .map((course) => ({ ...course.toJSON(), type: "Course", updatedAt: course.updatedAt }));
+
+    const inCompletedPathsArr = (
+      await Promise.all(
+        progresses
+          .filter((progress) => progress.progress !== 100 && progress.learningPathId)
+          .map(
+            async (progress) =>
+              await LearningPath.findOne({ where: { id: progress.learningPathId } })
+          )
+      )
+    )
+      .filter((path) => path !== null)
+      .map((path) => ({ ...path.toJSON(), type: "LearningPath", updatedAt: path.updatedAt }));
+
+    const inCompletedCoursesObj = [...inCompletedCoursesArr, ...inCompletedPathsArr].sort(
+      (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+    );
+
+    return res.json({
+      user: req.user,
+      completedCourses: completedCoursesObj,
+      inCompletedCourses: inCompletedCoursesObj
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to load dashboard data" });
+  }
+});
+
+//region update user progress
+
+const updateUserCourseProgress = async (userId, courseId, progress) => {
+  try {
+    const userProgress = await UserProgress.findOne({
+      where: { userId: userId, courseId: courseId }
+    });
+
+    if (!userProgress) {
+      await UserProgress.create({
+        userId: userId,
+        courseId: courseId,
+        progress: progress
+      });
+    } else {
+      await UserProgress.update(
+        { progress: progress },
+        { where: { userId: userId, courseId: courseId } }
+      );
+    }
+    return "success";
+  } catch (err) {
+    return err;
+  }
+};
+
+const updateUserPathProgress = async (userId, learningPathId, progress) => {
+  try {
+    const userProgress = await UserProgress.findOne({
+      where: { userId: userId, learningPathId: learningPathId }
+    });
+
+    if (!userProgress) {
+      await UserProgress.create({
+        userId: userId,
+        learningPathId: learningPathId,
+        progress: progress
+      });
+    } else {
+      await UserProgress.update(
+        { progress: progress },
+        { where: { userId: userId, learningPathId: learningPathId } }
+      );
+    }
+    return "success";
+  } catch (err) {
+    return err;
+  }
+};
+
+app.post("/api/set/active/module", authenticateToken, async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ error: "Token missing" });
+    }
+
+    const chuser = await getUserByToken(token);
+
+    if (!chuser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const user = await User.findOne({ where: { email: chuser.email } });
+    const { courseId, learningPathId, moduleId, end } = req.body;
+
+    if (courseId) {
+      const course = await Course.findOne({ where: { id: courseId } });
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      const module = await Module.findOne({ where: { id: moduleId } });
+      if (!module) {
+        return res.status(404).json({ error: "Module not found" });
+      }
+      const allModules = await Module.findAll({ where: { courseId: courseId } });
+      let progress;
+      if (end) {
+        progress = 100;
+      } else {
+        if (module.order === 1) {
+          progress = 0;
+        } else {
+          progress = ((module.order - 1) / allModules.length) * 100;
+        }
+      }
+      console.log(module);
+      console.log(progress);
+      console.log(module.order);
+      console.log(allModules.length);
+      const updateProgress = await updateUserCourseProgress(user.id, courseId, progress);
+      if (updateProgress !== "success") {
+        console.log(updateProgress);
+        return res.status(500).json({ error: "Failed to update user progress" });
+      }
+    }
+
+    if (learningPathId) {
+      const path = await LearningPath.findOne({
+        where: { id: learningPathId },
+        include: [
+          {
+            model: Course,
+
+            as: "Courses"
+          }
+        ]
+      });
+
+      if (path) {
+        const allCourses = await LearningPathCourse.findAll({
+          where: { learningPathId: learningPathId },
+          order: [["orderIndex", "ASC"]]
+        });
+        const totalCourses = allCourses.length;
+        const currentCoursePosition = allCourses.findIndex((c) => c.CourseId === courseId) + 1;
+        const progressPercentage = (currentCoursePosition / totalCourses) * 100;
+        const updateProgress = await updateUserPathProgress(
+          user.id,
+          learningPathId,
+          progressPercentage
+        );
+        if (updateProgress !== "success") {
+          console.log(updateProgress);
+          return res.status(500).json({ error: "Failed to update user progress" });
+        }
+      }
+
+      return res.status(200).json({ message: "User progress updated successfully" });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -329,10 +555,6 @@ app.get("/api/users", authenticateToken, async (req, res) => {
     console.error(err);
     res.status(500).send("Server error");
   }
-});
-
-app.get("/dashboard", authenticateToken, (req, res) => {
-  res.json({ message: `Welcome, ${req.user.email}!`, user: req.user });
 });
 
 const PORT = process.env.PORT || 5000;
@@ -1134,7 +1356,7 @@ app.post("/api/admin/login", async (req, res) => {
   }
 });
 
-app.get("/api/admin/dashboard", async (req, res) => {
+app.get("/api/admin/dashboard", authenticateToken, async (req, res) => {
   const now = new Date();
 
   try {

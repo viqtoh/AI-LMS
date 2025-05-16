@@ -58,7 +58,7 @@ const AdminDashboard = () => {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch course");
+          throw new Error("Failed to fetch");
         }
         const data = await response.json();
         console.log(data);
@@ -237,7 +237,7 @@ const AdminDashboard = () => {
                       <FaBookOpen className="me-2 text-info" /> Most Active Courses
                     </h6>
                     <ul className="list-group list-group-flush mt-2">
-                      {data.topCompletedCourses.length !== 0 ? (
+                      {data.topCompletedCourses && data.topCompletedCourses.length !== 0 ? (
                         data.topCompletedCourses.map((course) => (
                           <li
                             key={`topCourse-${course.id}`}
