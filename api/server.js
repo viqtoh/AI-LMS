@@ -44,6 +44,15 @@ app.use(express.json());
 // Serve the media folder statically
 app.use("/media", express.static(path.join(__dirname, "media")));
 
+function formatDate(date) {
+  if (!date) return null;
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 async function getUserByToken(token) {
   try {
     const user = await User.findOne({ where: { token } });
@@ -135,93 +144,118 @@ app.post("/api/login", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 app.get("/api/dashboard", authenticateToken, async (req, res) => {
-  const now = new Date();
-
   try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-
-    if (!token) {
-      return res.status(401).json({ error: "Token missing" });
-    }
-
-    const chuser = await getUserByToken(token);
+    const chuser = await getUserByToken(req.headers["authorization"]?.split(" ")[1]);
 
     if (!chuser) {
       return res.status(404).json({ error: "User not found" });
     }
+
     const user = await User.findOne({ where: { email: chuser.email } });
 
-    const progresses = await UserProgress.findAll({ userId: user.id });
-    const completedCourses = progresses.filter((progress) => progress.progress === 100).length;
-    // Merge completed courses and paths, sort by latest updatedAt
+    if (!user) {
+      return res.status(404).json({ error: "User record not found" });
+    }
+
+    const progresses = await UserProgress.findAll({ where: { userId: user.id } });
+
+    // Completed Courses
     const completedCoursesArr = await Promise.all(
       progresses
         .filter((progress) => progress.progress === 100 && progress.courseId)
         .map(async (progress) => {
           const course = await Course.findOne({ where: { id: progress.courseId } });
           return course
-            ? { ...course.toJSON(), type: "Course", updatedAt: course.updatedAt }
+            ? {
+                ...course.toJSON(),
+                type: "Course",
+                started: formatDate(progress.createdAt),
+                ended: formatDate(progress.updatedAt),
+                progress: progress.progress,
+                updatedAt: course.updatedAt
+              }
             : null;
         })
     );
 
+    // Completed Learning Paths
     const completedPathsArr = await Promise.all(
       progresses
         .filter((progress) => progress.progress === 100 && progress.learningPathId)
         .map(async (progress) => {
           const path = await LearningPath.findOne({ where: { id: progress.learningPathId } });
           return path
-            ? { ...path.toJSON(), type: "LearningPath", updatedAt: path.updatedAt }
+            ? {
+                ...path.toJSON(),
+                type: "LearningPath",
+                started: formatDate(progress.createdAt),
+                ended: formatDate(progress.updatedAt),
+                progress: progress.progress,
+                updatedAt: path.updatedAt
+              }
             : null;
         })
     );
 
     const completedCoursesObj = [...completedCoursesArr, ...completedPathsArr]
-      .filter((item) => item !== null)
+      .filter(Boolean)
       .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
-    // Get incomplete courses and paths, merge and sort by latest updatedAt
+    // Incomplete Courses
     const inCompletedCoursesArr = (
       await Promise.all(
         progresses
           .filter((progress) => progress.progress !== 100 && progress.courseId)
-          .map(
-            async (progress) =>
-              await Course.findOne({ where: { id: progress.courseId, show_outside: true } })
-          )
+          .map(async (progress) => {
+            const course = await Course.findOne({
+              where: { id: progress.courseId, show_outside: true }
+            });
+            return course ? { course, progress } : null;
+          })
       )
     )
-      .filter((course) => course !== null)
-      .map((course) => ({ ...course.toJSON(), type: "Course", updatedAt: course.updatedAt }));
+      .filter(Boolean)
+      .map(({ course, progress }) => ({
+        ...course.toJSON(),
+        type: "Course",
+        started: formatDate(progress.createdAt),
+        progress: progress.progress,
+        updatedAt: course.updatedAt
+      }));
 
+    // Incomplete Learning Paths
     const inCompletedPathsArr = (
       await Promise.all(
         progresses
           .filter((progress) => progress.progress !== 100 && progress.learningPathId)
-          .map(
-            async (progress) =>
-              await LearningPath.findOne({ where: { id: progress.learningPathId } })
-          )
+          .map(async (progress) => {
+            const path = await LearningPath.findOne({ where: { id: progress.learningPathId } });
+            return path ? { path, progress } : null;
+          })
       )
     )
-      .filter((path) => path !== null)
-      .map((path) => ({ ...path.toJSON(), type: "LearningPath", updatedAt: path.updatedAt }));
+      .filter(Boolean)
+      .map(({ path, progress }) => ({
+        ...path.toJSON(),
+        type: "Learning Path",
+        started: formatDate(progress.createdAt),
+        progress: progress.progress,
+        updatedAt: path.updatedAt
+      }));
 
     const inCompletedCoursesObj = [...inCompletedCoursesArr, ...inCompletedPathsArr].sort(
       (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
     );
 
     return res.json({
-      user: req.user,
+      user: user,
       completedCourses: completedCoursesObj,
       inCompletedCourses: inCompletedCoursesObj
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to load dashboard data" });
+    console.error("Dashboard error:", error);
+    return res.status(500).json({ error: "Failed to load dashboard data" });
   }
 });
 
@@ -729,6 +763,14 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
     if (!learningPath) {
       return res.status(404).json({ error: "Learning path not found." });
     }
+
+    progress = await UserProgress.findOne({
+      where: {
+        userId,
+        learningPathId: learningPath.id
+      }
+    });
+
     // Format response
     const response = {
       id: learningPath.id,
@@ -736,7 +778,8 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
       image: learningPath.image,
       description: learningPath.description,
       categories: learningPath.Categories?.map((cat) => cat.name) || [],
-      courses: []
+      courses: [],
+      progress: progress ? progress.progress : 0
     };
 
     // Fetch modules asynchronously for each course
@@ -873,6 +916,8 @@ app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
     if (statuses.every((s) => s === "completed")) courseProgress = "completed";
     else if (statuses.some((s) => s !== "not_started")) courseProgress = "in_progress";
 
+    const progress = await UserProgress.findOne({ where: { userId, courseId: id } });
+
     const response = {
       id: course.id,
       title: course.title,
@@ -880,7 +925,8 @@ app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
       description: course.description,
       categories: course.Categories?.map((cat) => cat.name) || [],
       modules: enrichedModules,
-      courseProgress
+      courseProgress,
+      progress: progress ? progress.progress : 0
     };
 
     res.status(200).json(response);

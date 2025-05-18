@@ -9,6 +9,8 @@ import { faAngleDown, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useNavigate, useParams } from "react-router-dom";
 import { ModuleCollapsible } from "../components/Collapsible";
+import CircleProgress from "../components/CircleProgress";
+import SmallCircleProgress from "../components/SmallCircleProgress";
 
 const Course = () => {
   const token = localStorage.getItem("token");
@@ -144,25 +146,8 @@ const Course = () => {
                       <span>Continue this course</span>
                     </button>
                   </div>
-
                   <div className="circleProgress">
-                    <svg width="150" height="150" viewBox="0 0 150 150">
-                      <circle cx="75" cy="75" r="67.5" stroke="#444" strokeWidth="10" fill="none" />
-                      <circle
-                        cx="75"
-                        cy="75"
-                        r="67.5"
-                        stroke="#4ccf50"
-                        strokeWidth="10"
-                        fill="none"
-                        strokeDasharray="424.1" // Circumference of the circle (2 * π * r)
-                        strokeDashoffset="106.025" // 75% progress (25% remaining)
-                        transform="rotate(-90 75 75)"
-                      />
-                      <text x="75" y="80" textAnchor="middle" fontSize="16" fill="#fff">
-                        75%
-                      </text>
-                    </svg>
+                    <CircleProgress progress={course.progress} />
                   </div>
                 </div>
               </div>
@@ -242,23 +227,7 @@ const Course = () => {
                   </div>
 
                   <div className="mcircleProgress">
-                    <svg width="40" height="40" viewBox="0 0 40 40">
-                      <circle cx="20" cy="20" r="17.5" stroke="#ddd" strokeWidth="5" fill="none" />
-                      <circle
-                        cx="20"
-                        cy="20"
-                        r="17.5"
-                        stroke="#4ccf50"
-                        strokeWidth="5"
-                        fill="none"
-                        strokeDasharray="109.95"
-                        strokeDashoffset={109.95 - 109.95 * 0.75} // 75% progress (25% remaining)
-                        transform="rotate(-90 20 20)"
-                      />
-                      <text x="20" y="22.5" textAnchor="middle" fontSize="8" fill="#fff">
-                        75%
-                      </text>
-                    </svg>
+                    <SmallCircleProgress progress={course.progress} />
                   </div>
                 </div>
               </div>
@@ -268,7 +237,7 @@ const Course = () => {
               {!course ? (
                 <div className="noObjects noObjects100 mt-4">Course not found</div>
               ) : (
-                modules.map((module) => <ModuleCollapsible {...module} />)
+                modules.map((module) => <ModuleCollapsible key={module.id} {...module} />)
               )}
               {course && modules.length === 0 && (
                 <div className="noObjects noObjects100 mt-4">

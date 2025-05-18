@@ -2377,3 +2377,10 @@ iframe {
   color: #10df40;
   background-color: #20973a22;
 }
+
+@media screen and (max-width: 768px) {
+  #welcomeImage {
+    justify-content: flex-start !important;
+    margin-top: 10px;
+  }
+}

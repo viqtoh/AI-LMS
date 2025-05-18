@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import Select from "react-select";
 import CourseCard from "../components/CourseCard";
+import WelcomeMessage from "../components/WelcomeMessage";
 
 const Dashboard = () => {
   const token = localStorage.getItem("token");
@@ -17,7 +18,9 @@ const Dashboard = () => {
   const [risCollapsed, setRisCollapsed] = useState(false);
   const [fisCollapsed, setFisCollapsed] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-
+  const [student, setStudent] = useState(null);
+  const [incompleteCourses, setIncompleteCourses] = useState([]);
+  const [completedCourses, setCompletedCourses] = useState([]);
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
   const showToast = React.useCallback((message, success = true) => {
@@ -50,7 +53,9 @@ const Dashboard = () => {
         }
         const data = await response.json();
         console.log(data);
-        setData(data);
+        setIncompleteCourses(data.inCompletedCourses);
+        setCompletedCourses(data.completedCourses);
+        setStudent(data.user);
       } catch (err) {
         showToast(err.message, false);
       } finally {
@@ -109,8 +114,19 @@ const Dashboard = () => {
               </div>
             </div>
 
+            {student && (
+              <WelcomeMessage
+                studentName={student.first_name}
+                image={
+                  student.image ? `${IMAGE_HOST}${student.image}` : "/images/default_profile.png"
+                }
+                totalCourses={completedCourses.length + incompleteCourses.length}
+                completedCourses={completedCourses.length}
+              />
+            )}
+
             <div className="dashboardContainer row">
-              <div className="dConDiv row col-md-8 nobar">
+              <div className="dConDiv  nobar">
                 <div className="dCon">
                   <div className="learnProgressCon">
                     <div className="dashTitle">
@@ -135,31 +151,31 @@ const Dashboard = () => {
                           strokeDasharray={`${35}, ${100 - 35}`} // Replace 35 with a dynamic progress value
                         />
                       </svg>
-                      <span>In Progress (3)</span>
+                      <span>
+                        In Progress ({incompleteCourses ? incompleteCourses.length : "0"})
+                      </span>
                     </div>
                     <div className="dashBody mt-2">
-                      <CourseCard
-                        image="/images/course_card_test.png"
-                        title="Conflict Management Package"
-                        assigned="22/03/2025"
-                        type="Learning Path"
-                        progress={35}
-                      />
-
-                      <CourseCard
-                        title="Management Package"
-                        assigned="22/03/2025"
-                        type="Learning Path"
-                        progress={65}
-                      />
-
-                      <CourseCard
-                        image="/images/course_card_test.png"
-                        title="Conflict Management Package"
-                        assigned="22/03/2025"
-                        type="Learning Path"
-                        progress={0}
-                      />
+                      {incompleteCourses.length !== 0 &&
+                        incompleteCourses.map((course) => (
+                          <CourseCard
+                            key={`incCard${course.id}`}
+                            id={course.id}
+                            image={course.image ? `${IMAGE_HOST}${course.image}` : null}
+                            title={course.title}
+                            date={course.started}
+                            type={course.type}
+                            progress={course.progress}
+                          />
+                        ))}
+                      {incompleteCourses.length === 0 && (
+                        <div
+                          className="noCourses d-flex align-items-center justify-content-center"
+                          style={{ height: "232px", width: "100%" }}
+                        >
+                          <span style={{ height: 20 }}>No Incomplete courses to show</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -197,54 +213,30 @@ const Dashboard = () => {
                           ></path>
                         </g>
                       </svg>
-                      <span>Completed (1)</span>
+                      <span>Completed ({completedCourses.length})</span>
                     </div>
                     <div className="dashBody mt-2">
-                      <CourseCard
-                        image="/images/course_card_test.png"
-                        title="Conflict Management Package"
-                        assigned="22/03/2025"
-                        type="Learning Path"
-                        progress={35}
-                        due={true}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="dConDiv row col-md-4 nobar">
-                <div className="dCon ">
-                  <div className="metricsCon">
-                    <div className="dashTitle">
-                      <span>Training Metrics</span>
-                    </div>
-
-                    <div className="dashBody dashBody2 mt-2">
-                      <div className="col-6">
-                        <div className="metricCard">
-                          <div className="metricCount">0</div>
-                          <span>Overdue</span>
+                      {completedCourses.length !== 0 &&
+                        completedCourses.map((course) => (
+                          <CourseCard
+                            key={`comCard${course.id}`}
+                            id={course.id}
+                            image={course.image ? `${IMAGE_HOST}${course.image}` : null}
+                            title={course.title}
+                            date={course.started}
+                            type={course.type}
+                            progress={course.progress}
+                            due={true}
+                          />
+                        ))}
+                      {completedCourses.length === 0 && (
+                        <div
+                          className="noCourses d-flex align-items-center justify-content-center"
+                          style={{ height: "232px", width: "100%" }}
+                        >
+                          <span style={{ height: 20 }}>No completed courses yet</span>
                         </div>
-                      </div>
-                      <div className="col-6">
-                        <div className="metricCard">
-                          <div className="metricCount">3</div>
-                          <span>In Progress</span>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div className="metricCard">
-                          <div className="metricCount">1</div>
-                          <span>Not Started</span>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div className="metricCard">
-                          <div className="metricCount">21</div>
-                          <span>Completed</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
