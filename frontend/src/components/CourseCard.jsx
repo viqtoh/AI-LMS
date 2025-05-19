@@ -5,17 +5,30 @@ import "../styles/home.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChartBar } from "@fortawesome/free-regular-svg-icons";
 import { faBookOpen, faLineChart } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "react-router-dom";
 
-const CourseCard = ({ progress = 0, title, assigned, type, image, due = false }) => {
+const CourseCard = ({ progress = 0, id, title, date, type, image, due = false }) => {
+  const navigate = useNavigate();
+  const navigator = () => {
+    if (type == "course") {
+      navigate("/content-library/course/" + id);
+    } else {
+      navigate("/content-library/path/" + id);
+    }
+  };
   return (
-    <div className="card shadow-sm courseCard" style={{ borderRadius: "12px" }}>
+    <div
+      className="card shadow-sm courseCard"
+      style={{ borderRadius: "12px" }}
+      onClick={() => navigator()}
+    >
       {/* Image Section */}
       <div
         className=" text-center CcardImage"
         style={{ borderTopLeftRadius: "12px", borderTopRightRadius: "12px" }}
       >
         {image ? (
-          <img src={image} alt="{title}" className="img-fluid" />
+          <img src={image} alt={title} className="img-fluid" />
         ) : (
           <img
             src="/images/course_default.png"
@@ -45,11 +58,11 @@ const CourseCard = ({ progress = 0, title, assigned, type, image, due = false })
       </div>
       {due ? (
         <div className="cardFooter2">
-          <p>Due - {assigned}</p>
+          <p>Finished - {date}</p>
         </div>
       ) : (
         <div className="cardFooter">
-          <p>Assigned - {assigned}</p>
+          <p>Started - {date}</p>
         </div>
       )}
     </div>

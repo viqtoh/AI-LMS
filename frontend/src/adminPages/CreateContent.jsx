@@ -175,7 +175,7 @@ const CreateContent = () => {
       }
 
       const result = await response.json();
-      showToast("COurse created successfully!", true);
+      showToast("Course created successfully!", true);
       window.location.href = `/admin/content-library/course/${result.id}`;
     } catch (error) {
       console.error("Error creating Course:", error);
