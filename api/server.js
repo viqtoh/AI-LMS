@@ -826,13 +826,22 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
           if (statuses.every((s) => s === "completed")) courseProgress = "completed";
           else if (statuses.some((s) => s !== "not_started")) courseProgress = "in_progress";
 
+          // Get course progress for this user/course
+          let courseProgressRecord = await UserProgress.findOne({
+            where: {
+              userId,
+              courseId: course.id
+            }
+          });
+
           return {
             id: course.id,
             title: course.title,
             description: course.description,
             categories: course.Categories?.map((cat) => cat.name) || [],
             modules: enrichedModules,
-            courseProgress
+            courseProgress,
+            progress: courseProgressRecord ? courseProgressRecord.progress : 0
           };
         })
     );
@@ -956,8 +965,8 @@ app.post("/api/module-progress/:moduleId", authenticateToken, async (req, res) =
       where: { userId, moduleId },
       defaults: {
         status: status || "in_progress",
-        progress: progress || 0,
-        last_second: last_second || 0,
+        progress: progress ? Math.floor(progress) : 0,
+        last_second: last_second ? Math.floor(last_second) : 0,
         last_accessed_at: new Date()
       }
     });
@@ -965,7 +974,7 @@ app.post("/api/module-progress/:moduleId", authenticateToken, async (req, res) =
     if (!created) {
       // Update existing record
       record.status = status || record.status;
-      record.progress = typeof progress === "number" ? progress : record.progress;
+      record.progress = typeof progress === "number" ? Math.floor(progress) : record.progress;
       record.last_second = typeof last_second === "number" ? last_second : record.last_second;
       record.last_accessed_at = new Date();
       await record.save();

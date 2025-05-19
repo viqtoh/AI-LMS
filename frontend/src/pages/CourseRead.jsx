@@ -8,6 +8,7 @@ import {
   faAngleDown,
   faAngleUp,
   faList,
+  faLock,
   faPlay,
   faRedo,
   faTimes
@@ -66,6 +67,7 @@ const CourseRead = () => {
   const location = useLocation();
   const [currentProgress, setCurrentProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [mode, setMode] = useState("");
 
   useEffect(() => {
     if (videoRef.current && activeModule && activeModule.content_type === "video") {
@@ -179,10 +181,10 @@ const CourseRead = () => {
             localStorage.removeItem("token");
             window.location.href = `${preurl}?next=${window.location.pathname}`;
           }
-          throw new Error("Failed to fetch user details");
+          throw new Error("Failed to fetch");
         }
       } catch (error) {
-        console.error("Error fetching user details:", error);
+        console.error("Error fetching:", error);
       } finally {
         setIsLoaded(true);
       }
@@ -210,19 +212,23 @@ const CourseRead = () => {
       }
 
       if (foundModule) {
-        setActiveModule(foundModule);
+        activateModule(foundModule);
         setCurrentTime(foundModule.userProgress.last_second | 0);
         setCurrentProgress(foundModule.userProgress.progress);
-        console.log(foundModule.userProgress);
+        console.log(isVideoReady);
       }
     }
-  }, [location.search, courses]);
+  }, [location.search]);
+
+  useEffect(() => {
+    console.log(currentTime);
+  }, [currentTime]);
 
   useEffect(() => {
     const fetchCourse = async () => {
       try {
         let response;
-        let mode;
+        let rmode;
         if (id) {
           response = await fetch(`${API_URL}/api/course-full/${id}`, {
             headers: {
@@ -230,7 +236,8 @@ const CourseRead = () => {
               "Content-Type": "application/json"
             }
           });
-          mode = "course";
+          setMode("course");
+          rmode = "course";
         } else {
           response = await fetch(`${API_URL}/api/learning-path-full/${pathId}`, {
             headers: {
@@ -238,7 +245,8 @@ const CourseRead = () => {
               "Content-Type": "application/json"
             }
           });
-          mode = "path";
+          setMode("path");
+          rmode = "path";
         }
 
         if (!response.ok) {
@@ -247,7 +255,7 @@ const CourseRead = () => {
         const data = await response.json();
         console.log(data);
         let datas;
-        if (mode === "course") {
+        if (rmode === "course") {
           setCourses([data]);
           setActiveCourse(data);
           datas = [data];
@@ -266,6 +274,7 @@ const CourseRead = () => {
         }
       } catch (err) {
         showToast(err.message, false);
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
@@ -317,7 +326,10 @@ const CourseRead = () => {
 
   const updateProgress = async () => {
     const newCurrentTime = playerRef.current.currentTime();
-    const totalTime = playerRef.current.duration;
+    const totalTime = playerRef.current.duration();
+    console.log(newCurrentTime);
+    console.log(totalTime);
+    console.log((newCurrentTime / totalTime) * 100);
 
     try {
       const response = await fetch(`${API_URL}/api/module-progress/${activeModule.id}`, {
@@ -413,20 +425,140 @@ const CourseRead = () => {
     setIsVideoReady(false);
   };
 
+  const startCourse = () => {
+    setActiveCourse(courses[0]);
+    activateModule(courses[0].modules[0]);
+  };
+
+  const iniActivateModule = (course) => {
+    setActiveCourse(course);
+    const progress = course.progress;
+    let index = (progress / 100) * course.modules.length;
+    if (progress === 0) {
+      index = 0;
+    } else {
+      index = Math.floor(index);
+    }
+    console.log(course);
+    console.log(index);
+    setActiveCourse(course);
+    activateModule(course.modules[index]);
+  };
+
+  const resumeCourse = () => {
+    if (mode === "course") {
+      const progress = courses[0].progress;
+      let index = (progress / 100) * courses[0].modules.length;
+      if (progress === 0) {
+        index = 0;
+      } else {
+        index = Math.floor(index);
+      }
+      setActiveCourse(courses[0]);
+      activateModule(courses[0].modules[index]);
+    } else {
+      const progress = learningPath.progress;
+      let index = (progress / 100) * learningPath.courses.length;
+      if (progress === 0) {
+        index = 0;
+      } else {
+        index = Math.floor(index);
+      }
+      iniActivateModule(learningPath.courses[index]);
+    }
+  };
+
+  const checkPermissionModule = (courseId, moduleId) => {
+    const course = courses.find((course) => course.id === courseId);
+    const moduleIndex = course.modules.findIndex((module) => module.id === moduleId);
+    if (course && moduleIndex !== -1) {
+      const modules = course.modules;
+      const modulesAbove = modules.slice(0, moduleIndex);
+      const allCompleted = modulesAbove.every(
+        (mod) => mod.userProgress && mod.userProgress.progress === 100
+      );
+      return allCompleted;
+    }
+    return false;
+  };
+
+  const checkPermissionCourse = (courseId) => {
+    const course = courses.find((course) => course.id === courseId);
+    const courseIndex = courses.findIndex((course) => course.id === courseId);
+    if (course && courseIndex !== -1) {
+      const coursesAbove = courses.slice(0, courseIndex);
+      const allCompleted = coursesAbove.every((course) => course.progress === 100);
+      return allCompleted;
+    }
+    return false;
+  };
+
+  const getLastPermittedModule = () => {
+    let lastPermittedModule = courses[0].modules[0];
+
+    for (const course of courses) {
+      for (let i = 0; i < course.modules.length; i++) {
+        const module = course.modules[i];
+
+        // Use your check logic inline
+        const modulesAbove = course.modules.slice(0, i);
+        const allCompleted = modulesAbove.every(
+          (mod) => mod.userProgress && mod.userProgress.progress === 100
+        );
+
+        if (i === 0 || allCompleted) {
+          lastPermittedModule = module;
+        } else {
+          // As soon as one is not permitted, stop checking modules in this course
+          break;
+        }
+      }
+
+      // If any course before is incomplete, stop checking next courses
+      if (course.progress !== 100) {
+        break;
+      }
+    }
+
+    return lastPermittedModule;
+  };
+
+  const checkLast = () => {
+    const foundCourse = courses.find((course) =>
+      course.modules.some((module) => module.id === activeModule.id)
+    );
+
+    if (foundCourse) {
+      const isLastCourse = courses[courses.length - 1].id === foundCourse.id;
+      const isLastModule =
+        foundCourse.modules[foundCourse.modules.length - 1].id === activeModule.id;
+      return isLastCourse && isLastModule;
+    }
+    return false;
+  };
+
   return (
     <div>
       <div>
         {/* Top Navbar */}
         <nav className="navbar navbar-dark bg-dark">
           <div className="container-fluid">
-            <div className="readLearnPath headerRead">
-              <button
-                className={`btn btn-outline-light hamburger2  ${sidebarOpen ? "" : "hamburgerclosed"}`}
-                onClick={toggleSidebar}
-              >
-                &#9776;
-              </button>
-              {learningPath && <p>{learningPath.title}</p>}
+            <div className="readLearnPath headerRead align-items-center w-100 justify-content-between">
+              <div className="d-flex">
+                <button
+                  className={`btn btn-outline-light hamburger2  ${sidebarOpen ? "" : "hamburgerclosed"}`}
+                  onClick={toggleSidebar}
+                >
+                  &#9776;
+                </button>
+                {learningPath && <p>{learningPath.title}</p>}
+              </div>
+              {activeModule &&
+                (checkLast() ? (
+                  <button className="nextbtn">End</button>
+                ) : (
+                  <button className="nextbtn">Next Module</button>
+                ))}
             </div>
           </div>
         </nav>
@@ -471,9 +603,26 @@ const CourseRead = () => {
                         {course.modules.map((module) => (
                           <div
                             key={module.updatedAt}
-                            className={`sideModule ${coursesState[course.id] ? "" : "h-0"}`}
+                            onClick={() => {
+                              if (
+                                checkPermissionCourse(course.id) &&
+                                checkPermissionModule(course.id, module.id)
+                              ) {
+                                activateModule(module);
+                              }
+                            }}
+                            className={`sideModule ${coursesState[course.id] ? "" : "h-0"} d-flex gap-3 justify-content-between align-items-center`}
                           >
-                            <span>{module.title}</span>
+                            <div className="d-flex gap-2 align-items-center">
+                              {checkPermissionCourse(course.id) &&
+                              checkPermissionModule(course.id, module.id) ? (
+                                <FontAwesomeIcon icon={faPlay} />
+                              ) : (
+                                <FontAwesomeIcon icon={faLock} />
+                              )}{" "}
+                              <span>{module.title}</span>
+                            </div>
+                            <span>{module.userProgress.progress}%</span>
                           </div>
                         ))}
                       </div>
@@ -498,7 +647,12 @@ const CourseRead = () => {
                       <div className="activeCourseTitle">
                         <h1>{activeCourse.title}</h1>
                         <div className="activeCourseButtons">
-                          <button>START COURSE</button>
+                          {courses.length !== 0 &&
+                            (courses[0].courseProgress === "in_progress" ? (
+                              <button onClick={() => resumeCourse()}>RESUME COURSE</button>
+                            ) : (
+                              <button onClick={() => startCourse()}>START COURSE</button>
+                            ))}
                           <span
                             style={{ cursor: "pointer" }}
                             onClick={() =>
@@ -522,10 +676,18 @@ const CourseRead = () => {
                           <div
                             className="activeIntroModule"
                             key={`momdule-${module.title}`}
-                            onClick={() => activateModule(module)}
+                            onClick={() => {
+                              if (checkPermissionModule(activeCourse.id, module.id)) {
+                                activateModule(module);
+                              }
+                            }}
                           >
                             <div>
-                              <FontAwesomeIcon icon={faList} />
+                              {checkPermissionModule(activeCourse.id, module.id) ? (
+                                <FontAwesomeIcon icon={faList} />
+                              ) : (
+                                <FontAwesomeIcon icon={faLock} />
+                              )}
                               <span>{module.title}</span>
                             </div>
 
@@ -549,11 +711,12 @@ const CourseRead = () => {
                     {isVideoReady && currentTime > 0 ? (
                       <div className="startdiv">
                         <button onClick={() => resumeVideo()}>
-                          <FontAwesomeIcon icon={faRedo} />
+                          <FontAwesomeIcon icon={faPlay} />
+
                           <span>Resume</span>
                         </button>
                         <button onClick={() => startVideo()}>
-                          <FontAwesomeIcon icon={faPlay} />
+                          <FontAwesomeIcon icon={faRedo} />
                           <span>Start Over</span>
                         </button>
                       </div>
@@ -564,6 +727,7 @@ const CourseRead = () => {
                         <video
                           className="video-js vjs-theme-fantasy"
                           ref={videoRef}
+                          onLoadedMetadata={() => setIsVideoReady(true)}
                           onPlay={() => setIsPlaying(true)}
                           onPause={() => setIsPlaying(false)}
                           onEnded={() => setIsPlaying(false)}
