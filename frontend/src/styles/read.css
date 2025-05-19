@@ -112,7 +112,7 @@
   font-weight: bold;
   margin-bottom: 0px !important;
   color: white;
-  width: calc(100% - 30px);
+  width: calc(100% - 10px);
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
@@ -124,15 +124,15 @@
   background-color: #212529;
 }
 .learnPresent {
-  margin-left: 30px;
-  width: calc(100% - 30px);
+  margin-left: 10px;
+  width: calc(100% - 10px);
+  margin-top: 20px;
 }
 .sideModule {
-  padding-left: 40px;
-  background-color: #49505722;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  padding: 10px 5px;
+  background-color: #03030322;
   transition: height 5s ease;
+  border-bottom: 1px solid #38373799;
 }
 
 .sideModule span {
@@ -145,8 +145,8 @@
   overflow: hidden !important;
 }
 
-.readLearnPath span,
-.readLearnPath p {
+.readLearnPath div span,
+.readLearnPath div p {
   font-size: 20px;
   font-weight: 700;
   color: white;
@@ -374,7 +374,7 @@
 }
 
 .startdiv button {
-  background-color: #44444444;
+  background-color: #444444aa;
   color: white;
   border-radius: 10px;
   padding: 10px 25px;
@@ -451,4 +451,17 @@
   color: white;
   font-weight: bold;
   margin-top: 50px;
+}
+.nextbtn {
+  color: white;
+  border: 1px solid white;
+  background-color: #2e2f301f;
+  padding: 5px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.nextbtn:hover {
+  background-color: #00000007;
 }
