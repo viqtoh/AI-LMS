@@ -29,7 +29,11 @@ const { startOfDay, endOfDay, subDays, startOfWeek, endOfWeek } = require("date-
 require("dotenv").config();
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://ailms.apps.ginnsltd.com"
+  })
+);
 
 const bodyParser = require("body-parser");
 const fs = require("fs");
