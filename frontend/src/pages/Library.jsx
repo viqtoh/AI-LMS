@@ -15,6 +15,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import Select from "react-select";
+import { useRef } from "react";
 
 const Library = () => {
   const token = localStorage.getItem("token");
@@ -33,6 +34,8 @@ const Library = () => {
   const [isPublished, setIsPublished] = useState("");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("asc");
+
+  const searchRef = useRef();
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -80,7 +83,6 @@ const Library = () => {
       display: "none"
     }),
 
-    // Optional: Style the dropdown arrow container if needed
     indicatorsContainer: (base) => ({
       ...base,
       padding: "0px",
@@ -90,7 +92,7 @@ const Library = () => {
     }),
     dropdownIndicator: (base) => ({
       ...base,
-      padding: "8px 4px 0px 0px" // Adjust this value
+      padding: "8px 4px 0px 0px"
     })
   };
 
@@ -171,6 +173,7 @@ const Library = () => {
     setSelectedCategories([]);
     setSearch("");
     setSort("asc");
+    searchRef.current.value = "";
     document.getElementById("learnCheck").checked = false;
     document.getElementById("courseCheck").checked = false;
     document.querySelectorAll(".catCheck").forEach((checkbox) => {
@@ -305,6 +308,7 @@ const Library = () => {
                 <input
                   type="text"
                   className="searchBar2"
+                  ref={searchRef}
                   placeholder="Search content by title or description"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {

@@ -31,7 +31,7 @@ require("dotenv").config();
 const app = express();
 app.use(
   cors({
-    origin: "https://ailms.apps.ginnsltd.com"
+    origin: ["https://ailms.apps.ginnsltd.com", "http://localhost:3000"]
   })
 );
 

@@ -26,15 +26,8 @@ const Dashboard = () => {
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
-  const extendDescriptions = (courses) => {
-    return courses.map((course) => ({
-      ...course,
-      description: `${course.description} This course provides in-depth knowledge and practical examples to help you master the subject effectively.`
-    }));
-  };
 
   const [data, setData] = useState({});
 
@@ -52,7 +45,6 @@ const Dashboard = () => {
           throw new Error("Failed to fetch");
         }
         const data = await response.json();
-        console.log(data);
         setIncompleteCourses(data.inCompletedCourses);
         setCompletedCourses(data.completedCourses);
         setStudent(data.user);
@@ -157,9 +149,9 @@ const Dashboard = () => {
                     </div>
                     <div className="dashBody mt-2">
                       {incompleteCourses.length !== 0 &&
-                        incompleteCourses.map((course) => (
+                        incompleteCourses.map((course, index) => (
                           <CourseCard
-                            key={`incCard${course.id}`}
+                            key={`incCard${course.id}-${index}`}
                             id={course.id}
                             image={course.image ? `${IMAGE_HOST}${course.image}` : null}
                             title={course.title}
@@ -193,13 +185,13 @@ const Dashboard = () => {
                         stroke="#0057ff"
                         transform="rotate(90)"
                       >
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
                         <g
                           id="SVGRepo_tracerCarrier"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                           stroke="#CCCCCC"
-                          stroke-width="1.024"
+                          strokeWidth="1.024"
                         ></g>
                         <g id="SVGRepo_iconCarrier">
                           <path d="M208,512,155.62,372.38,16,320l139.62-52.38L208,128l52.38,139.62L400,320,260.38,372.38Z"></path>
