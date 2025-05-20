@@ -36,6 +36,7 @@ const CourseRead = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [courses, setCourses] = useState([]);
   const [isVideoReady, setIsVideoReady] = useState(false);
+  const [showNextModal, setShowNextModal] = useState(false);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -55,6 +56,7 @@ const CourseRead = () => {
   const [activeCourse, setActiveCourse] = useState(null);
   const [activeModule, setActiveModule] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isEnded, setIsEnded] = useState(false);
 
   const descriptionRef = useRef();
 
@@ -136,8 +138,6 @@ const CourseRead = () => {
     }
   }, [activeModule]);
 
-  useEffect(() => {}, [currentTime]);
-
   useEffect(() => {
     if (isPlaying) {
       intervalRef.current = setInterval(updateProgress, 10000); // 10 seconds
@@ -201,7 +201,6 @@ const CourseRead = () => {
       let foundModule = null;
 
       for (const course of courses) {
-        console.log(course);
         const match = course.modules.find((m) => m.id === parseInt(moduleId));
 
         if (match) {
@@ -214,11 +213,11 @@ const CourseRead = () => {
       if (foundModule) {
         activateModule(foundModule);
         setCurrentTime(foundModule.userProgress.last_second | 0);
+        console.log(foundModule.userProgress.last_second);
         setCurrentProgress(foundModule.userProgress.progress);
-        console.log(isVideoReady);
       }
     }
-  }, [location.search]);
+  }, [location.search, courses]);
 
   useEffect(() => {
     console.log(currentTime);
@@ -327,30 +326,28 @@ const CourseRead = () => {
   const updateProgress = async () => {
     const newCurrentTime = playerRef.current.currentTime();
     const totalTime = playerRef.current.duration();
-    console.log(newCurrentTime);
-    console.log(totalTime);
-    console.log((newCurrentTime / totalTime) * 100);
+    if (newCurrentTime > 3) {
+      try {
+        const response = await fetch(`${API_URL}/api/module-progress/${activeModule.id}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            status: "in_progress",
+            progress: (newCurrentTime / totalTime) * 100,
+            last_second: Math.floor(newCurrentTime)
+          })
+        });
 
-    try {
-      const response = await fetch(`${API_URL}/api/module-progress/${activeModule.id}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          status: "in_progress",
-          progress: (newCurrentTime / totalTime) * 100,
-          last_second: Math.floor(newCurrentTime)
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch object");
+        if (!response.ok) {
+          throw new Error("Failed to fetch object");
+        }
+        const data = await response.json();
+      } catch (err) {
+        showToast(err.message, false);
       }
-      const data = await response.json();
-    } catch (err) {
-      showToast(err.message, false);
     }
   };
 
@@ -537,6 +534,88 @@ const CourseRead = () => {
     return false;
   };
 
+  const checkNext = () => {
+    if (playerRef.current) {
+      const newCurrentTime = playerRef.current.currentTime();
+      const totalTime = playerRef.current.duration();
+
+      if (newCurrentTime >= totalTime - 10) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  };
+
+  const goNext = () => {
+    const foundCourse = courses.find((course) =>
+      course.modules.some((module) => module.id === activeModule.id)
+    );
+    const nextModuleIndex =
+      foundCourse.modules.findIndex((module) => module.id === activeModule.id) + 1;
+    if (nextModuleIndex < foundCourse.modules.length - 1) {
+      setActiveModule(foundCourse.modules[nextModuleIndex]);
+    } else {
+      const nextCourseIndex = courses.findIndex((course) => course.id === foundCourse.id) + 1;
+      if (nextCourseIndex < courses.length) {
+        const nextCourse = courses[nextCourseIndex];
+        const firstModule = nextCourse.modules[0];
+        setActiveModule(firstModule);
+        setActiveCourse(nextCourse);
+      } else {
+        setIsEnded(true);
+      }
+    }
+  };
+
+  const nextModule = async () => {
+    const foundCourse = courses.find((course) =>
+      course.modules.some((module) => module.id === activeModule.id)
+    );
+    const body = {
+      moduleId: activeModule.id,
+      courseId: foundCourse.id,
+      end: false
+    };
+
+    if (learningPath) {
+      body.learningPathId = learningPath.id;
+    }
+    // Check if activeModule is the last module in foundCourse.modules
+    const isLastModule = foundCourse.modules[foundCourse.modules.length - 1].id === activeModule.id;
+    if (isLastModule) {
+      body.end = true;
+    }
+
+    try {
+      setIsLoading(true);
+      await endProgress(activeModule.id);
+      const response = await fetch(`${API_URL}/api/set/active/module`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch");
+      }
+      const data = await response.json();
+      console.log(data);
+      if (data.message === "User progress updated successfully") {
+        goNext();
+      }
+    } catch (err) {
+      showToast(err.message, false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div>
       <div>
@@ -556,14 +635,25 @@ const CourseRead = () => {
               {activeModule &&
                 (checkLast() ? (
                   <button className="nextbtn">End</button>
+                ) : activeModule.content_type === "video" ? (
+                  checkNext() ? (
+                    <button className="nextbtn" onClick={nextModule}>
+                      Next Module
+                    </button>
+                  ) : (
+                    <button className="nextbtn" disabled>
+                      Next Module
+                    </button>
+                  )
                 ) : (
-                  <button className="nextbtn">Next Module</button>
+                  <button className="nextbtn" onClick={() => setShowNextModal(true)}>
+                    Next Module
+                  </button>
                 ))}
             </div>
           </div>
         </nav>
         <div className="readerHouse">
-          {" "}
           {/* Sidebar */}
           <div className={`sidebar2 ${sidebarOpen ? "open" : ""}`}>
             <button
@@ -698,57 +788,93 @@ const CourseRead = () => {
                     </div>
                   </div>
                 )}
+                {isLoading ? (
+                  <div className="loader-container">
+                    <div className="loader"></div>
+                  </div>
+                ) : isEnded ? (
+                  <div>
+                    <div
+                      className="course-end-message d-flex flex-column align-items-center justify-content-center"
+                      style={{ minHeight: "60vh" }}
+                    >
+                      <img
+                        src="/images/course_completed.png"
+                        alt="Course Completed"
+                        style={{ width: 120, marginBottom: 24 }}
+                      />
+                      <h2 className="text-success mb-3">Congratulations!</h2>
+                      <p className="mb-2">You have completed this course.</p>
+                      {pathId && (
+                        <p className="mb-0 text-info">
+                          You have also completed this learning path.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    {activeModule &&
+                      activeCourse &&
+                      activeModule.content_type !== "video" &&
+                      activeModule.content_type !== "assessment" && (
+                        <DocRenderer url={`${API_URL}${activeModule.file}`} />
+                      )}
 
-                {activeModule &&
-                  activeCourse &&
-                  activeModule.content_type !== "video" &&
-                  activeModule.content_type !== "assessment" && (
-                    <DocRenderer url={`${API_URL}${activeModule.file}`} />
-                  )}
+                    {activeModule && activeModule.content_type === "video" ? (
+                      <div className="videoReaderDiv">
+                        {isVideoReady && currentTime > 0 ? (
+                          <div className="startdiv">
+                            <button onClick={() => resumeVideo()}>
+                              <FontAwesomeIcon icon={faPlay} />
 
-                {activeModule && activeModule.content_type === "video" ? (
-                  <div className="videoReaderDiv">
-                    {isVideoReady && currentTime > 0 ? (
-                      <div className="startdiv">
-                        <button onClick={() => resumeVideo()}>
-                          <FontAwesomeIcon icon={faPlay} />
+                              <span>Resume</span>
+                            </button>
+                            <button onClick={() => startVideo()}>
+                              <FontAwesomeIcon icon={faRedo} />
+                              <span>Start Over</span>
+                            </button>
+                          </div>
+                        ) : null}
 
-                          <span>Resume</span>
-                        </button>
-                        <button onClick={() => startVideo()}>
-                          <FontAwesomeIcon icon={faRedo} />
-                          <span>Start Over</span>
-                        </button>
-                      </div>
-                    ) : null}
+                        {isVideoReady && currentTime === 0 ? (
+                          <div className="startdiv">
+                            <button onClick={() => startVideo()}>
+                              <FontAwesomeIcon icon={faPlay} />
+                              <span>Start</span>
+                            </button>
+                          </div>
+                        ) : null}
 
-                    <div className="d-flex justify-content-center align-items-center h-100 w-100 ">
-                      <div data-vjs-player>
-                        <video
-                          className="video-js vjs-theme-fantasy"
-                          ref={videoRef}
-                          onLoadedMetadata={() => setIsVideoReady(true)}
-                          onPlay={() => setIsPlaying(true)}
-                          onPause={() => setIsPlaying(false)}
-                          onEnded={() => setIsPlaying(false)}
-                          controls
-                          disablePictureInPicture
-                          controlsList="nodownload nofullscreen noremoteplayback"
-                        />
-                        <style>
-                          {`
+                        <div className="d-flex justify-content-center align-items-center h-100 w-100 ">
+                          <div data-vjs-player>
+                            <video
+                              className="video-js vjs-theme-fantasy"
+                              ref={videoRef}
+                              onLoadedMetadata={() => setIsVideoReady(true)}
+                              onPlay={() => setIsPlaying(true)}
+                              onPause={() => setIsPlaying(false)}
+                              onEnded={() => setIsPlaying(false)}
+                              controls
+                              disablePictureInPicture
+                              controlsList="nodownload nofullscreen noremoteplayback"
+                            />
+                            <style>
+                              {`
           .vjs-big-play-button {
             visibility: ${!isVideoReady ? "visible" : "hidden"} !important;
           }
         `}
-                        </style>
+                            </style>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ) : null}
+                    ) : null}
 
-                {activeModule && activeModule.content_type === "assessment" && (
-                  <AssessmentHandler assessment={activeModule} />
+                    {activeModule && activeModule.content_type === "assessment" && (
+                      <AssessmentHandler assessment={activeModule} />
+                    )}
+                  </div>
                 )}
               </div>
             ) : (
@@ -757,6 +883,52 @@ const CourseRead = () => {
           </div>
         </div>
       </div>
+      {/* Confirmation Modal */}
+      {activeModule && (
+        <div
+          className="modal fade show"
+          style={{
+            display: sidebarOpen ? "none" : "block",
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 1050,
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh"
+          }}
+          tabIndex="-1"
+          role="dialog"
+          aria-modal="true"
+          hidden={!showNextModal}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered"
+            role="document"
+            style={{ pointerEvents: "auto" }}
+          >
+            <div className="modal-content areyousure">
+              <div className="modal-body">
+                <p>Are you sure you want to move to the next module?</p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setShowNextModal(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary px-4"
+                  onClick={() => {
+                    setShowNextModal(false);
+                    nextModule();
+                  }}
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1822,6 +1822,7 @@ iframe {
   width: 18rem;
   min-width: 18rem !important;
   margin-right: 15px;
+  cursor: pointer;
 }
 
 .card-title {
