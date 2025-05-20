@@ -331,6 +331,36 @@ app.post("/api/set/active/module", authenticateToken, async (req, res) => {
       if (!course) {
         return res.status(404).json({ error: "Course not found" });
       }
+      if (course && learningPathId) {
+        const pathCourse = await LearningPathCourse.findOne({
+          where: { learningPathId: learningPathId, courseId: courseId }
+        });
+        if (!pathCourse) {
+          const orderindex = pathCourse.orderIndex;
+          const lastpathCourse = await LearningPathCourse.findOne({
+            where: { learningPathId: learningPathId, orderIndex: orderindex - 1 }
+          });
+          const lastCourse = await Course.findOne({ where: { id: lastpathCourse.CourseId } });
+          if (lastCourse) {
+            const lastCourseP = await UserProgress.findOne({
+              where: { userId: user.id, courseId: lastCourse.id }
+            });
+            if (lastCourseP) {
+              await lastCourseP.update({
+                progress: 100,
+                updatedAt: new Date()
+              });
+            } else {
+              await UserProgress.create({
+                userId: user.id,
+                courseId: lastCourse.id,
+                progress: 100,
+                updatedAt: new Date()
+              });
+            }
+          }
+        }
+      }
       const module = await Module.findOne({ where: { id: moduleId } });
       if (!module) {
         return res.status(404).json({ error: "Module not found" });
@@ -343,16 +373,30 @@ app.post("/api/set/active/module", authenticateToken, async (req, res) => {
         if (module.order === 1) {
           progress = 0;
         } else {
+          const lastModule = allModules.find((m) => m.order === module.order - 1);
+          const moduleP = await UserModuleProgress.findOne({
+            where: { userId: user.id, moduleId: lastModule.id }
+          });
+          if (moduleP) {
+            await moduleP.update({
+              status: "completed",
+              progress: 100,
+              last_accessed_at: new Date()
+            });
+          } else {
+            await UserModuleProgress.create({
+              userId: user.id,
+              moduleId: lastModule.id,
+              status: "completed",
+              progress: 100,
+              last_accessed_at: new Date()
+            });
+          }
           progress = ((module.order - 1) / allModules.length) * 100;
         }
       }
-      console.log(module);
-      console.log(progress);
-      console.log(module.order);
-      console.log(allModules.length);
       const updateProgress = await updateUserCourseProgress(user.id, courseId, progress);
       if (updateProgress !== "success") {
-        console.log(updateProgress);
         return res.status(500).json({ error: "Failed to update user progress" });
       }
     }
