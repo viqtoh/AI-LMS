@@ -16,7 +16,7 @@ const Question = require("./Question");
 const Option = require("./Option");
 const UserAnswer = require("./UserAnswer");
 const AttemptQuestion = require("./AttemptQuestion");
-const LoginActivity = require("./LoginActivity");
+const LoginActivity = require("./loginActivity");
 
 // Define junction tables (before associations)
 const LearningPathCategory = sequelize.define("LearningPathCategory", {}, { timestamps: false });
