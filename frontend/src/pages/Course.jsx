@@ -221,7 +221,12 @@ const Course = () => {
                     <div className="headerDesc">
                       <span>{course.description}</span>
                     </div>
-                    <button className="btn continueBtn">
+                    <button
+                      className="btn continueBtn"
+                      onClick={() => {
+                        navigate(`/content-library/course/${course.id}/read`);
+                      }}
+                    >
                       <span>Continue this course</span>
                     </button>
                   </div>
