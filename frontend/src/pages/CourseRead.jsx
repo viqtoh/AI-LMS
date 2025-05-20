@@ -6,7 +6,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
 import {
   faAngleDown,
-  faAngleUp,
+  faAngleRight,
   faList,
   faLock,
   faPlay,
@@ -50,7 +50,7 @@ const CourseRead = () => {
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
 
-  const [coursesState, setCoursesState] = useState([]);
+  const [coursesState, setCoursesState] = useState({});
   const [learningPath, setLearningPath] = useState(null);
 
   const [activeCourse, setActiveCourse] = useState(null);
@@ -634,7 +634,9 @@ const CourseRead = () => {
               </div>
               {activeModule &&
                 (checkLast() ? (
-                  <button className="nextbtn">End</button>
+                  <button className="nextbtn" onClick={nextModule}>
+                    End
+                  </button>
                 ) : activeModule.content_type === "video" ? (
                   checkNext() ? (
                     <button className="nextbtn" onClick={nextModule}>
@@ -680,7 +682,7 @@ const CourseRead = () => {
                         <div className="d-flex gap-2 w-100 align-items-center">
                           <button onClick={() => toggleCourse(course.id)} className="text-white">
                             <FontAwesomeIcon
-                              icon={coursesState[course.title] ? faAngleUp : faAngleDown}
+                              icon={coursesState[course.id] ? faAngleDown : faAngleRight}
                             />
                           </button>
                           <p>{course.title}</p>
