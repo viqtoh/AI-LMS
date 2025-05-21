@@ -509,7 +509,10 @@ iframe {
 .main-body5 {
   background-color: #f9f9f9 !important;
 }
-
+.undoruin {
+  height: 100% !important;
+  overflow: visible !important;
+}
 .sub-body {
   height: 100%;
   overflow: scroll;
@@ -2077,6 +2080,10 @@ iframe {
   min-width: 100%;
   display: flex;
   justify-content: center;
+}
+.noObjectsh300 {
+  min-height: 300px;
+  align-items: center;
 }
 
 .category-list {

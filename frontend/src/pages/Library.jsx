@@ -112,6 +112,7 @@ const Library = () => {
   useEffect(() => {
     const fetchContents = async () => {
       try {
+        setIsLoading(true);
         setCanRefetch(true);
         setContents([]);
         const queryParams = new URLSearchParams({
@@ -262,209 +263,201 @@ const Library = () => {
       <div className="navHeader">
         <NavBar title="Content Library" />
       </div>
-      <div className="main-body2 main-body main-body3">
+      <div className={`main-body2 main-body main-body3 ${isLoading && "undoruin"}`}>
         {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
-        {isLoading ? (
-          <div className="loader-container">
-            <div className="loader"></div>
-          </div>
-        ) : (
-          <div
-            className="sub-body"
-            onScroll={(e) => {
-              const button = document.querySelector(".returnUp");
-              if (e.target.scrollTop > 500) {
-                button.style.opacity = "1";
-                button.style.visibility = "visible";
-              } else {
-                button.style.opacity = "0";
-                button.style.visibility = "hidden";
+
+        <div
+          className="sub-body"
+          onScroll={(e) => {
+            const button = document.querySelector(".returnUp");
+            if (e.target.scrollTop > 500) {
+              button.style.opacity = "1";
+              button.style.visibility = "visible";
+            } else {
+              button.style.opacity = "0";
+              button.style.visibility = "hidden";
+            }
+          }}
+        >
+          <button
+            className="btn returnUp"
+            onClick={() => {
+              const subBody = document.querySelector(".sub-body");
+              if (subBody) {
+                subBody.scrollTo({ top: 0, behavior: "smooth" });
               }
             }}
           >
-            <button
-              className="btn returnUp"
-              onClick={() => {
-                const subBody = document.querySelector(".sub-body");
-                if (subBody) {
-                  subBody.scrollTo({ top: 0, behavior: "smooth" });
-                }
-              }}
-            >
-              <FontAwesomeIcon icon={faAngleUp} />
-            </button>
-            <div className="searchContainer">
-              <div className="searchBarContainer">
-                <FontAwesomeIcon
-                  icon={faSearch}
-                  onClick={() => {
-                    const searchInput = document.querySelector(".searchBar2");
-                    if (searchInput) {
-                      setSearch(searchInput.value);
-                    }
-                  }}
-                  style={{ cursor: "pointer" }}
-                />
-                <input
-                  type="text"
-                  className="searchBar2"
-                  ref={searchRef}
-                  placeholder="Search content by title or description"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      setSearch(e.target.value);
-                    }
-                  }}
-                />
-              </div>
-
-              <div className="sortContainer">
-                <button
-                  className="btn btn-reset"
-                  onClick={() => {
-                    resetFilter();
-                  }}
-                >
-                  <FontAwesomeIcon icon={faRotateLeft} />
-                  <span className="ms-1">Reset Filters</span>
-                </button>
-                <Select
-                  styles={customStyles}
-                  options={sortOptions}
-                  placeholder={"Sort: Default"}
-                  onChange={handleChange}
-                />
-
-                <button
-                  className="btn btn-reset showFilterBtn"
-                  onClick={() => setShowFilter(!showFilter)}
-                >
-                  <span className="ms-1">Show Filters</span>
-                </button>
-              </div>
+            <FontAwesomeIcon icon={faAngleUp} />
+          </button>
+          <div className="searchContainer">
+            <div className="searchBarContainer">
+              <FontAwesomeIcon
+                icon={faSearch}
+                onClick={() => {
+                  const searchInput = document.querySelector(".searchBar2");
+                  if (searchInput) {
+                    setSearch(searchInput.value);
+                  }
+                }}
+                style={{ cursor: "pointer" }}
+              />
+              <input
+                type="text"
+                className="searchBar2"
+                ref={searchRef}
+                placeholder="Search content by title or description"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setSearch(e.target.value);
+                  }
+                }}
+              />
             </div>
-            <div className="desktopSeperator">
-              <div className="desktopFilterMain" style={showFilter ? { display: "block" } : {}}>
-                <div
-                  className="filterSeperator"
-                  style={!cisCollapsed ? { maxHeight: "300px" } : {}}
-                >
-                  <div>
-                    <div
-                      className="header d-flex justify-content-between"
-                      onClick={() => setCisCollapsed(!cisCollapsed)}
-                      style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
-                    >
-                      <h5 className="filterHeading">Content Type</h5>
-                      <FontAwesomeIcon
-                        icon={cisCollapsed ? faAngleDown : faAngleUp}
-                        style={{ marginLeft: "8px" }}
-                      />
-                    </div>
 
-                    <ul className="collapsed-list nobar">
-                      <li>
-                        <input
-                          type="checkbox"
-                          id="learnCheck"
-                          onClick={() => {
-                            makeType();
-                          }}
-                        />
-                        <span>Learning Paths</span>
-                      </li>
-                      <li>
-                        <input
-                          type="checkbox"
-                          id="courseCheck"
-                          onClick={() => {
-                            makeType();
-                          }}
-                        />
-                        <span>Courses</span>
-                      </li>
-                    </ul>
+            <div className="sortContainer">
+              <button
+                className="btn btn-reset"
+                onClick={() => {
+                  resetFilter();
+                }}
+              >
+                <FontAwesomeIcon icon={faRotateLeft} />
+                <span className="ms-1">Reset Filters</span>
+              </button>
+              <Select
+                styles={customStyles}
+                options={sortOptions}
+                placeholder={"Sort: Default"}
+                onChange={handleChange}
+              />
+
+              <button
+                className="btn btn-reset showFilterBtn"
+                onClick={() => setShowFilter(!showFilter)}
+              >
+                <span className="ms-1">Show Filters</span>
+              </button>
+            </div>
+          </div>
+          <div className="desktopSeperator">
+            <div className="desktopFilterMain" style={showFilter ? { display: "block" } : {}}>
+              <div className="filterSeperator" style={!cisCollapsed ? { maxHeight: "300px" } : {}}>
+                <div>
+                  <div
+                    className="header d-flex justify-content-between"
+                    onClick={() => setCisCollapsed(!cisCollapsed)}
+                    style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+                  >
+                    <h5 className="filterHeading">Content Type</h5>
+                    <FontAwesomeIcon
+                      icon={cisCollapsed ? faAngleDown : faAngleUp}
+                      style={{ marginLeft: "8px" }}
+                    />
                   </div>
-                </div>
-                <div
-                  className="filterSeperator"
-                  style={!risCollapsed ? { maxHeight: "300px" } : {}}
-                >
-                  <div>
-                    <div
-                      className="header d-flex justify-content-between"
-                      onClick={() => setRisCollapsed(!risCollapsed)}
-                      style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
-                    >
-                      <h5 className="filterHeading">Categories</h5>
-                      <FontAwesomeIcon
-                        icon={risCollapsed ? faAngleDown : faAngleUp}
-                        style={{ marginLeft: "8px" }}
-                      />
-                    </div>
 
-                    <div className="categorySearchCon">
-                      <FontAwesomeIcon icon={faSearch} />
+                  <ul className="collapsed-list nobar">
+                    <li>
                       <input
-                        type="text"
-                        className="categorySearch"
-                        placeholder="Search categories"
-                        onChange={(e) => {
-                          const searchValue = e.target.value.toLowerCase();
-                          const filtered = categories.filter((category) =>
-                            category.name.toLowerCase().includes(searchValue)
-                          );
-                          setFcategories(filtered);
+                        type="checkbox"
+                        id="learnCheck"
+                        onClick={() => {
+                          makeType();
                         }}
                       />
-                    </div>
-
-                    <ul className="collapsed-list collapsed-list2">
-                      {fCategories.map((category) => (
-                        <li key={category.name}>
-                          <input
-                            type="checkbox"
-                            className="catCheck"
-                            onClick={() => {
-                              makeCategory(category.name);
-                            }}
-                          />
-                          <span>{category.name}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                <div
-                  className="filterSeperator"
-                  style={!fisCollapsed ? { maxHeight: "300px" } : {}}
-                >
-                  <div>
-                    <div
-                      className="header d-flex justify-content-between"
-                      onClick={() => setFisCollapsed(!fisCollapsed)}
-                      style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
-                    >
-                      <h5 className="filterHeading">Favorites</h5>
-                      <FontAwesomeIcon
-                        icon={fisCollapsed ? faAngleDown : faAngleUp}
-                        style={{ marginLeft: "8px" }}
+                      <span>Learning Paths</span>
+                    </li>
+                    <li>
+                      <input
+                        type="checkbox"
+                        id="courseCheck"
+                        onClick={() => {
+                          makeType();
+                        }}
                       />
-                    </div>
-
-                    <ul className="collapsed-list nobar">
-                      <li>
-                        <input type="radio" name="favorites" value="yes" />
-                        <span>Yes</span>
-                      </li>
-                      <li>
-                        <input type="radio" name="favorites" value="no" />
-                        <span>No</span>
-                      </li>
-                    </ul>
-                  </div>
+                      <span>Courses</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
+              <div className="filterSeperator" style={!risCollapsed ? { maxHeight: "300px" } : {}}>
+                <div>
+                  <div
+                    className="header d-flex justify-content-between"
+                    onClick={() => setRisCollapsed(!risCollapsed)}
+                    style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+                  >
+                    <h5 className="filterHeading">Categories</h5>
+                    <FontAwesomeIcon
+                      icon={risCollapsed ? faAngleDown : faAngleUp}
+                      style={{ marginLeft: "8px" }}
+                    />
+                  </div>
+
+                  <div className="categorySearchCon">
+                    <FontAwesomeIcon icon={faSearch} />
+                    <input
+                      type="text"
+                      className="categorySearch"
+                      placeholder="Search categories"
+                      onChange={(e) => {
+                        const searchValue = e.target.value.toLowerCase();
+                        const filtered = categories.filter((category) =>
+                          category.name.toLowerCase().includes(searchValue)
+                        );
+                        setFcategories(filtered);
+                      }}
+                    />
+                  </div>
+
+                  <ul className="collapsed-list collapsed-list2">
+                    {fCategories.map((category) => (
+                      <li key={category.name}>
+                        <input
+                          type="checkbox"
+                          className="catCheck"
+                          onClick={() => {
+                            makeCategory(category.name);
+                          }}
+                        />
+                        <span>{category.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <div className="filterSeperator" style={!fisCollapsed ? { maxHeight: "300px" } : {}}>
+                <div>
+                  <div
+                    className="header d-flex justify-content-between"
+                    onClick={() => setFisCollapsed(!fisCollapsed)}
+                    style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+                  >
+                    <h5 className="filterHeading">Favorites</h5>
+                    <FontAwesomeIcon
+                      icon={fisCollapsed ? faAngleDown : faAngleUp}
+                      style={{ marginLeft: "8px" }}
+                    />
+                  </div>
+
+                  <ul className="collapsed-list nobar">
+                    <li>
+                      <input type="radio" name="favorites" value="yes" />
+                      <span>Yes</span>
+                    </li>
+                    <li>
+                      <input type="radio" name="favorites" value="no" />
+                      <span>No</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {isLoading ? (
+              <div className="loader-container" style={{ height: "70vh" }}>
+                <div className="loader"></div>
+              </div>
+            ) : (
               <div className="searchBody greyScroll">
                 {contents && contents.length > 0 ? (
                   contents.map((content, index) => (
@@ -502,7 +495,7 @@ const Library = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="noObjects">
+                  <div className="noObjects noObjects100 noObjectsh300 ">
                     <p>No results found</p>
                   </div>
                 )}
@@ -517,9 +510,9 @@ const Library = () => {
                   </div>
                 ) : null}
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

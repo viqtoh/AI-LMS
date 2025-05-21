@@ -485,3 +485,40 @@
   color: white !important;
   font-size: 16px !important;
 }
+
+.chatDiv {
+  position: absolute;
+  top: calc(100% - 100px);
+  right: calc(100px - 100%);
+}
+
+.chatbody {
+  position: fixed; /* or relative if you want it relative to a parent */
+  width: 100vw;
+  height: 100vh;
+  bottom: 0;
+  right: 0;
+  pointer-events: none; /* So clicks pass through except on chat and fab */
+  z-index: 10000;
+}
+
+.fab {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  pointer-events: auto;
+  z-index: 10;
+}
+.chat-window {
+  position: absolute;
+  bottom: 70px; /* height of Fab + some margin */
+  right: 20px;
+  width: 320px; /* or whatever width your chat uses */
+  height: 400px; /* adjust as needed */
+  pointer-events: auto;
+  z-index: 9;
+  background: white; /* or transparent */
+  border: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+}

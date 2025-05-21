@@ -30,6 +30,7 @@ import "@videojs/themes/dist/forest/index.css";
 // Sea
 import "@videojs/themes/dist/sea/index.css";
 import AssessmentHandler from "./AssessmentHandler";
+import BotpressChat from "../components/BotPressChat";
 
 const CourseRead = () => {
   const token = localStorage.getItem("token");
@@ -815,7 +816,15 @@ const CourseRead = () => {
                     </div>
                   </div>
                 ) : (
-                  <div>
+                  <div className="">
+                    {activeModule &&
+                      activeCourse &&
+                      activateModule.content_type !== "assessment" && (
+                        <div className="chatDiv">
+                          <BotpressChat />
+                        </div>
+                      )}
+
                     {activeModule &&
                       activeCourse &&
                       activeModule.content_type !== "video" &&
