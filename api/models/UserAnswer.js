@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../db");
 const AssessmentAttempt = require("./AssessmentAttempt");
-const Question = require("./Question");
+const AttemptQuestion = require("./AttemptQuestion");
 const Option = require("./Option");
 
 const UserAnswer = sequelize.define("UserAnswer", {
@@ -13,7 +13,7 @@ const UserAnswer = sequelize.define("UserAnswer", {
 });
 
 UserAnswer.belongsTo(AssessmentAttempt, { foreignKey: "AttemptId", onDelete: "CASCADE" });
-UserAnswer.belongsTo(Question, { foreignKey: "QuestionId", onDelete: "CASCADE" });
+UserAnswer.belongsTo(AttemptQuestion, { foreignKey: "AttemptQuestionId", onDelete: "CASCADE" });
 UserAnswer.belongsTo(Option, { foreignKey: "OptionId", onDelete: "CASCADE" });
 
 module.exports = UserAnswer;

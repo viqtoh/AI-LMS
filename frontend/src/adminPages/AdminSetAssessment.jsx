@@ -79,6 +79,7 @@ const AdminSetAssessment = () => {
   }, [isLoaded]);
 
   useEffect(() => {
+    console.log("Questions changed");
     // Clear any pending save
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
@@ -88,8 +89,8 @@ const AdminSetAssessment = () => {
     debounceTimer.current = setTimeout(() => {
       if (!saved) {
         updateAssessment();
-        setSaved(true); // Mark as saved
-      }
+        setSaved(true);
+      } // Mark as saved
     }, 3000);
 
     // Cleanup on unmount or before new effect
@@ -126,63 +127,26 @@ const AdminSetAssessment = () => {
   };
 
   const deleteQuestion = async (questionId) => {
-    setIsSaving(true);
-    try {
-      const response = await fetch(`${API_URL}/api/admin/assessment/module/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          questionId: questionId
-        })
-      });
-      const data = await response.json();
-      if (data.questions.length > 0) {
-        setQuestions(data.questions);
-      }
-
-      console.log(data);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setIsSaving(false);
-    }
+    setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+    setSaved(false); // Mark unsaved
   };
 
   const deleteOption = async (optionId) => {
-    setIsSaving(true);
-    try {
-      const response = await fetch(`${API_URL}/api/admin/assessment/module/option/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          optionId: optionId
-        })
-      });
-      const data = await response.json();
-      if (data.questions.length > 0) {
-        setQuestions(data.questions);
-      }
-
-      console.log(data);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setIsSaving(false);
-    }
+    setQuestions((prev) =>
+      prev.map((q) => ({
+        ...q,
+        answers: q.answers.map((opt) => (opt.id === optionId ? { ...opt, delete: true } : opt))
+      }))
+    );
+    setSaved(false); // Mark unsaved
   };
 
   const handleDeleteQuestion = (id) => {
     deleteQuestion(id);
   };
 
-  const handleOptionDelete = (id) => {
-    deleteOption(id);
+  const handleOptionDelete = (id, qid) => {
+    deleteOption(id, qid);
   };
 
   const addNewQuestion = () => {

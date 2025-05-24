@@ -29,7 +29,7 @@ function QuestionEditor({ index, data, onChange, onDelete, onOptDelete }) {
   };
 
   const deleteAnswer = (answerId) => {
-    onOptDelete(answerId);
+    onOptDelete(answerId, data.id);
   };
 
   return (
@@ -47,29 +47,35 @@ function QuestionEditor({ index, data, onChange, onDelete, onOptDelete }) {
         rows="3"
       />
 
-      {data.answers.map((answer, index) => (
-        <div key={answer.id} className="d-flex align-items-center mb-2">
-          <div className="me-2 text-muted">
-            <FaGripVertical />
-          </div>
-          <div className="me-2 fw-bold">{String.fromCharCode(65 + index)}</div>
-          <input
-            type="text"
-            className="form-control me-2"
-            value={answer.text}
-            onChange={(e) => handleAnswerChange(answer.id, e.target.value)}
-          />
-          <button
-            className={`btn btn-sm me-1 ${answer.correct ? "btn-success" : "btn-outline-success"}`}
-            onClick={() => toggleCorrect(answer.id)}
-          >
-            <FaCheck />
-          </button>
-          <button className="btn btn-sm btn-outline-danger" onClick={() => deleteAnswer(answer.id)}>
-            <FaTimes />
-          </button>
-        </div>
-      ))}
+      {data.answers.map(
+        (answer, index) =>
+          !answer.delete && (
+            <div key={answer.id} className="d-flex align-items-center mb-2">
+              <div className="me-2 text-muted">
+                <FaGripVertical />
+              </div>
+              <div className="me-2 fw-bold">{String.fromCharCode(65 + index)}</div>
+              <input
+                type="text"
+                className="form-control me-2"
+                value={answer.text}
+                onChange={(e) => handleAnswerChange(answer.id, e.target.value)}
+              />
+              <button
+                className={`btn btn-sm me-1 ${answer.correct ? "btn-success" : "btn-outline-success"}`}
+                onClick={() => toggleCorrect(answer.id)}
+              >
+                <FaCheck />
+              </button>
+              <button
+                className="btn btn-sm btn-outline-danger"
+                onClick={() => deleteAnswer(answer.id)}
+              >
+                <FaTimes />
+              </button>
+            </div>
+          )
+      )}
       <div className="w-100 d-flex justify-content-center mt-5">
         <button className="addOptionBtn" onClick={addAnswer}>
           More Options +

@@ -435,9 +435,8 @@ app.post("/api/set/active/module", authenticateToken, async (req, res) => {
           return res.status(500).json({ error: "Failed to update user progress" });
         }
       }
-
-      return res.status(200).json({ message: "User progress updated successfully" });
     }
+    return res.status(200).json({ message: "User progress updated successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -1161,9 +1160,31 @@ app.post("/api/assessment-attempt", authenticateToken, async (req, res) => {
     const numberToSelect = assessment.numberOfQuestions;
     const userId = user.id;
     // Fetch random questions from the assessment
-    const allQuestions = await Question.findAll({
+    // First, get question IDs that have correct options
+    // Step 1: Get question IDs that have correct options
+    const questionsWithCorrectOptions = await Question.findAll({
       where: { AssessmentId: assessmentId },
-      include: [{ model: Option }],
+      include: [
+        {
+          model: Option,
+          where: { isCorrect: true },
+          required: true
+        }
+      ],
+      attributes: ["id"] // Only get the ID to avoid grouping issues
+      // Remove the group clause entirely
+    });
+
+    // Extract unique question IDs (in case there are duplicates due to multiple correct options)
+    const questionIds = [...new Set(questionsWithCorrectOptions.map((q) => q.id))];
+
+    // Step 2: Get random selection with all options
+    const allQuestions = await Question.findAll({
+      where: {
+        AssessmentId: assessmentId,
+        id: { [Sequelize.Op.in]: questionIds }
+      },
+      include: [{ model: Option }], // Include ALL options for each question
       order: Sequelize.literal("RANDOM()"),
       limit: numberToSelect
     });
@@ -1196,7 +1217,8 @@ app.post("/api/assessment-attempt", authenticateToken, async (req, res) => {
     res.status(201).json({
       message: "Assessment attempt created",
       attemptId: attempt.id,
-      questions: formattedQuestions
+      questions: formattedQuestions,
+      duration: assessment.duration
     });
   } catch (error) {
     console.error("Error creating assessment attempt:", error);
@@ -1276,13 +1298,69 @@ app.post("/api/assessment-attempt/resume", authenticateToken, async (req, res) =
       })
       .filter((q) => q !== null); // Filter out null values
 
+    const assessment = await Assessment.findByPk(assessmentAttempt.AssessmentId);
+
     res.status(200).json({
       message: "Assessment resumed",
       attemptId: assessmentAttempt.id,
-      questions: formattedQuestions
+      questions: formattedQuestions,
+      duration: assessment.duration
     });
   } catch (error) {
     console.error("Error resuming assessment attempt:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//end test
+
+app.post("/api/assessment-attempt/end-assessment", authenticateToken, async (req, res) => {
+  const { assessmentId } = req.body;
+
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token missing" });
+
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    // Validate input
+    if (!assessmentId) {
+      return res.status(400).json({ message: "Assessment not found" });
+    }
+
+    // Get the assessment and number of questions
+    const assessment = await Assessment.findByPk(assessmentId);
+    if (!assessment) {
+      return res.status(404).json({ message: "Assessment not found" });
+    }
+
+    const assessmentAttempt = await AssessmentAttempt.findOne({
+      where: {
+        id: assessmentAttemptId,
+        UserId: user.id
+      }
+    });
+
+    if (!assessmentAttempt) {
+      return res.status(404).json({ message: "Assessment attempt not found" });
+    }
+
+    // Calculate the end time by subtracting the duration from now
+    const durationMinutes = assessment.duration || 0;
+    const endTime = new Date();
+    const fakeStartTime = new Date(endTime.getTime() - durationMinutes * 60 * 1000);
+
+    // Update the attempt: set status to completed and set startTime so that it appears ended
+    await assessmentAttempt.update({
+      status: "completed",
+      startTime: fakeStartTime
+    });
+
+    res.status(201).json({
+      message: "Assessment ended"
+    });
+  } catch (error) {
+    console.error("Error ending assessment:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -1318,6 +1396,10 @@ app.post("/api/assessment-attempt/setAnswer", authenticateToken, async (req, res
       return res.status(404).json({ message: "Question not found" });
     }
 
+    const attemptQuestion = await AttemptQuestion.findOne({
+      where: { AttemptId: assessmentAttemptId, QuestionId: question.id }
+    });
+
     let userAnswer = await UserAnswer.findOne({
       where: {
         AttemptId: assessmentAttemptId,
@@ -1327,33 +1409,39 @@ app.post("/api/assessment-attempt/setAnswer", authenticateToken, async (req, res
 
     const isMultiple = question.Options.filter((opt) => opt.isCorrect).length > 1;
 
-    if (remove) {
+    if (isMultiple) {
       if (userAnswer) {
         await userAnswer.destroy();
+      } else {
+        if (!userAnswer) {
+          userAnswer = await UserAnswer.create({
+            OptionId: answerId,
+            AttemptQuestionId: attemptQuestion.id,
+            AttemptId: assessmentAttemptId
+          });
+        }
       }
     } else {
       if (!userAnswer) {
         userAnswer = await UserAnswer.create({
           OptionId: answerId,
-          QuestionId: question.id,
+          AttemptQuestionId: attemptQuestion.id,
           AttemptId: assessmentAttemptId
         });
+
+        const otherAnswers = await UserAnswer.findAll({
+          where: {
+            AttemptId: assessmentAttemptId,
+            AttemptQuestionId: attemptQuestion.id
+          }
+        });
+
+        otherAnswers.forEach((answer) => {
+          if (answer.OptionId !== userAnswer.OptionId) {
+            answer.destroy();
+          }
+        });
       }
-    }
-
-    if (!isMultiple) {
-      const otherAnswers = await UserAnswer.findAll({
-        where: {
-          AttemptId: assessmentAttemptId,
-          QuestionId: question.id
-        }
-      });
-
-      otherAnswers.forEach((answer) => {
-        if (answer.OptionId !== userAnswer.OptionId) {
-          answer.destroy();
-        }
-      });
     }
 
     const assessmentAttempt = await AssessmentAttempt.findOne({
@@ -1409,8 +1497,7 @@ app.post("/api/assessment-attempt/setAnswer", authenticateToken, async (req, res
       .filter((q) => q !== null);
 
     res.status(200).json({
-      message: "Assessment resumed",
-      attemptId: assessmentAttempt.id,
+      message: "Answer set successfully",
       questions: formattedQuestions
     });
   } catch (error) {
@@ -2427,32 +2514,25 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
         if (question) {
           question.text = q.question;
           await question.save();
-        } else {
-          question = await Question.create({
-            aid: q.aid,
-            text: q.question,
-            AssessmentId: assessment.id
-          });
         }
+      } else {
+        question = await Question.create({
+          aid: q.aid,
+          text: q.question,
+          AssessmentId: assessment.id
+        });
+      }
 
-        // Update existing options or create new ones
-        for (const opt of q.answers) {
-          if (opt.id) {
-            const existingOpt = await Option.findOne({
-              where: { id: opt.id }
-            });
-            if (existingOpt) {
-              existingOpt.text = opt.text;
-              existingOpt.isCorrect = opt.correct;
-              await existingOpt.save();
-            } else {
-              await Option.create({
-                qid: opt.qid,
-                text: opt.text,
-                isCorrect: opt.correct,
-                QuestionId: question.id
-              });
-            }
+      // Update existing options or create new ones
+      for (const opt of q.answers) {
+        if (opt.id) {
+          const existingOpt = await Option.findOne({
+            where: { id: opt.id }
+          });
+          if (existingOpt) {
+            existingOpt.text = opt.text;
+            existingOpt.isCorrect = opt.correct;
+            await existingOpt.save();
           } else {
             await Option.create({
               qid: opt.qid,
@@ -2460,6 +2540,22 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
               isCorrect: opt.correct,
               QuestionId: question.id
             });
+          }
+        } else {
+          await Option.create({
+            qid: opt.qid,
+            text: opt.text,
+            isCorrect: opt.correct,
+            QuestionId: question.id
+          });
+        }
+
+        if (opt.delete) {
+          const existingOpt = await Option.findOne({
+            where: { id: opt.id }
+          });
+          if (existingOpt) {
+            await existingOpt.destroy();
           }
         }
       }

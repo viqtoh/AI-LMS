@@ -13,6 +13,7 @@ const clientId = "e8ce95c2-045b-4bc3-9f49-23e4861ecfc4";
 const configuration: Configuration = {
   color: '#000',
   showPoweredBy: false,
+  botName: 'TutorAI',
 };
 
 const BotPressChat = () => {
@@ -75,8 +76,31 @@ const BotPressChat = () => {
         configuration={configuration}
         
       >
+        {/* Chatbot label - only show when chat is closed */}
+        {!isWebchatOpen && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 85, // Position above the FAB
+              right: 20,
+              color: '#fff',
+              padding: '6px 12px',
+              borderRadius: '16px',
+              fontSize: '12px',
+              fontWeight: '500',
+              pointerEvents: 'none',
+              zIndex: 11,
+              whiteSpace: 'nowrap',
+              textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+            }}
+          >
+            chatbot
+          </div>
+        )}
+        
         <Fab
           onClick={toggleWebchat}
+          
           style={{
             position: 'absolute',
             bottom: 20,

@@ -556,14 +556,14 @@ const CourseRead = () => {
     );
     const nextModuleIndex =
       foundCourse.modules.findIndex((module) => module.id === activeModule.id) + 1;
-    if (nextModuleIndex < foundCourse.modules.length - 1) {
-      setActiveModule(foundCourse.modules[nextModuleIndex]);
+    if (nextModuleIndex < foundCourse.modules.length) {
+      activateModule(foundCourse.modules[nextModuleIndex]);
     } else {
       const nextCourseIndex = courses.findIndex((course) => course.id === foundCourse.id) + 1;
       if (nextCourseIndex < courses.length) {
         const nextCourse = courses[nextCourseIndex];
         const firstModule = nextCourse.modules[0];
-        setActiveModule(firstModule);
+        activateModule(firstModule);
         setActiveCourse(nextCourse);
       } else {
         setIsEnded(true);
@@ -734,7 +734,7 @@ const CourseRead = () => {
             ) : courses !== null ? (
               <div className="readerBody bg-dark">
                 {!activeModule && activeCourse && (
-                  <div>
+                  <div className="w-100" style={{ height: "100%" }}>
                     <div className="activeCourseBanner">
                       <img src="/images/default_course_banner.png" />
                       <div className="activeCourseTitle">
@@ -816,14 +816,12 @@ const CourseRead = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="">
-                    {activeModule &&
-                      activeCourse &&
-                      activateModule.content_type !== "assessment" && (
-                        <div className="chatDiv">
-                          <BotpressChat />
-                        </div>
-                      )}
+                  <div className="h-100 w-100">
+                    {activeModule && activeCourse && activeModule.content_type !== "assessment" && (
+                      <div className="chatDiv">
+                        <BotpressChat />
+                      </div>
+                    )}
 
                     {activeModule &&
                       activeCourse &&
@@ -883,7 +881,7 @@ const CourseRead = () => {
                     ) : null}
 
                     {activeModule && activeModule.content_type === "assessment" && (
-                      <AssessmentHandler assessment={activeModule} />
+                      <AssessmentHandler iniAssessment={activeModule} />
                     )}
                   </div>
                 )}

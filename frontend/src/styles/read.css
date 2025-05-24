@@ -325,6 +325,7 @@
 
   .activeCourseModules {
     width: 90vw;
+    padding-bottom: 50px;
   }
 
   .activeCourseMenu {
@@ -475,6 +476,7 @@
 
 .areyousure {
   background-color: #000000c7 !important;
+  overflow: hidden;
 }
 
 .areyousure div {
@@ -521,4 +523,7 @@
   border: 1px solid #ccc;
   display: flex;
   flex-direction: column;
+}
+.modal-backdrop {
+  z-index: 200 !important;
 }
