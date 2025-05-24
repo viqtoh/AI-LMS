@@ -31,7 +31,7 @@ require("dotenv").config();
 const app = express();
 app.use(
   cors({
-    origin: "https://ailms.apps.ginnsltd.com"
+    origin: ["https://ailms.apps.ginnsltd.com", "http://localhost:3000"]
   })
 );
 
@@ -435,9 +435,8 @@ app.post("/api/set/active/module", authenticateToken, async (req, res) => {
           return res.status(500).json({ error: "Failed to update user progress" });
         }
       }
-
-      return res.status(200).json({ message: "User progress updated successfully" });
     }
+    return res.status(200).json({ message: "User progress updated successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -855,18 +854,40 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
             };
           });
 
-          const enrichedModules = modules.map((module) => {
-            const progress = progressMap[module.id];
-            return {
-              ...module.toJSON(),
-              userProgress: progress || {
-                status: "not_started",
-                progress: 0,
-                last_accessed_at: null,
-                last_second: null
+          const enrichedModules = await Promise.all(
+            modules.map(async (module) => {
+              const progress = progressMap[module.id];
+              let moduleData = {
+                ...module.toJSON(),
+                userProgress: progress || {
+                  status: "not_started",
+                  progress: 0,
+                  last_accessed_at: null,
+                  last_second: null
+                }
+              };
+
+              if (module.content_type === "assessment") {
+                // If the module is an assessment, add score to record
+                const assessment = await Assessment.findOne({ where: { moduleId: module.id } });
+                if (assessment) {
+                  const attempt = await AssessmentAttempt.findOne({
+                    where: { UserId: userId, AssessmentId: assessment.id }
+                  });
+                  if (attempt) {
+                    const score = await calculateScore(attempt.id);
+                    moduleData.score = score;
+                  } else {
+                    moduleData.score = null;
+                  }
+                } else {
+                  moduleData.score = null;
+                }
               }
-            };
-          });
+
+              return moduleData;
+            })
+          );
 
           // Determine course progress status
           const statuses = enrichedModules.map((m) => m.userProgress.status);
@@ -953,19 +974,42 @@ app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
       };
     });
 
-    const enrichedModules = modules.map((mod) => {
-      const userProgress = progressMap[mod.id] || {
-        status: "not_started",
-        progress: 0,
-        last_accessed_at: null,
-        last_second: null
-      };
+    const enrichedModules = await Promise.all(
+      modules.map(async (mod) => {
+        const userProgress = progressMap[mod.id] || {
+          status: "not_started",
+          progress: 0,
+          last_accessed_at: null,
+          last_second: null
+        };
 
-      return {
-        ...mod.toJSON(),
-        userProgress
-      };
-    });
+        // Add score if module is an assessment
+        let score = null;
+        if (mod.content_type === "assessment") {
+          const assessment = await Assessment.findOne({ where: { moduleId: mod.id } });
+          if (assessment) {
+            const attempt = await AssessmentAttempt.findOne({
+              where: { UserId: userId, AssessmentId: assessment.id }
+            });
+            if (attempt) {
+              score = await calculateScore(attempt.id);
+            }
+          }
+        }
+        if (score) {
+          return {
+            ...mod.toJSON(),
+            userProgress,
+            score
+          };
+        }
+
+        return {
+          ...mod.toJSON(),
+          userProgress
+        };
+      })
+    );
 
     // Determine overall courseProgress
     const statuses = enrichedModules.map((m) => m.userProgress.status);
@@ -1007,6 +1051,7 @@ app.post("/api/module-progress/:moduleId", authenticateToken, async (req, res) =
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const userId = user.id;
+    const module = await Module.findByPk(moduleId);
 
     // Find or create progress record
     let [record, created] = await UserModuleProgress.findOrCreate({
@@ -1161,9 +1206,31 @@ app.post("/api/assessment-attempt", authenticateToken, async (req, res) => {
     const numberToSelect = assessment.numberOfQuestions;
     const userId = user.id;
     // Fetch random questions from the assessment
-    const allQuestions = await Question.findAll({
+    // First, get question IDs that have correct options
+    // Step 1: Get question IDs that have correct options
+    const questionsWithCorrectOptions = await Question.findAll({
       where: { AssessmentId: assessmentId },
-      include: [{ model: Option }],
+      include: [
+        {
+          model: Option,
+          where: { isCorrect: true },
+          required: true
+        }
+      ],
+      attributes: ["id"] // Only get the ID to avoid grouping issues
+      // Remove the group clause entirely
+    });
+
+    // Extract unique question IDs (in case there are duplicates due to multiple correct options)
+    const questionIds = [...new Set(questionsWithCorrectOptions.map((q) => q.id))];
+
+    // Step 2: Get random selection with all options
+    const allQuestions = await Question.findAll({
+      where: {
+        AssessmentId: assessmentId,
+        id: { [Sequelize.Op.in]: questionIds }
+      },
+      include: [{ model: Option }], // Include ALL options for each question
       order: Sequelize.literal("RANDOM()"),
       limit: numberToSelect
     });
@@ -1196,7 +1263,8 @@ app.post("/api/assessment-attempt", authenticateToken, async (req, res) => {
     res.status(201).json({
       message: "Assessment attempt created",
       attemptId: attempt.id,
-      questions: formattedQuestions
+      questions: formattedQuestions,
+      duration: assessment.duration
     });
   } catch (error) {
     console.error("Error creating assessment attempt:", error);
@@ -1276,13 +1344,105 @@ app.post("/api/assessment-attempt/resume", authenticateToken, async (req, res) =
       })
       .filter((q) => q !== null); // Filter out null values
 
+    const assessment = await Assessment.findByPk(assessmentAttempt.AssessmentId);
+
     res.status(200).json({
       message: "Assessment resumed",
       attemptId: assessmentAttempt.id,
-      questions: formattedQuestions
+      questions: formattedQuestions,
+      duration: assessment.duration
     });
   } catch (error) {
     console.error("Error resuming assessment attempt:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//end test
+
+async function calculateScore(assessmentAttemptId) {
+  // Get all attempt questions for this attempt
+  const attemptQuestions = await AttemptQuestion.findAll({
+    where: { AttemptId: assessmentAttemptId },
+    include: [
+      {
+        model: Question,
+        include: [Option]
+      },
+      {
+        model: UserAnswer,
+        include: [Option]
+      }
+    ]
+  });
+
+  let correctCount = 0;
+
+  for (const aq of attemptQuestions) {
+    const question = aq.Question;
+    const allCorrectOptions = question.Options.filter((opt) => opt.isCorrect)
+      .map((opt) => opt.id)
+      .sort();
+    const userSelectedOptions = aq.UserAnswers.map((ua) => ua.Option.id).sort();
+
+    // Check if user selected all correct options and only those
+    const isCorrect = JSON.stringify(userSelectedOptions) === JSON.stringify(allCorrectOptions);
+
+    if (isCorrect) {
+      correctCount++;
+    }
+  }
+
+  const totalQuestions = attemptQuestions.length;
+  const scorePercent = totalQuestions ? ((correctCount / totalQuestions) * 100).toFixed(2) : "0.00";
+
+  return {
+    totalQuestions,
+    correctAnswers: correctCount,
+    scorePercent
+  };
+}
+
+app.post("/api/assessment-attempt/end-assessment", authenticateToken, async (req, res) => {
+  const { assessmentAttemptId } = req.body;
+
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token missing" });
+
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const assessmentAttempt = await AssessmentAttempt.findOne({
+      where: {
+        id: assessmentAttemptId,
+        UserId: user.id
+      }
+    });
+
+    if (!assessmentAttempt) {
+      return res.status(404).json({ message: "Assessment attempt not found" });
+    }
+
+    const assessment = await Assessment.findByPk(assessmentAttempt.AssessmentId);
+
+    // Calculate the end time by subtracting the duration from now
+    const durationMinutes = assessment.duration || 0;
+    const endTime = new Date();
+    const fakeStartTime = new Date(endTime.getTime() - durationMinutes * 60 * 1000);
+
+    // Update the attempt: set status to completed and set startTime so that it appears ended
+    await assessmentAttempt.update({
+      status: "completed",
+      startTime: fakeStartTime
+    });
+
+    res.status(201).json({
+      message: "Assessment ended",
+      score: await calculateScore(assessmentAttempt.id)
+    });
+  } catch (error) {
+    console.error("Error ending assessment:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -1318,6 +1478,10 @@ app.post("/api/assessment-attempt/setAnswer", authenticateToken, async (req, res
       return res.status(404).json({ message: "Question not found" });
     }
 
+    const attemptQuestion = await AttemptQuestion.findOne({
+      where: { AttemptId: assessmentAttemptId, QuestionId: question.id }
+    });
+
     let userAnswer = await UserAnswer.findOne({
       where: {
         AttemptId: assessmentAttemptId,
@@ -1327,33 +1491,39 @@ app.post("/api/assessment-attempt/setAnswer", authenticateToken, async (req, res
 
     const isMultiple = question.Options.filter((opt) => opt.isCorrect).length > 1;
 
-    if (remove) {
+    if (isMultiple) {
       if (userAnswer) {
         await userAnswer.destroy();
+      } else {
+        if (!userAnswer) {
+          userAnswer = await UserAnswer.create({
+            OptionId: answerId,
+            AttemptQuestionId: attemptQuestion.id,
+            AttemptId: assessmentAttemptId
+          });
+        }
       }
     } else {
       if (!userAnswer) {
         userAnswer = await UserAnswer.create({
           OptionId: answerId,
-          QuestionId: question.id,
+          AttemptQuestionId: attemptQuestion.id,
           AttemptId: assessmentAttemptId
         });
+
+        const otherAnswers = await UserAnswer.findAll({
+          where: {
+            AttemptId: assessmentAttemptId,
+            AttemptQuestionId: attemptQuestion.id
+          }
+        });
+
+        otherAnswers.forEach((answer) => {
+          if (answer.OptionId !== userAnswer.OptionId) {
+            answer.destroy();
+          }
+        });
       }
-    }
-
-    if (!isMultiple) {
-      const otherAnswers = await UserAnswer.findAll({
-        where: {
-          AttemptId: assessmentAttemptId,
-          QuestionId: question.id
-        }
-      });
-
-      otherAnswers.forEach((answer) => {
-        if (answer.OptionId !== userAnswer.OptionId) {
-          answer.destroy();
-        }
-      });
     }
 
     const assessmentAttempt = await AssessmentAttempt.findOne({
@@ -1409,8 +1579,7 @@ app.post("/api/assessment-attempt/setAnswer", authenticateToken, async (req, res
       .filter((q) => q !== null);
 
     res.status(200).json({
-      message: "Assessment resumed",
-      attemptId: assessmentAttempt.id,
+      message: "Answer set successfully",
       questions: formattedQuestions
     });
   } catch (error) {
@@ -2427,32 +2596,25 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
         if (question) {
           question.text = q.question;
           await question.save();
-        } else {
-          question = await Question.create({
-            aid: q.aid,
-            text: q.question,
-            AssessmentId: assessment.id
-          });
         }
+      } else {
+        question = await Question.create({
+          aid: q.aid,
+          text: q.question,
+          AssessmentId: assessment.id
+        });
+      }
 
-        // Update existing options or create new ones
-        for (const opt of q.answers) {
-          if (opt.id) {
-            const existingOpt = await Option.findOne({
-              where: { id: opt.id }
-            });
-            if (existingOpt) {
-              existingOpt.text = opt.text;
-              existingOpt.isCorrect = opt.correct;
-              await existingOpt.save();
-            } else {
-              await Option.create({
-                qid: opt.qid,
-                text: opt.text,
-                isCorrect: opt.correct,
-                QuestionId: question.id
-              });
-            }
+      // Update existing options or create new ones
+      for (const opt of q.answers) {
+        if (opt.id) {
+          const existingOpt = await Option.findOne({
+            where: { id: opt.id }
+          });
+          if (existingOpt) {
+            existingOpt.text = opt.text;
+            existingOpt.isCorrect = opt.correct;
+            await existingOpt.save();
           } else {
             await Option.create({
               qid: opt.qid,
@@ -2460,6 +2622,22 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
               isCorrect: opt.correct,
               QuestionId: question.id
             });
+          }
+        } else {
+          await Option.create({
+            qid: opt.qid,
+            text: opt.text,
+            isCorrect: opt.correct,
+            QuestionId: question.id
+          });
+        }
+
+        if (opt.delete) {
+          const existingOpt = await Option.findOne({
+            where: { id: opt.id }
+          });
+          if (existingOpt) {
+            await existingOpt.destroy();
           }
         }
       }

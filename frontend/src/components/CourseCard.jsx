@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 const CourseCard = ({ progress = 0, id, title, date, type, image, due = false }) => {
   const navigate = useNavigate();
   const navigator = () => {
-    if (type == "course") {
+    if (type == "Course") {
       navigate("/content-library/course/" + id);
     } else {
       navigate("/content-library/path/" + id);

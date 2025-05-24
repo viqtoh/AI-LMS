@@ -57,7 +57,7 @@ Question.hasMany(Option);
 Assessment.hasMany(Question);
 
 AssessmentAttempt.hasMany(UserAnswer);
-Question.hasMany(UserAnswer);
+AttemptQuestion.hasMany(UserAnswer);
 Option.hasMany(UserAnswer);
 
 Question.belongsToMany(AssessmentAttempt, {

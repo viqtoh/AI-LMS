@@ -34,7 +34,6 @@ const AdminSetAssessment = () => {
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
 
@@ -88,8 +87,8 @@ const AdminSetAssessment = () => {
     debounceTimer.current = setTimeout(() => {
       if (!saved) {
         updateAssessment();
-        setSaved(true); // Mark as saved
-      }
+        setSaved(true);
+      } // Mark as saved
     }, 3000);
 
     // Cleanup on unmount or before new effect
@@ -98,7 +97,6 @@ const AdminSetAssessment = () => {
 
   const updateAssessment = async () => {
     setIsSaving(true);
-    console.log("sending");
     try {
       const response = await fetch(`${API_URL}/api/admin/assessment/module/${id}`, {
         method: "PUT",
@@ -109,15 +107,12 @@ const AdminSetAssessment = () => {
         body: JSON.stringify(questions)
       });
       const data = await response.json();
-      console.log(questions);
 
       if (data.questions.length > 0) {
         setQuestions(data.questions);
       }
 
       setSaved(true);
-
-      console.log(data);
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -126,63 +121,26 @@ const AdminSetAssessment = () => {
   };
 
   const deleteQuestion = async (questionId) => {
-    setIsSaving(true);
-    try {
-      const response = await fetch(`${API_URL}/api/admin/assessment/module/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          questionId: questionId
-        })
-      });
-      const data = await response.json();
-      if (data.questions.length > 0) {
-        setQuestions(data.questions);
-      }
-
-      console.log(data);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setIsSaving(false);
-    }
+    setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+    setSaved(false); // Mark unsaved
   };
 
   const deleteOption = async (optionId) => {
-    setIsSaving(true);
-    try {
-      const response = await fetch(`${API_URL}/api/admin/assessment/module/option/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          optionId: optionId
-        })
-      });
-      const data = await response.json();
-      if (data.questions.length > 0) {
-        setQuestions(data.questions);
-      }
-
-      console.log(data);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setIsSaving(false);
-    }
+    setQuestions((prev) =>
+      prev.map((q) => ({
+        ...q,
+        answers: q.answers.map((opt) => (opt.id === optionId ? { ...opt, delete: true } : opt))
+      }))
+    );
+    setSaved(false); // Mark unsaved
   };
 
   const handleDeleteQuestion = (id) => {
     deleteQuestion(id);
   };
 
-  const handleOptionDelete = (id) => {
-    deleteOption(id);
+  const handleOptionDelete = (id, qid) => {
+    deleteOption(id, qid);
   };
 
   const addNewQuestion = () => {
