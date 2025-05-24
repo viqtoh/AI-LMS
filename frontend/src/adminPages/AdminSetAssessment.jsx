@@ -34,7 +34,6 @@ const AdminSetAssessment = () => {
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
 
@@ -79,7 +78,6 @@ const AdminSetAssessment = () => {
   }, [isLoaded]);
 
   useEffect(() => {
-    console.log("Questions changed");
     // Clear any pending save
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
@@ -99,7 +97,6 @@ const AdminSetAssessment = () => {
 
   const updateAssessment = async () => {
     setIsSaving(true);
-    console.log("sending");
     try {
       const response = await fetch(`${API_URL}/api/admin/assessment/module/${id}`, {
         method: "PUT",
@@ -110,15 +107,12 @@ const AdminSetAssessment = () => {
         body: JSON.stringify(questions)
       });
       const data = await response.json();
-      console.log(questions);
 
       if (data.questions.length > 0) {
         setQuestions(data.questions);
       }
 
       setSaved(true);
-
-      console.log(data);
     } catch (error) {
       console.error("Error:", error);
     } finally {

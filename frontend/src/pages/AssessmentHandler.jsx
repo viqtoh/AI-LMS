@@ -33,7 +33,6 @@ const AssessmentHandler = ({ iniAssessment }) => {
   const [score, setScore] = useState(null);
 
   const checkAssessment = async () => {
-    console.log(iniAssessment);
     try {
       const response = await fetch(`${API_URL}/api/assessment-attempt/check/${iniAssessment.id}`, {
         headers: {
@@ -42,7 +41,6 @@ const AssessmentHandler = ({ iniAssessment }) => {
       });
       const data = await response.json();
       setAssessment((prevData) => ({ ...prevData, duration: data.duration }));
-      console.log("loaded");
 
       if (data.exists) {
         if (data.hasTimeLeft) {
@@ -61,8 +59,6 @@ const AssessmentHandler = ({ iniAssessment }) => {
           setRestart(true);
         }
       }
-
-      console.log("checked");
     } catch (error) {
       console.error("Error fetching user details:", error);
     } finally {
@@ -74,7 +70,6 @@ const AssessmentHandler = ({ iniAssessment }) => {
     if (assessment.score) {
       setScore(assessment.score?.scorePercent);
     }
-    console.log(assessment.score);
   }, [assessment]);
 
   useEffect(() => {
@@ -108,7 +103,6 @@ const AssessmentHandler = ({ iniAssessment }) => {
     try {
       let response;
       if (resume && !isEnded) {
-        console.log("Resuming assessment attempt:", assessmentAttemptId);
         response = await fetch(`${API_URL}/api/assessment-attempt/resume`, {
           method: "POST",
           headers: {
@@ -128,7 +122,6 @@ const AssessmentHandler = ({ iniAssessment }) => {
           body: JSON.stringify({ assessmentId: assessment.id })
         });
         data = await response.json();
-        console.log("Assessment started:", data);
         setAssessmentAttemptId(data.attemptId);
         setAssessment((prevData) => ({ ...prevData, duration: data.duration }));
 
@@ -248,7 +241,6 @@ const AssessmentHandler = ({ iniAssessment }) => {
       });
 
       const data = await response.json();
-      console.log("Answer set:", data);
 
       if (data.questions.length > 0) {
         setQuestions(data.questions);
@@ -259,10 +251,6 @@ const AssessmentHandler = ({ iniAssessment }) => {
       setIsLoading2(false);
     }
   };
-
-  useEffect(() => {
-    console.log(questions);
-  }, [questions]);
 
   useEffect(() => {
     if (!isLoaded) {
