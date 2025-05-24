@@ -854,18 +854,40 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
             };
           });
 
-          const enrichedModules = modules.map((module) => {
-            const progress = progressMap[module.id];
-            return {
-              ...module.toJSON(),
-              userProgress: progress || {
-                status: "not_started",
-                progress: 0,
-                last_accessed_at: null,
-                last_second: null
+          const enrichedModules = await Promise.all(
+            modules.map(async (module) => {
+              const progress = progressMap[module.id];
+              let moduleData = {
+                ...module.toJSON(),
+                userProgress: progress || {
+                  status: "not_started",
+                  progress: 0,
+                  last_accessed_at: null,
+                  last_second: null
+                }
+              };
+
+              if (module.content_type === "assessment") {
+                // If the module is an assessment, add score to record
+                const assessment = await Assessment.findOne({ where: { moduleId: module.id } });
+                if (assessment) {
+                  const attempt = await AssessmentAttempt.findOne({
+                    where: { UserId: userId, AssessmentId: assessment.id }
+                  });
+                  if (attempt) {
+                    const score = await calculateScore(attempt.id);
+                    moduleData.score = score;
+                  } else {
+                    moduleData.score = null;
+                  }
+                } else {
+                  moduleData.score = null;
+                }
               }
-            };
-          });
+
+              return moduleData;
+            })
+          );
 
           // Determine course progress status
           const statuses = enrichedModules.map((m) => m.userProgress.status);
@@ -952,19 +974,42 @@ app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
       };
     });
 
-    const enrichedModules = modules.map((mod) => {
-      const userProgress = progressMap[mod.id] || {
-        status: "not_started",
-        progress: 0,
-        last_accessed_at: null,
-        last_second: null
-      };
+    const enrichedModules = await Promise.all(
+      modules.map(async (mod) => {
+        const userProgress = progressMap[mod.id] || {
+          status: "not_started",
+          progress: 0,
+          last_accessed_at: null,
+          last_second: null
+        };
 
-      return {
-        ...mod.toJSON(),
-        userProgress
-      };
-    });
+        // Add score if module is an assessment
+        let score = null;
+        if (mod.content_type === "assessment") {
+          const assessment = await Assessment.findOne({ where: { moduleId: mod.id } });
+          if (assessment) {
+            const attempt = await AssessmentAttempt.findOne({
+              where: { UserId: userId, AssessmentId: assessment.id }
+            });
+            if (attempt) {
+              score = await calculateScore(attempt.id);
+            }
+          }
+        }
+        if (score) {
+          return {
+            ...mod.toJSON(),
+            userProgress,
+            score
+          };
+        }
+
+        return {
+          ...mod.toJSON(),
+          userProgress
+        };
+      })
+    );
 
     // Determine overall courseProgress
     const statuses = enrichedModules.map((m) => m.userProgress.status);
@@ -1006,6 +1051,7 @@ app.post("/api/module-progress/:moduleId", authenticateToken, async (req, res) =
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const userId = user.id;
+    const module = await Module.findByPk(moduleId);
 
     // Find or create progress record
     let [record, created] = await UserModuleProgress.findOrCreate({
@@ -1314,8 +1360,51 @@ app.post("/api/assessment-attempt/resume", authenticateToken, async (req, res) =
 
 //end test
 
+async function calculateScore(assessmentAttemptId) {
+  // Get all attempt questions for this attempt
+  const attemptQuestions = await AttemptQuestion.findAll({
+    where: { AttemptId: assessmentAttemptId },
+    include: [
+      {
+        model: Question,
+        include: [Option]
+      },
+      {
+        model: UserAnswer,
+        include: [Option]
+      }
+    ]
+  });
+
+  let correctCount = 0;
+
+  for (const aq of attemptQuestions) {
+    const question = aq.Question;
+    const allCorrectOptions = question.Options.filter((opt) => opt.isCorrect)
+      .map((opt) => opt.id)
+      .sort();
+    const userSelectedOptions = aq.UserAnswers.map((ua) => ua.Option.id).sort();
+
+    // Check if user selected all correct options and only those
+    const isCorrect = JSON.stringify(userSelectedOptions) === JSON.stringify(allCorrectOptions);
+
+    if (isCorrect) {
+      correctCount++;
+    }
+  }
+
+  const totalQuestions = attemptQuestions.length;
+  const scorePercent = totalQuestions ? ((correctCount / totalQuestions) * 100).toFixed(2) : "0.00";
+
+  return {
+    totalQuestions,
+    correctAnswers: correctCount,
+    scorePercent
+  };
+}
+
 app.post("/api/assessment-attempt/end-assessment", authenticateToken, async (req, res) => {
-  const { assessmentId } = req.body;
+  const { assessmentAttemptId } = req.body;
 
   try {
     const token = req.headers["authorization"]?.split(" ")[1];
@@ -1323,16 +1412,6 @@ app.post("/api/assessment-attempt/end-assessment", authenticateToken, async (req
 
     const user = await getUserByToken(token);
     if (!user) return res.status(404).json({ error: "User not found" });
-    // Validate input
-    if (!assessmentId) {
-      return res.status(400).json({ message: "Assessment not found" });
-    }
-
-    // Get the assessment and number of questions
-    const assessment = await Assessment.findByPk(assessmentId);
-    if (!assessment) {
-      return res.status(404).json({ message: "Assessment not found" });
-    }
 
     const assessmentAttempt = await AssessmentAttempt.findOne({
       where: {
@@ -1344,6 +1423,8 @@ app.post("/api/assessment-attempt/end-assessment", authenticateToken, async (req
     if (!assessmentAttempt) {
       return res.status(404).json({ message: "Assessment attempt not found" });
     }
+
+    const assessment = await Assessment.findByPk(assessmentAttempt.AssessmentId);
 
     // Calculate the end time by subtracting the duration from now
     const durationMinutes = assessment.duration || 0;
@@ -1357,7 +1438,8 @@ app.post("/api/assessment-attempt/end-assessment", authenticateToken, async (req
     });
 
     res.status(201).json({
-      message: "Assessment ended"
+      message: "Assessment ended",
+      score: await calculateScore(assessmentAttempt.id)
     });
   } catch (error) {
     console.error("Error ending assessment:", error);

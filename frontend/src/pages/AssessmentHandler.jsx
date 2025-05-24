@@ -30,6 +30,7 @@ const AssessmentHandler = ({ iniAssessment }) => {
   const [percent, setPercent] = useState(0);
   const [timerColor, setTimerColor] = useState("#10b981");
   const [assessment, setAssessment] = useState(iniAssessment);
+  const [score, setScore] = useState(null);
 
   const checkAssessment = async () => {
     console.log(iniAssessment);
@@ -70,7 +71,10 @@ const AssessmentHandler = ({ iniAssessment }) => {
   };
 
   useEffect(() => {
-    console.log(assessment);
+    if (assessment.score) {
+      setScore(assessment.score?.scorePercent);
+    }
+    console.log(assessment.score);
   }, [assessment]);
 
   useEffect(() => {
@@ -100,9 +104,11 @@ const AssessmentHandler = ({ iniAssessment }) => {
 
   const handleStart = async () => {
     setIsLoading2(true);
+    let data;
     try {
       let response;
-      if (resume) {
+      if (resume && !isEnded) {
+        console.log("Resuming assessment attempt:", assessmentAttemptId);
         response = await fetch(`${API_URL}/api/assessment-attempt/resume`, {
           method: "POST",
           headers: {
@@ -111,6 +117,7 @@ const AssessmentHandler = ({ iniAssessment }) => {
           },
           body: JSON.stringify({ assessmentAttemptId: assessmentAttemptId })
         });
+        data = await response.json();
       } else {
         response = await fetch(`${API_URL}/api/assessment-attempt`, {
           method: "POST",
@@ -120,9 +127,24 @@ const AssessmentHandler = ({ iniAssessment }) => {
           },
           body: JSON.stringify({ assessmentId: assessment.id })
         });
+        data = await response.json();
+        console.log("Assessment started:", data);
+        setAssessmentAttemptId(data.attemptId);
+        setAssessment((prevData) => ({ ...prevData, duration: data.duration }));
+
+        const totalSeconds = data.duration * 60;
+        let perc = 100; // Initially full time
+        setPercent(perc);
+
+        const end = new Date(Date.now() + totalSeconds * 1000);
+        setEndTime(end);
+
+        const minutes = Math.floor(totalSeconds / 60)
+          .toString()
+          .padStart(2, "0");
+        const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+        setTimeLeft(`${minutes}:${seconds}`);
       }
-      const data = await response.json();
-      setAssessment((prevData) => ({ ...prevData, duration: data.duration }));
 
       if (data.questions.length > 0) {
         setQuestions(data.questions);
@@ -197,6 +219,7 @@ const AssessmentHandler = ({ iniAssessment }) => {
       });
 
       const data = await response.json();
+      setScore(data.score.scorePercent);
     } catch (error) {
       console.error("Error fetching:", error);
     }
@@ -263,6 +286,16 @@ const AssessmentHandler = ({ iniAssessment }) => {
     }
   };
 
+  // Move to the next question
+  const nextQuestion = () => {
+    setActiveIndex((prevIndex) => {
+      if (prevIndex < questions.length - 1) {
+        return prevIndex + 1;
+      }
+      return prevIndex;
+    });
+  };
+
   // Modal state
   const [showSubmitModal, setShowSubmitModal] = useState(false);
 
@@ -294,6 +327,11 @@ const AssessmentHandler = ({ iniAssessment }) => {
               <h1>{assessment.title}</h1>
               <p className="mb-5">{assessment.description}</p>
               <p>Duration: {assessment.duration}mins </p>
+              {score && (
+                <div className="score">
+                  <span className="me-2">Score: {parseInt(score) ?? 0}%</span>
+                </div>
+              )}
               <Button
                 variant="primary"
                 size="lg"
@@ -302,9 +340,11 @@ const AssessmentHandler = ({ iniAssessment }) => {
               >
                 {isLoading2 ? (
                   <Spinner animation="border" />
+                ) : isEnded ? (
+                  "Restart Test"
                 ) : resume ? (
                   "Resume Test"
-                ) : restart || isEnded ? (
+                ) : restart ? (
                   "Restart Test"
                 ) : (
                   "Start Test"
@@ -358,9 +398,11 @@ const AssessmentHandler = ({ iniAssessment }) => {
                                 />
                               ))}
                         </Form>
-                        <button className="optionsBtn">
-                          Next <FontAwesomeIcon icon={faArrowRight} size="md" className="pt-1" />
-                        </button>
+                        {activeQuestion != questions[questions.length - 1] && (
+                          <button className="optionsBtn" onClick={() => nextQuestion()}>
+                            Next <FontAwesomeIcon icon={faArrowRight} size="md" className="pt-1" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </Card.Body>
@@ -400,7 +442,7 @@ const AssessmentHandler = ({ iniAssessment }) => {
                   <Card.Body>
                     <Row className="g-2">
                       {questions.map((q, index) => (
-                        <Col xs={3} key={q.number}>
+                        <Col xs={3} key={`question-${q.id}`}>
                           {q.id === activeQuestion.id ? (
                             <Button variant={"danger"} size="sm" className="w-100">
                               {index + 1}

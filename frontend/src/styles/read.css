@@ -527,3 +527,10 @@
 .modal-backdrop {
   z-index: 200 !important;
 }
+
+.score {
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 700;
+  text-shadow: 0 1px 3px #00000007;
+}
