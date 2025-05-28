@@ -1588,6 +1588,94 @@ app.post("/api/assessment-attempt/setAnswer", authenticateToken, async (req, res
   }
 });
 
+//get acheivement route
+
+app.get("/api/achievements", authenticateToken, async (req, res) => {
+  try {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token missing" });
+
+    const user = await getUserByToken(token);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const userObj = await User.findByPk(user.id, {
+      attributes: ["id", "first_name", "last_name", "email", "image"]
+    });
+
+    // Get finished courses (progress 100, courseId not null)
+    const finishedCourses = await UserProgress.findAll({
+      where: { userId: user.id, progress: 100, courseId: { [Op.ne]: null } }
+    });
+
+    // For each finished course, get the course details where show_outside is true
+    const finishedCoursesObj = await Promise.all(
+      finishedCourses.map(async (finishedCourse) => {
+        const course = await Course.findOne({
+          where: { id: finishedCourse.courseId, show_outside: true }
+        });
+        return course ? course.toJSON() : null;
+      })
+    );
+
+    // Filter out nulls (in case some courses are not show_outside)
+    const filteredFinishedCourses = finishedCoursesObj.filter(Boolean);
+
+    // Get finished learning paths (progress 100, learningPathId not null)
+    const finishedLearningPaths = await UserProgress.findAll({
+      where: { userId: user.id, progress: 100, learningPathId: { [Op.ne]: null } }
+    });
+
+    // For each finished learning path, get the learning path details
+    const finishedLearningPathsObj = await Promise.all(
+      finishedLearningPaths.map(async (finishedPath) => {
+        const learningPath = await LearningPath.findByPk(finishedPath.learningPathId);
+        return learningPath ? learningPath.toJSON() : null;
+      })
+    );
+    // Filter out nulls
+    const filteredFinishedLearningPaths = finishedLearningPathsObj.filter(Boolean);
+
+    const achievements = [
+      ...filteredFinishedCourses.map(async (course) => {
+        // Find the UserProgress for this course
+        const progress = await UserProgress.findOne({
+          where: { userId: user.id, courseId: course.id, progress: 100 }
+        });
+        return {
+          ...course,
+          type: "Course",
+          attained_on: progress ? progress.updatedAt : null
+        };
+      }),
+      ...filteredFinishedLearningPaths.map(async (learningPath) => {
+        // Find the UserProgress for this learning path
+        const progress = await UserProgress.findOne({
+          where: { userId: user.id, learningPathId: learningPath.id, progress: 100 }
+        });
+        return {
+          ...learningPath,
+          type: "LearningPath",
+          attained_on: progress ? progress.updatedAt : null
+        };
+      })
+    ];
+
+    // Wait for all promises to resolve and sort by attained_on descending
+    const achievementsResolved = (await Promise.all(achievements))
+      .filter((a) => a.attained_on) // Only those with attained_on
+      .sort((a, b) => new Date(b.attained_on) - new Date(a.attained_on));
+
+    res.json({
+      finishedCourses: filteredFinishedCourses.length,
+      finishedLearningPaths: filteredFinishedLearningPaths.length,
+      user: userObj.toJSON(),
+      achievements: achievementsResolved
+    });
+  } catch (error) {
+    console.error("Error ending assessment:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 //region Admin Apis
 
 app.post("/api/admin/login", async (req, res) => {
