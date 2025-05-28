@@ -10,33 +10,53 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams } from "react-router-dom";
 import CourseRow from "../components/CourseRow";
 
-const courses = [
-  { title: "How to Avoid and Manage Conflict 1.0", attainedDate: "22/03/2025" },
-  { title: "Productive Conflict Resolution - An Introduction 1.0", attainedDate: "22/03/2025" },
-  { title: "First Aid - Secondary Survey 1.0", attainedDate: "27/01/2025" },
-  { title: "Handling Conflicts in High-Value Relationships 1.0", attainedDate: "27/01/2025" },
-  { title: "Modern Slavery 3.0 (UK)", attainedDate: "27/01/2025", compliantUntil: "27/01/2026" },
-  { title: "Whistleblowing 3.0 (UK)", attainedDate: "26/01/2025", compliantUntil: "26/01/2026" },
-  {
-    title: "Sexual Harassment Prevention in the Workplace 2.0 (UK)",
-    attainedDate: "26/01/2025",
-    compliantUntil: "26/01/2026"
-  },
-  {
-    title: "Listening Skills - Transform Your Customer Interactions 1.0",
-    attainedDate: "26/01/2025"
-  }
-];
-
 const Achievements = () => {
   const token = localStorage.getItem("token");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [imageUrl, setImageUrl] = useState("");
   const [username, setUsername] = useState("");
+  const [data, setData] = useState({});
+  const [search, setSearch] = useState("");
+  const [achievements, setAchievements] = useState([]);
+
   useEffect(() => {
     setImageUrl(localStorage.getItem("image"));
     setUsername(localStorage.getItem("first_name") + " " + localStorage.getItem("last_name"));
   }, []);
+
+  useEffect(() => {
+    const filteredAchievements = data.achievements?.filter((achievement) =>
+      achievement.title.toLowerCase().includes(search.toLowerCase())
+    );
+    setAchievements(filteredAchievements || []);
+  }, [search]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/achievements`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch data");
+        }
+        const data = await response.json();
+        setData(data);
+        setAchievements(data.achievements);
+      } catch (err) {
+        showToast(err.message, false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [token]);
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -53,7 +73,7 @@ const Achievements = () => {
       </div>
       <div className="main-body main-body5 main-body4">
         {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
-        {isLoading ? (
+        {isLoading || data === null ? (
           <div className="loader-container">
             <div className="loader"></div>
           </div>
@@ -62,7 +82,11 @@ const Achievements = () => {
             <div className="archievementHeader">
               <div className="aheaderContent">
                 <img
-                  src={imageUrl ? `${IMAGE_HOST}${imageUrl}` : "/images/default_profile.png"}
+                  src={
+                    data.user.image
+                      ? `${IMAGE_HOST}${data.user.image}`
+                      : "/images/default_profile.png"
+                  }
                   alt="user-image"
                   className="aheaderImage"
                 />
@@ -70,7 +94,10 @@ const Achievements = () => {
                 <div className="AheaderContent">
                   <div className="headerTitle">
                     <div>
-                      <span>{username}</span>
+                      <span>
+                        {data.user.first_name && `${data.user.first_name} `}
+                        {data.user.last_name && `${data.user.last_name}`}
+                      </span>
                     </div>
 
                     <div className="cardDiv">
@@ -78,14 +105,14 @@ const Achievements = () => {
                         <FontAwesomeIcon icon={faRocket} className="aCardIcon" />
                         <div className="aCardText">
                           <p>Paths Completed</p>
-                          <span>20</span>
+                          <span>{data.finishedLearningPaths}</span>
                         </div>
                       </div>
                       <div className="aCard">
                         <FontAwesomeIcon icon={faBookOpenReader} className="aCardIcon" />
                         <div className="aCardText">
                           <p>Courses Completed</p>
-                          <span>20</span>
+                          <span>{data.finishedCourses}</span>
                         </div>
                       </div>
                     </div>
@@ -98,11 +125,18 @@ const Achievements = () => {
                   <div className="headerTitle">
                     <div className="mheadertitle">
                       <img
-                        src={imageUrl ? `${IMAGE_HOST}${imageUrl}` : "/images/default_profile.png"}
+                        src={
+                          data.user.image
+                            ? `${IMAGE_HOST}${data.user.image}`
+                            : "/images/default_profile.png"
+                        }
                         alt="user-image"
                         className="mheaderImage"
                       />
-                      <span>{username}</span>
+                      <span>
+                        {data.user.first_name && `${data.user.first_name} `}
+                        {data.user.last_name && `${data.user.last_name}`}
+                      </span>
                     </div>
 
                     <div className="cardDiv">
@@ -110,14 +144,14 @@ const Achievements = () => {
                         <FontAwesomeIcon icon={faRocket} className="mCardIcon" />
                         <div className="mCardText">
                           <p>Paths Completed</p>
-                          <span>20</span>
+                          <span>{data.finishedLearningPaths}</span>
                         </div>
                       </div>
                       <div className="mCard">
                         <FontAwesomeIcon icon={faBookOpenReader} className="mCardIcon" />
                         <div className="mCardText">
                           <p>Courses Completed</p>
-                          <span>20</span>
+                          <span>{data.finishedCourses}</span>
                         </div>
                       </div>
                     </div>
@@ -128,7 +162,7 @@ const Achievements = () => {
 
             <div className="achievementBody">
               <div className="achievementBodyContent">
-                <div className="searchBar">
+                <div className="searchBar mb-5">
                   <div className="searchButton">
                     <FontAwesomeIcon icon={faSearch} id="searchIcon" />
                   </div>
@@ -136,12 +170,20 @@ const Achievements = () => {
                     type="text"
                     placeholder="Search for an achievement..."
                     className="searchInput"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
 
-                {courses.map((course, index) => (
-                  <CourseRow key={index} {...course} />
+                {achievements.map((course, index) => (
+                  <CourseRow key={index} index={index} {...course} />
                 ))}
+
+                {achievements.length === 0 && (
+                  <div className="noAchievements">
+                    <p>No achievements found.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
