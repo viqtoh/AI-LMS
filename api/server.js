@@ -1777,21 +1777,47 @@ app.get("/api/admin/dashboard", authenticateToken, async (req, res) => {
     // Top 3 most completed courses
     const topCompletedCourses = await UserProgress.findAll({
       attributes: ["courseId", [fn("COUNT", col("courseId")), "completionCount"]],
-      where: { progress: 100 },
+      where: { progress: 100, courseId: { [Op.ne]: null } },
       group: ["UserProgress.courseId", "Course.id", "Course.title"],
       order: [[fn("COUNT", col("UserProgress.courseId")), "DESC"]],
       limit: 3,
       include: {
-        model: Course, // adjust path if needed
+        model: Course,
         attributes: ["id", "title"]
       }
     });
 
-    const topCourses = topCompletedCourses.map((entry) => ({
-      courseId: entry.course.id,
-      title: entry.Course.title,
-      completions: entry.dataValues.completionCount
-    }));
+    const topCompletedPaths = await UserProgress.findAll({
+      attributes: ["learningPathId", [fn("COUNT", col("learningPathId")), "completionCount"]],
+      where: { progress: 100, learningPathId: { [Op.ne]: null } },
+      group: ["UserProgress.learningPathId", "LearningPath.id", "LearningPath.title"],
+      order: [[fn("COUNT", col("UserProgress.learningPathId")), "DESC"]],
+      limit: 3,
+      include: {
+        model: LearningPath,
+        attributes: ["id", "title"]
+      }
+    });
+
+    // Combine top completed courses and learning paths, sort by completions, and limit to 3
+    const combinedTop = [
+      ...topCompletedCourses.map((entry) => ({
+        id: entry.Course.id,
+        title: entry.Course.title,
+        completions: entry.dataValues.completionCount,
+        type: "Course"
+      })),
+      ...topCompletedPaths.map((entry) => ({
+        id: entry.LearningPath.id,
+        title: entry.LearningPath.title,
+        completions: entry.dataValues.completionCount,
+        type: "LearningPath"
+      }))
+    ]
+      .sort((a, b) => b.completions - a.completions)
+      .slice(0, 3);
+
+    const topCourses = combinedTop;
 
     res.json({
       totalUsers: totalUsers,

@@ -180,7 +180,6 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
-
               {/* Course Completion Rate */}
               <div className="col-md-6 col-lg-4">
                 <div className="card shadow-sm h-100">
@@ -197,10 +196,10 @@ const AdminDashboard = () => {
                           <div
                             className="progress-bar bg-success"
                             style={{
-                              width: `${(data.completedProgresses / data.totalProgresses) * 100}%`
+                              width: `${((data.completedProgresses / data.totalProgresses) * 100).toFixed(2)}%`
                             }}
                           >
-                            {(data.completedProgresses / data.totalProgresses) * 100}%
+                            {((data.completedProgresses / data.totalProgresses) * 100).toFixed(2)}%
                           </div>
                         </div>
                       ) : (
@@ -215,10 +214,10 @@ const AdminDashboard = () => {
                           <div
                             className="progress-bar bg-info"
                             style={{
-                              width: `${(data.completedUsers / data.totalStudents) * 100}%`
+                              width: `${((data.completedUsers / data.totalStudents) * 100).toFixed(2)}%`
                             }}
                           >
-                            {(data.completedUsers / data.totalStudents) * 100}%
+                            {((data.completedUsers / data.totalStudents) * 100).toFixed(2)}%
                           </div>
                         </div>
                       ) : (
@@ -228,7 +227,6 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
-
               {/* Most Active Courses */}
               <div className="col-md-6 col-lg-4">
                 <div className="card shadow-sm h-100">
@@ -254,7 +252,6 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
-
               {/* Most Active Students */}
               <div className="col-md-12 col-lg-6">
                 <div className="card shadow-sm h-100">
