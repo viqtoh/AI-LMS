@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { API_URL, IMAGE_HOST } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
-import { faAngleDown, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faAngleDown } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams } from "react-router-dom";
 import { CourseCollapsible } from "../components/AdminCollapsible";
@@ -266,51 +266,6 @@ const AdminLearnPath = () => {
                   <div className="headerTitle">
                     <div>
                       <span>{learningPath.title}</span>
-                      <div className="starDiv">
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          style={{
-                            color: "#FFCC00",
-                            marginRight: "4px"
-                          }}
-                        />
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          style={{
-                            color: "#FFCC00",
-                            marginRight: "4px"
-                          }}
-                        />
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          style={{
-                            color: "#FFCC00",
-                            marginRight: "4px"
-                          }}
-                        />
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          style={{
-                            color: "#ccc",
-                            marginRight: "4px"
-                          }}
-                        />
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          style={{
-                            color: "#ccc",
-                            marginRight: "4px"
-                          }}
-                        />{" "}
-                        <span>(35)</span>
-                        <FontAwesomeIcon
-                          icon={faAngleDown}
-                          style={{
-                            color: "#fff",
-                            marginRight: "4px"
-                          }}
-                        />
-                      </div>
                     </div>
 
                     <div className="headerDesc">
@@ -342,51 +297,6 @@ const AdminLearnPath = () => {
                   <div className="mheaderTitle">
                     <div>
                       <span>{learningPath.title}</span>
-                      <div className="starDiv">
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          style={{
-                            color: "#FFCC00",
-                            marginRight: "4px"
-                          }}
-                        />
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          style={{
-                            color: "#FFCC00",
-                            marginRight: "4px"
-                          }}
-                        />
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          style={{
-                            color: "#FFCC00",
-                            marginRight: "4px"
-                          }}
-                        />
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          style={{
-                            color: "#ccc",
-                            marginRight: "4px"
-                          }}
-                        />
-                        <FontAwesomeIcon
-                          icon={faStar}
-                          style={{
-                            color: "#ccc",
-                            marginRight: "4px"
-                          }}
-                        />{" "}
-                        <span>(35)</span>
-                        <FontAwesomeIcon
-                          icon={faAngleDown}
-                          style={{
-                            color: "#fff",
-                            marginRight: "4px"
-                          }}
-                        />
-                      </div>
                     </div>
 
                     <div className="headerDesc">
