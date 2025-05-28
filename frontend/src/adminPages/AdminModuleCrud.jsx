@@ -99,6 +99,7 @@ const AdminModuleCrud = () => {
   ];
 
   useEffect(() => {
+    setIsLoading(true);
     const fetchCourse = async () => {
       try {
         const response = await fetch(`${API_URL}/api/admin/course-full/${id}`, {
@@ -214,6 +215,7 @@ const AdminModuleCrud = () => {
 
     const formData = moduleFormData;
     let response;
+    setIsLoading(true);
 
     try {
       if (moduleId) {
@@ -262,6 +264,8 @@ const AdminModuleCrud = () => {
       }
       console.error("Error creating Module:", error);
       showToast("Internal Server Error", false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -373,6 +377,12 @@ const AdminModuleCrud = () => {
                               onChange={(e) => {
                                 const file = e.target.files[0];
                                 if (file) {
+                                  // 100MB = 104857600 bytes
+                                  if (file.size > 104857600) {
+                                    showToast("File size must be less than 100MB", false);
+                                    clearFile();
+                                    return;
+                                  }
                                   const reader = new FileReader();
 
                                   reader.onload = () => {
@@ -446,8 +456,8 @@ const AdminModuleCrud = () => {
                       />
                     </div>
 
-                    <button type="submit" className="btn btn-primary">
-                      Submit
+                    <button type="submit" className="btn btn-primary" disabled={isLoading}>
+                      {isLoading ? "Saving..." : moduleId ? "Update Module" : "Create Module"}
                     </button>
                   </form>
                 </div>
