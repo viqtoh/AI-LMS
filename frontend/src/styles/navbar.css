@@ -140,6 +140,11 @@ li svg {
   display: flex;
   align-items: center;
 }
+@media screen and (max-width: 500px) {
+  .navbar-title {
+    margin-top: 20px;
+  }
+}
 
 .navbar-title h3 {
   font-size: 20px;
@@ -184,6 +189,19 @@ li svg {
   margin-right: 30px;
 }
 
+@media screen and (max-width: 768px) {
+  .nav-right {
+    margin-right: 10px;
+  }
+}
+
+@media screen and (max-width: 500px) {
+  .nav-right {
+    margin-right: 0px !important;
+    padding-right: 10px !important;
+  }
+}
+
 .nav-right span {
   color: #333;
   font-size: 12px;
@@ -194,6 +212,7 @@ li svg {
   color: grey;
   height: 15px;
   width: 15px;
+  display: none;
 }
 
 .nav-profile img {

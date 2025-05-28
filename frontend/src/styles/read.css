@@ -3,6 +3,15 @@
 }
 .navbar {
   height: 54px;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+}
+.readerHouse {
+  position: relative;
+  top: 54px;
+  height: calc(100vh - 54px);
 }
 .sidebar2 {
   position: fixed;
@@ -58,8 +67,14 @@
 }
 .readerBody {
   width: 100%;
-  height: 100%;
-  overflow: hidden;
+  min-height: calc(100vh - 54px);
+  overflow: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-color: #212529 #fff;
+}
+.readerBody::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 @media screen and (max-width: 768px) {
@@ -321,6 +336,9 @@
   }
   .activeCourseDescription {
     width: 90vw;
+  }
+  .activeCourseDescription span {
+    font-size: 14px;
   }
 
   .activeCourseModules {

@@ -16,6 +16,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import Select from "react-select";
 import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Library = () => {
   const token = localStorage.getItem("token");
@@ -36,6 +37,8 @@ const Library = () => {
   const [sort, setSort] = useState("asc");
 
   const searchRef = useRef();
+
+  const navigate = useNavigate();
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -336,7 +339,7 @@ const Library = () => {
                 className="btn btn-reset showFilterBtn"
                 onClick={() => setShowFilter(!showFilter)}
               >
-                <span className="ms-1">Show Filters</span>
+                <span className="ms-1">{showFilter ? "Hide Filters" : "Show Filters"}</span>
               </button>
             </div>
           </div>
@@ -461,7 +464,15 @@ const Library = () => {
               <div className="searchBody greyScroll">
                 {contents && contents.length > 0 ? (
                   contents.map((content, index) => (
-                    <div className="searchResult" key={index}>
+                    <div
+                      className="searchResult"
+                      key={index}
+                      onClick={() => {
+                        content.type === "Course"
+                          ? navigate(`/content-library/course/${content.id}`)
+                          : navigate(`/content-library/path/${content.id}`);
+                      }}
+                    >
                       <div className="searchImage">
                         <img
                           src={
@@ -478,15 +489,7 @@ const Library = () => {
                           <span className="badge course-badge">{content.type}</span>
                         </div>
                         <div className="searchTitle">
-                          <a
-                            href={
-                              content.type === "Course"
-                                ? `/content-library/course/${content.id}`
-                                : `/content-library/path/${content.id}`
-                            }
-                          >
-                            <span>{content.title}</span>
-                          </a>
+                          <span>{content.title}</span>
                         </div>
                         <div className="searchDesc">
                           <span>{content.description}</span>

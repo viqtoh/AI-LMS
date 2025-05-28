@@ -22,6 +22,9 @@ import "video.js/dist/video-js.css";
 import "@videojs/themes/dist/city/index.css";
 
 // Fantasy
+
+// Custom hook to handle browser back button
+
 import "@videojs/themes/dist/fantasy/index.css";
 
 // Forest
@@ -31,6 +34,7 @@ import "@videojs/themes/dist/forest/index.css";
 import "@videojs/themes/dist/sea/index.css";
 import AssessmentHandler from "./AssessmentHandler";
 import BotpressChat from "../components/BotPressChat";
+import { useCallback } from "react";
 
 const CourseRead = () => {
   const token = localStorage.getItem("token");
@@ -71,6 +75,34 @@ const CourseRead = () => {
   const [currentProgress, setCurrentProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [mode, setMode] = useState("");
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const pathname = location.pathname;
+      const search = location.search;
+
+      if (pathname.endsWith("/read")) {
+        const newPath = pathId
+          ? `/content-library/path/${pathId}`
+          : `/content-library/course/${id}`;
+
+        // Jump forward to a new state, bypassing history
+        window.history.pushState({}, "", "/temp-redirect");
+
+        // Immediately replace it with a clean URL
+        window.history.replaceState({}, "", `${newPath}`);
+
+        // Then redirect to the actual content page
+        navigate(`${newPath}`, { replace: true });
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [pathId, id, location.pathname, location.search]);
 
   useEffect(() => {
     if (videoRef.current && activeModule && activeModule.content_type === "video") {
@@ -634,8 +666,8 @@ const CourseRead = () => {
                 {learningPath && <p>{learningPath.title}</p>}
               </div>
               {activeModule &&
-                (checkLast() ? (
-                  <button className="nextbtn" onClick={nextModule}>
+                (checkLast() && !isEnded ? (
+                  <button className="nextbtn" onClick={() => setShowNextModal(true)}>
                     End
                   </button>
                 ) : activeModule.content_type === "video" ? (
@@ -813,6 +845,16 @@ const CourseRead = () => {
                           You have also completed this learning path.
                         </p>
                       )}
+                      <button
+                        className="btn btn-primary mt-3"
+                        onClick={() => {
+                          if (pathId) {
+                            navigate(`/content-library/path/${pathId}`);
+                          } else {
+                            navigate(`/content-library/course/${id}`);
+                          }
+                        }}
+                      ></button>
                     </div>
                   </div>
                 ) : (
@@ -827,7 +869,12 @@ const CourseRead = () => {
                       activeCourse &&
                       activeModule.content_type !== "video" &&
                       activeModule.content_type !== "assessment" && (
-                        <DocRenderer url={`${API_URL}${activeModule.file}`} />
+                        <div style={{ width: "100%", maxWidth: "100vw", overflowX: "auto" }}>
+                          <DocRenderer
+                            url={`${API_URL}${activeModule.file}`}
+                            style={{ width: "100%", maxWidth: "100vw" }}
+                          />
+                        </div>
                       )}
 
                     {activeModule && activeModule.content_type === "video" ? (

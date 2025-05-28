@@ -994,6 +994,7 @@ iframe {
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 40px;
+  cursor: pointer;
 }
 
 .searchImage {
@@ -1158,6 +1159,8 @@ iframe {
     padding: 20px;
     border-radius: 8px;
     height: fit-content;
+    z-index: 10000;
+    position: relative;
   }
   .searchBody {
     height: calc(100vh - 270px) !important;
@@ -1300,6 +1303,12 @@ iframe {
   font-size: 15px;
 }
 
+@media screen and (max-width: 344px) {
+  .continueBtn span {
+    font-size: 12px;
+  }
+}
+
 .headerTitle div {
   display: flex;
   align-items: flex-start;
@@ -1332,6 +1341,7 @@ iframe {
   align-items: center;
   display: flex;
   flex-direction: column;
+  padding-bottom: 50px;
 }
 
 .collapsibleDiv {
