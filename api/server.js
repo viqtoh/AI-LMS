@@ -1841,6 +1841,79 @@ app.get("/api/admin/dashboard", authenticateToken, async (req, res) => {
   }
 });
 
+//region delete contents
+
+const deleteModule = async (id) => {
+  const module = await Module.findOne({ where: { id: id } });
+  await module.destroy();
+};
+
+const deleteCourse = async (id) => {
+  const course = await Course.findOne({ where: { id: id } });
+  console.log(course);
+  const modules = Module.findAll({ where: { courseId: id } });
+  for (let i = 0; i < modules.length; i++) {
+    const module = modules[i];
+    await deleteModule(module.id);
+  }
+  await course.destroy();
+};
+
+app.delete("/api/admin/learning-path/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const learningPath = await LearningPath.findByPk(id);
+
+    if (!learningPath) {
+      return res.status(404).json({ error: "Learning path not found" });
+    }
+
+    // Find all courses associated with this learning path
+    const courses = await learningPath.getCourses();
+
+    // For each course, check if show_outside is false and not associated with any other learning path
+    for (const course of courses) {
+      if (!course.show_outside) {
+        // Count how many learning paths this course is associated with
+        const learningPathsForCourse = await course.getLearningPaths();
+        if (learningPathsForCourse.length === 1) {
+          // Only associated with this learning path, safe to delete
+          await deleteCourse(course.id);
+        }
+      }
+    }
+
+    await learningPath.destroy();
+    return res.status(200).json({ ok: true, message: "success" });
+  } catch (error) {
+    console.error("Error deleting learning path:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.delete("/api/admin/module/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await deleteModule(id);
+    return res.status(200).json({ ok: true, message: "success" });
+  } catch (error) {
+    console.error("Error deleting module:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.delete("/api/admin/course/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await deleteCourse(id);
+    return res.status(200).json({ ok: true, message: "success" });
+  } catch (error) {
+    console.error("Error deleting course:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 //region create contents
 app.post("/api/admin/learningpath", authenticateToken, async (req, res) => {
   try {

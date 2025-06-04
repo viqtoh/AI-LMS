@@ -1903,8 +1903,14 @@ iframe {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  overflow-y: scroll;
   padding: 20px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tab-container::-webkit-scrollbar {
+  display: none;
 }
 
 .tab-header {
@@ -2184,7 +2190,19 @@ iframe {
 }
 
 .courseBodyHeader {
-  align-self: flex-end;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+@media screen and (max-width: 358px) {
+  .courseBodyHeader {
+    flex-direction: column;
+  }
+  .courseBodyHeader button {
+    width: 180px !important;
+    margin-bottom: 10px;
+  }
 }
 
 .mheader {
@@ -2194,6 +2212,23 @@ iframe {
   justify-content: center;
 }
 
+.mheaderred h3 {
+  color: red;
+}
+
+.topHCourse {
+  display: flex;
+}
+
+@media screen and (max-width: 612px) {
+  .topHCourse {
+    display: block !important;
+  }
+  .green-noti-con {
+    margin-bottom: 10px;
+    width: fit-content;
+  }
+}
 .mheader span {
   font-size: 18px;
   font-weight: bold;
