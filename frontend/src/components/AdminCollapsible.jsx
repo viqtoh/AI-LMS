@@ -8,7 +8,8 @@ import {
   faCirclePlay,
   faEye,
   faLock,
-  faPen
+  faPen,
+  faTrash
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimesCircle } from "@fortawesome/free-regular-svg-icons";
@@ -20,7 +21,8 @@ export const ModuleCollapsible = ({
   courseId,
   is_published,
   content_type = "",
-  onMoveUp
+  onMoveUp,
+  onDelete
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -44,6 +46,14 @@ export const ModuleCollapsible = ({
               Set Assessment
             </button>
           )}
+          <button
+            className="btn btn-danger sm-btn"
+            onClick={() => {
+              onDelete(id);
+            }}
+          >
+            <FontAwesomeIcon icon={faTrash} />
+          </button>
           <button
             className="btn btn-primary sm-btn"
             onClick={() => {

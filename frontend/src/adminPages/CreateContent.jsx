@@ -8,6 +8,7 @@ import { faSearch, faAngleUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import Select from "react-select";
+import { useNavigate } from "react-router-dom";
 
 const CreateContent = () => {
   const token = localStorage.getItem("token");
@@ -16,6 +17,7 @@ const CreateContent = () => {
   const [risCollapsed, setRisCollapsed] = useState(false);
   const [fisCollapsed, setFisCollapsed] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
+  const navigate = useNavigate();
 
   const [pathFormData, setPathFormData] = useState({
     title: "",
@@ -145,7 +147,7 @@ const CreateContent = () => {
       const result = await response.json();
       console.log(result);
       showToast("Learning path created successfully!", true);
-      window.location.href = `/admin/content-management/path/${result.learningPath.id}`;
+      navigate(`/admin/content-management/path/${result.learningPath.id}`);
     } catch (error) {
       console.error("Error creating Learning path:", error);
       showToast("Internal Server Error", false);
@@ -176,7 +178,7 @@ const CreateContent = () => {
 
       const result = await response.json();
       showToast("Course created successfully!", true);
-      window.location.href = `/admin/content-library/course/${result.id}`;
+      navigate(`/admin/content-management/course/${result.course.id}`);
     } catch (error) {
       console.error("Error creating Course:", error);
       showToast("Internal Server Error", false);

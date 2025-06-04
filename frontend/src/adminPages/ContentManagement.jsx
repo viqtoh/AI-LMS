@@ -16,6 +16,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart } from "@fortawesome/free-regular-svg-icons";
 import Select from "react-select";
 import AdminNavBar from "../components/AdminNavBar";
+import { useNavigate } from "react-router-dom";
 
 const ContentManagement = () => {
   const token = localStorage.getItem("token");
@@ -34,6 +35,7 @@ const ContentManagement = () => {
   const [isPublished, setIsPublished] = useState("");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("asc");
+  const navigate = useNavigate();
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -504,7 +506,17 @@ const ContentManagement = () => {
               <div className="searchBody greyScroll">
                 {contents && contents.length > 0 ? (
                   contents.map((content, index) => (
-                    <div className="searchResult" key={index}>
+                    <div
+                      className="searchResult"
+                      key={index}
+                      onClick={() => {
+                        if (content.type == "Course") {
+                          navigate(`/admin/content-management/course/${content.id}`);
+                        } else {
+                          navigate(`/admin/content-management/path/${content.id}`);
+                        }
+                      }}
+                    >
                       <div className="searchImage">
                         <img
                           src={
@@ -521,15 +533,7 @@ const ContentManagement = () => {
                           <span className="badge course-badge">{content.type}</span>
                         </div>
                         <div className="searchTitle">
-                          <a
-                            href={
-                              content.type == "Course"
-                                ? `/admin/content-management/course/${content.id}`
-                                : `/admin/content-management/path/${content.id}`
-                            }
-                          >
-                            <span>{content.title}</span>
-                          </a>
+                          <span>{content.title}</span>
                         </div>
                         <div className="searchDesc">
                           <span>{content.description}</span>
