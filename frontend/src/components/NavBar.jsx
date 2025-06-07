@@ -64,7 +64,6 @@ const NavBar = ({ title = "Dashboard", subTitle = "" }) => {
         localStorage.setItem("first_name", data.first_name);
         localStorage.setItem("last_name", data.last_name);
       } catch (error) {
-        console.error("Error fetching user details:", error);
       } finally {
         setIsLoaded(true);
       }

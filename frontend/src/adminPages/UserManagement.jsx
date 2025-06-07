@@ -106,7 +106,6 @@ const UserManagement = () => {
       });
       const data = await response.json();
       if (data.error) {
-        console.log(data);
         if (data.error === "Invalid token") {
           localStorage.setItem("error", "token expired");
           window.location.href = "/admin";
@@ -120,7 +119,6 @@ const UserManagement = () => {
         setReload(!reload);
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
     } finally {
       setFisLoading(false);
     }

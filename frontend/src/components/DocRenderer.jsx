@@ -2,8 +2,6 @@ import React, { memo } from "react";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 
 const DocRenderer = memo(({ url }) => {
-  console.log(url);
-
   return (
     <div style={{ height: "90vh" }}>
       {" "}

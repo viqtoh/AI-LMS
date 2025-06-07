@@ -22,7 +22,6 @@ const CategoryManagement = () => {
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
 
@@ -43,11 +42,9 @@ const CategoryManagement = () => {
           throw new Error("Failed to fetch categories");
         }
         const data = await response.json();
-        console.log(data);
         setCategories(data);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching categories:", error);
         showToast("Failed to load categories", false);
         setIsLoading(false);
       }
@@ -149,7 +146,6 @@ const CategoryManagement = () => {
                   showToast("Category created successfully", true);
                   setShowCreateModal(false);
                 } catch (error) {
-                  console.error("Error creating category:", error);
                   showToast("Failed to create category", false);
                 }
               }}
@@ -223,7 +219,6 @@ const CategoryManagement = () => {
                   showToast("Category updated successfully", true);
                   setShowEditModal(false);
                 } catch (error) {
-                  console.error("Error updating category:", error);
                   showToast("Failed to update category", false);
                 }
               }}

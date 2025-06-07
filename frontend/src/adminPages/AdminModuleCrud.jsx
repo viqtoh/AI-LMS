@@ -257,12 +257,6 @@ const AdminModuleCrud = () => {
 
       window.location.href = `/admin/content-management/course/${id}`;
     } catch (error) {
-      if (moduleId) {
-        console.error("Error updating Module:", error);
-      } else {
-        console.error("Error creating Module:", error);
-      }
-      console.error("Error creating Module:", error);
       showToast("Internal Server Error", false);
     } finally {
       setIsLoading(false);

@@ -60,7 +60,6 @@ const ContentManagement = () => {
           sort
         });
 
-        console.log(queryParams.toString());
         const response = await fetch(`${API_URL}/api/admin/contents?${queryParams.toString()}`, {
           headers: {
             Authorization: `Bearer ${token}`
@@ -94,7 +93,6 @@ const ContentManagement = () => {
         setFcategories(data);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching categories:", error);
         showToast("Failed to load categories", false);
         setIsLoading(false);
       }

@@ -45,7 +45,7 @@ const Library = () => {
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
+
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
 
@@ -128,7 +128,6 @@ const Library = () => {
           sort
         });
 
-        console.log(queryParams.toString());
         const response = await fetch(`${API_URL}/api/contents?${queryParams.toString()}`, {
           headers: {
             Authorization: `Bearer ${token}`
@@ -162,7 +161,6 @@ const Library = () => {
         setFcategories(data);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching categories:", error);
         showToast("Failed to load categories", false);
         setIsLoading(false);
       }

@@ -109,7 +109,6 @@ const CreateContent = () => {
         setCategories(data);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching categories:", error);
         showToast("Failed to load categories", false);
         setIsLoading(false);
       }
@@ -145,11 +144,9 @@ const CreateContent = () => {
       }
 
       const result = await response.json();
-      console.log(result);
       showToast("Learning path created successfully!", true);
       navigate(`/admin/content-management/path/${result.learningPath.id}`);
     } catch (error) {
-      console.error("Error creating Learning path:", error);
       showToast("Internal Server Error", false);
     }
   };
@@ -180,7 +177,6 @@ const CreateContent = () => {
       showToast("Course created successfully!", true);
       navigate(`/admin/content-management/course/${result.course.id}`);
     } catch (error) {
-      console.error("Error creating Course:", error);
       showToast("Internal Server Error", false);
     }
   };

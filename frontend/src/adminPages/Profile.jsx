@@ -44,7 +44,6 @@ const AdminProfile = () => {
           setEditFormData(data.user);
         }
       } catch (error) {
-        console.error("Error fetching profile:", error);
       } finally {
         setIsLoading(false);
       }
@@ -110,13 +109,11 @@ const AdminProfile = () => {
         setIsEditModalOpen(false);
         SetEditError("");
         showToast("Profile updated successfully", true);
-        console.log(data);
         if (data.user.image !== "") {
           setProfileSrc(`${IMAGE_HOST}${data.user.image}`);
         }
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
     } finally {
       setIsLoading(false);
     }
@@ -148,7 +145,6 @@ const AdminProfile = () => {
         showToast("Password updated successfully", true);
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
     } finally {
       setIsLoading(false);
     }
