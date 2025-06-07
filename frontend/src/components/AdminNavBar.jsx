@@ -124,7 +124,7 @@ const AdminNavBar = ({ title = "Dashboard", subTitle = "", context = "" }) => {
             </a>
           </li>
           <li className={`${title === "Content Management" ? "active" : ""}`}>
-            <a onClick={() => navigate("/admin/content-management")}>
+            <a onClick={() => navigate("/admin/content-management")} href="#">
               {title === "Content Management" ? (
                 <FontAwesomeIcon icon={faFolderOpen} id="folderIcon" />
               ) : (
