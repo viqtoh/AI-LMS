@@ -275,11 +275,11 @@ const updateUserCourseProgress = async (userId, courseId, progress) => {
       await UserProgress.create({
         userId: userId,
         courseId: courseId,
-        progress: progress
+        progress: Math.floor(progress)
       });
     } else {
       await UserProgress.update(
-        { progress: progress },
+        { progress: Math.floor(progress) },
         { where: { userId: userId, courseId: courseId } }
       );
     }
@@ -299,11 +299,11 @@ const updateUserPathProgress = async (userId, learningPathId, progress) => {
       await UserProgress.create({
         userId: userId,
         learningPathId: learningPathId,
-        progress: progress
+        progress: Math.floor(progress)
       });
     } else {
       await UserProgress.update(
-        { progress: progress },
+        { progress: Math.floor(progress) },
         { where: { userId: userId, learningPathId: learningPathId } }
       );
     }
@@ -1173,7 +1173,8 @@ app.get("/api/assessment-attempt/check/:assessmentId", authenticateToken, async 
       timeUsed: elapsedSeconds,
       timeRemaining: Math.max(0, totalDurationSeconds - elapsedSeconds),
       assessmentAttemptId: attempt.id,
-      duration: attempt.Assessment.duration
+      duration: attempt.Assessment.duration,
+      score: await calculateScore(attempt.id)
     });
   } catch (err) {
     console.error("Error checking assessment attempt:", err);
@@ -1396,10 +1397,31 @@ async function calculateScore(assessmentAttemptId) {
   const totalQuestions = attemptQuestions.length;
   const scorePercent = totalQuestions ? ((correctCount / totalQuestions) * 100).toFixed(2) : "0.00";
 
+  // Collect wrongly answered questions
+  const Recommendations = [];
+  for (const aq of attemptQuestions) {
+    const question = aq.Question;
+    const allCorrectOptions = question.Options.filter((opt) => opt.isCorrect)
+      .map((opt) => opt.id)
+      .sort();
+    const userSelectedOptions = aq.UserAnswers.map((ua) => ua.Option.id).sort();
+
+    const isCorrect = JSON.stringify(userSelectedOptions) === JSON.stringify(allCorrectOptions);
+
+    if (!isCorrect && question.module) {
+      module = await Module.findOne({ where: { id: question.module } });
+      // Only add the module if it's not already in Recommendations
+      if (module && !Recommendations.some((rec) => rec.id === module.id)) {
+        Recommendations.push(module);
+      }
+    }
+  }
+
   return {
     totalQuestions,
     correctAnswers: correctCount,
-    scorePercent
+    scorePercent,
+    Recommendations
   };
 }
 
@@ -2718,6 +2740,13 @@ app.get("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
       return res.status(404).json({ message: "Module not found." });
     }
 
+    const modules = await Module.findAll({
+      where: {
+        courseId: module.courseId,
+        content_type: { [Op.ne]: "assessment" }
+      }
+    });
+
     const assessment = module.Assessment;
 
     if (!assessment) {
@@ -2733,6 +2762,7 @@ app.get("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
         id: q.id,
         aid: q.aid,
         question: q.text,
+        module: q.module,
         answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
           .map((opt) => ({
             id: opt.id,
@@ -2750,7 +2780,8 @@ app.get("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
       title: assessment.title,
       description: assessment.description,
       duration: assessment.duration,
-      questions: formattedQuestions
+      questions: formattedQuestions,
+      modules: modules
     });
   } catch (error) {
     console.error("Error fetching module and assessment:", error);
@@ -2782,13 +2813,15 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
         question = await Question.findOne({ where: { id: q.id } });
         if (question) {
           question.text = q.question;
+          question.module = q.module;
           await question.save();
         }
       } else {
         question = await Question.create({
           aid: q.aid,
           text: q.question,
-          AssessmentId: assessment.id
+          AssessmentId: assessment.id,
+          module: q.module
         });
       }
 
@@ -2811,15 +2844,17 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
             });
           }
         } else {
-          await Option.create({
-            qid: opt.qid,
-            text: opt.text,
-            isCorrect: opt.correct,
-            QuestionId: question.id
-          });
+          if (!opt.delete) {
+            await Option.create({
+              qid: opt.qid,
+              text: opt.text,
+              isCorrect: opt.correct,
+              QuestionId: question.id
+            });
+          }
         }
 
-        if (opt.delete) {
+        if (opt.delete && opt.id) {
           const existingOpt = await Option.findOne({
             where: { id: opt.id }
           });
@@ -2845,6 +2880,7 @@ app.put("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
         id: q.id,
         aid: q.aid,
         question: q.text,
+        module: q.module,
         answers: q.Options.sort((a, b) => a.id - b.id) // Sort options by id
           .map((opt) => ({
             id: opt.id,

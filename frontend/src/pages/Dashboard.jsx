@@ -101,7 +101,7 @@ const Dashboard = () => {
                   type="text"
                   className="searchBar2"
                   placeholder="Search content by title or description"
-                  onChange={(e) => console.log(e.target.value)}
+                  onChange={(e) => {}}
                 />
               </div>
             </div>

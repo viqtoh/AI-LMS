@@ -18,6 +18,7 @@ const AdminSetAssessment = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(true);
   const debounceTimer = useRef(null);
+  const [modules, setModules] = useState([]);
   const [questions, setQuestions] = useState([
     {
       id: 1,
@@ -36,6 +37,7 @@ const AdminSetAssessment = () => {
     setIsSuccess(success);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
+  const [title, setTitle] = useState("");
 
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -47,6 +49,8 @@ const AdminSetAssessment = () => {
         }
       });
       const data = await response.json();
+      setTitle(data.title);
+      setModules(data.modules);
 
       if (data.questions.length > 0) {
         setQuestions(data.questions);
@@ -60,7 +64,6 @@ const AdminSetAssessment = () => {
       });
       setIsLoaded(true);
     } catch (error) {
-      console.error("Error fetching user details:", error);
     } finally {
       setIsLoading(false);
     }
@@ -114,7 +117,6 @@ const AdminSetAssessment = () => {
 
       setSaved(true);
     } catch (error) {
-      console.error("Error:", error);
     } finally {
       setIsSaving(false);
     }
@@ -125,12 +127,18 @@ const AdminSetAssessment = () => {
     setSaved(false); // Mark unsaved
   };
 
-  const deleteOption = async (optionId) => {
+  const deleteOption = async (optionId, questionId) => {
     setQuestions((prev) =>
-      prev.map((q) => ({
-        ...q,
-        answers: q.answers.map((opt) => (opt.id === optionId ? { ...opt, delete: true } : opt))
-      }))
+      prev.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              answers: q.answers.map((opt) =>
+                opt.qid === optionId ? { ...opt, delete: true } : opt
+              )
+            }
+          : q
+      )
     );
     setSaved(false); // Mark unsaved
   };
@@ -199,7 +207,6 @@ const AdminSetAssessment = () => {
         setShowModal(false);
       }
     } catch (error) {
-      console.error("Error updating category:", error);
       showToast("Failed to update category", false);
     } finally {
       setIsSaving(false);
@@ -209,7 +216,7 @@ const AdminSetAssessment = () => {
   return (
     <div>
       <div className="navHeader">
-        <AdminNavBar title={`Set Assessment - `} />
+        <AdminNavBar title={`Set Assessment - ${title}`} />
       </div>
       <div className="main-body5 main-body main-body3 main-body4">
         {toast && <Toast message={toast} onClose={() => setToast(null)} isSuccess={isSuccess} />}
@@ -244,6 +251,7 @@ const AdminSetAssessment = () => {
                   onChange={handleQuestionChange}
                   onDelete={handleDeleteQuestion}
                   onOptDelete={handleOptionDelete}
+                  modules={modules}
                 />
               ))}
 

@@ -22,7 +22,7 @@ const LearnPath = () => {
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
+
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
 

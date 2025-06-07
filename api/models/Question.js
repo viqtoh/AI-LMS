@@ -19,6 +19,10 @@ const Question = sequelize.define("Question", {
   multiAnswer: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  module: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 });
 

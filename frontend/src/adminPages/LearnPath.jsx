@@ -89,7 +89,7 @@ const AdminLearnPath = () => {
         throw new Error("Failed to fetch learning path");
       }
       const data = await response.json();
-      console.log(data);
+
       setLearningPath(data);
       setSelectedCategories(data.categories.map((category) => category.id));
 
@@ -141,7 +141,6 @@ const AdminLearnPath = () => {
   };
 
   const moveUp = async (id) => {
-    console.log("movinf");
     try {
       const response = await fetch(
         `${API_URL}/api/admin/learning-path/${learningPath.id}/move-up/${id}`,
@@ -162,7 +161,6 @@ const AdminLearnPath = () => {
       setIsLoading(false);
       fetchLearningPath();
     } catch (error) {
-      console.error("Error moving course:", error);
       showToast("Failed to move course", false);
       setIsLoading(false);
     }
@@ -183,7 +181,6 @@ const AdminLearnPath = () => {
         setCategories(data);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching categories:", error);
         showToast("Failed to load categories", false);
         setIsLoading(false);
       }
@@ -217,12 +214,10 @@ const AdminLearnPath = () => {
       }
 
       const result = await response.json();
-      console.log(result);
       setLearningPath((prevData) => ({ ...prevData, ...result.learningPath }));
       setIsEditModalOpen(false);
       showToast("Learning path updated successfully!", true);
     } catch (error) {
-      console.error("Error creating Learning path:", error);
       showToast("Internal Server Error", false);
     }
   };
@@ -255,7 +250,6 @@ const AdminLearnPath = () => {
       setIsModalOpen(false);
       window.location.reload();
     } catch (error) {
-      console.error("Error creating Course:", error);
       showToast("Internal Server Error", false);
     } finally {
       setIsLoading2(false);

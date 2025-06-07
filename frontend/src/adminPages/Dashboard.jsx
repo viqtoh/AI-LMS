@@ -35,7 +35,6 @@ const AdminDashboard = () => {
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
   const extendDescriptions = (courses) => {
@@ -61,7 +60,6 @@ const AdminDashboard = () => {
           throw new Error("Failed to fetch");
         }
         const data = await response.json();
-        console.log(data);
         setData(data);
         setStats([
           {
@@ -130,7 +128,7 @@ const AdminDashboard = () => {
                   type="text"
                   className="searchBar2"
                   placeholder="Search content by title or description"
-                  onChange={(e) => console.log(e.target.value)}
+                  onChange={(e) => {}}
                 />
               </div>
             </div>

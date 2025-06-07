@@ -217,7 +217,6 @@ const CourseRead = () => {
           throw new Error("Failed to fetch");
         }
       } catch (error) {
-        console.error("Error fetching:", error);
       } finally {
         setIsLoaded(true);
       }
@@ -246,15 +245,11 @@ const CourseRead = () => {
       if (foundModule) {
         activateModule(foundModule);
         setCurrentTime(foundModule.userProgress.last_second | 0);
-        console.log(foundModule.userProgress.last_second);
+
         setCurrentProgress(foundModule.userProgress.progress);
       }
     }
   }, [location.search, courses]);
-
-  useEffect(() => {
-    console.log(currentTime);
-  }, [currentTime]);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -285,7 +280,7 @@ const CourseRead = () => {
           throw new Error("Failed to fetch object");
         }
         const data = await response.json();
-        console.log(data);
+
         let datas;
         if (rmode === "course") {
           setCourses([data]);
@@ -306,7 +301,6 @@ const CourseRead = () => {
         }
       } catch (err) {
         showToast(err.message, false);
-        console.error(err);
       } finally {
         setIsLoading(false);
       }
@@ -344,7 +338,6 @@ const CourseRead = () => {
             });
           }
           const data = await response.json();
-          console.log(data);
         } catch (err) {
           showToast(err.message, false);
         } finally {
@@ -469,8 +462,6 @@ const CourseRead = () => {
     } else {
       index = Math.floor(index);
     }
-    console.log(course);
-    console.log(index);
     setActiveCourse(course);
     activateModule(course.modules[index]);
   };
@@ -638,7 +629,6 @@ const CourseRead = () => {
         throw new Error("Failed to fetch");
       }
       const data = await response.json();
-      console.log(data);
       if (data.message === "User progress updated successfully") {
         goNext();
       }

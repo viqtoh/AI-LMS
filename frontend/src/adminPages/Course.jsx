@@ -23,7 +23,6 @@ const AdminCourse = () => {
   const showToast = React.useCallback((message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
 
@@ -105,7 +104,6 @@ const AdminCourse = () => {
       const data = await response.json();
       setCourse(data);
       setModules(data.modules);
-      console.log("log");
       setCourseFormData({
         title: data.title,
         description: data.description,
@@ -114,7 +112,6 @@ const AdminCourse = () => {
         is_published: data.is_published
       });
       setSelectedCategories2(data.categories.map((category) => category.id));
-      console.log(data.categories);
     } catch (err) {
       showToast(err.message, false);
     } finally {
@@ -146,7 +143,6 @@ const AdminCourse = () => {
         setCategories(data);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching categories:", error);
         showToast("Failed to load categories", false);
         setIsLoading(false);
       }
@@ -163,10 +159,6 @@ const AdminCourse = () => {
     }));
   };
 
-  useEffect(() => {
-    console.log(modules);
-  }, [modules]);
-
   const moveUp = async (id) => {
     try {
       const response = await fetch(`${API_URL}/api/admin/course/${course.id}/move-up/${id}`, {
@@ -176,11 +168,10 @@ const AdminCourse = () => {
       });
 
       const data = await response.json();
-      console.log(data);
+
       setIsLoading(false);
       fetchCourse();
     } catch (error) {
-      console.error("Error moving module:", error);
       showToast("Failed to move module", false);
       setIsLoading(false);
     }
@@ -214,7 +205,6 @@ const AdminCourse = () => {
       setCourse((prevData) => ({ ...prevData, ...result.course }));
       setIsModalOpen(false);
     } catch (error) {
-      console.error("Error creating Course:", error);
       showToast("Internal Server Error", false);
     } finally {
       setIsLoading2(false);

@@ -37,7 +37,6 @@ const BotPressChat = () => {
   useEffect(() => {
   const interval = setInterval(() => {
     if (window.botpressWebChat) {
-      console.log("sending")
       clearInterval(interval);
 
       const customPayload = {
@@ -49,7 +48,7 @@ const BotPressChat = () => {
       };
 
       window.botpressWebChat.sendEvent(customPayload)
-        .then(() => console.log("Event sent"))
+        .then(() => {})
         .catch((err) => console.error("Failed to send event:", err));
     }
   }, 500);

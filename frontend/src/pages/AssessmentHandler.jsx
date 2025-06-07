@@ -24,6 +24,7 @@ const AssessmentHandler = ({ iniAssessment }) => {
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [endTime, setEndTime] = useState(null);
   const [resume, setResume] = useState(false);
+  const [Recommendations, setRecommendations] = useState([]);
   const [restart, setRestart] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const [assessmentAttemptId, setAssessmentAttemptId] = useState(null);
@@ -41,10 +42,15 @@ const AssessmentHandler = ({ iniAssessment }) => {
       });
       const data = await response.json();
       setAssessment((prevData) => ({ ...prevData, duration: data.duration }));
+      if (data.score) {
+        setScore(data.score.scorePercent);
+        setRecommendations(data.score.Recommendations);
+      }
 
       if (data.exists) {
         if (data.hasTimeLeft) {
           setResume(true);
+
           setAssessmentAttemptId(data.assessmentAttemptId);
           let perc = (data.timeRemaining / (data.duration * 60)) * 100;
           setPercent(perc);
@@ -60,17 +66,10 @@ const AssessmentHandler = ({ iniAssessment }) => {
         }
       }
     } catch (error) {
-      console.error("Error fetching user details:", error);
     } finally {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (assessment.score) {
-      setScore(assessment.score?.scorePercent);
-    }
-  }, [assessment]);
 
   useEffect(() => {
     if (!endTime) return;
@@ -145,7 +144,6 @@ const AssessmentHandler = ({ iniAssessment }) => {
         setStarted(true);
       }
     } catch (error) {
-      console.error("Error fetching user details:", error);
     } finally {
       setIsLoading2(false);
     }
@@ -210,12 +208,12 @@ const AssessmentHandler = ({ iniAssessment }) => {
           assessmentAttemptId: assessmentAttemptId
         })
       });
+      setResume(false);
 
       const data = await response.json();
+      setRecommendations(data.score.Recommendations);
       setScore(data.score.scorePercent);
-    } catch (error) {
-      console.error("Error fetching:", error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -246,7 +244,6 @@ const AssessmentHandler = ({ iniAssessment }) => {
         setQuestions(data.questions);
       }
     } catch (error) {
-      console.error("Error fetching user details:", error);
     } finally {
       setIsLoading2(false);
     }
@@ -306,7 +303,7 @@ const AssessmentHandler = ({ iniAssessment }) => {
                 position: "absolute",
                 top: "50%",
                 left: "50%",
-                transform: "translate(-50%, -50%)",
+                transform: "translate(-50%, 0%)",
                 color: "white",
                 textShadow: "2px 2px 4px rgba(0, 0, 0, 1)"
               }}
@@ -315,9 +312,24 @@ const AssessmentHandler = ({ iniAssessment }) => {
               <h1>{assessment.title}</h1>
               <p className="mb-5">{assessment.description}</p>
               <p>Duration: {assessment.duration}mins </p>
-              {score && (
+              {score && !resume && (
                 <div className="score">
                   <span className="me-2">Score: {parseInt(score) ?? 0}%</span>
+                </div>
+              )}
+              {score && !resume && Recommendations && Recommendations.length > 0 && (
+                <div className="recommendations my-4 p-4 rounded  ">
+                  <h5 className="mb-2 text-primary">Recommendations</h5>
+                  <p className="text-white mb-3">
+                    These are recommendations for modules to study to improve your assessment score.
+                  </p>
+                  <ul className="">
+                    {Recommendations.map((rec, idx) => (
+                      <li key={idx} className="list-group-item ps-0">
+                        <strong>{idx + 1})</strong> {rec.title}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
               <Button

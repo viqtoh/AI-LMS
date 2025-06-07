@@ -1,13 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FaCheck, FaTimes, FaGripVertical } from "react-icons/fa";
 
-function QuestionEditor({ index, data, onChange, onDelete, onOptDelete }) {
+function QuestionEditor({ index, data, onChange, onDelete, onOptDelete, modules }) {
+  const [answers, setAnswers] = React.useState(data.answers);
+
   const handleQuestionChange = (e) => {
     onChange({ ...data, question: e.target.value });
   };
 
   const handleAnswerChange = (answerId, text) => {
-    const updatedAnswers = data.answers.map((a) => (a.id === answerId ? { ...a, text } : a));
+    const updatedAnswers = data.answers.map((a) => (a.qid === answerId ? { ...a, text } : a));
+    setAnswers(answers.map((a) => (a.qid === answerId ? { ...a, text } : a)));
     onChange({ ...data, answers: updatedAnswers });
   };
 
@@ -19,18 +22,25 @@ function QuestionEditor({ index, data, onChange, onDelete, onOptDelete }) {
   };
 
   const addAnswer = () => {
-    const newId = Math.max(0, ...data.answers.map((a) => a.id)) + 1;
+    const newId = Math.max(0, ...data.answers.map((a) => a.qid)) + 1;
     const newAnswer = {
       qid: newId,
       text: "",
       correct: false
     };
     onChange({ ...data, answers: [...data.answers, newAnswer] });
+    setAnswers([...answers, newAnswer]);
   };
 
   const deleteAnswer = (answerId) => {
+    const updatedAnswers = data.answers.map((a) =>
+      a.qid === answerId ? { ...a, delete: true } : a
+    );
+    setAnswers(updatedAnswers);
     onOptDelete(answerId, data.id);
   };
+
+  const filteredAnswers = answers.filter((answer) => !answer.delete);
 
   return (
     <div className="examcard p-4 mb-4">
@@ -47,36 +57,47 @@ function QuestionEditor({ index, data, onChange, onDelete, onOptDelete }) {
         rows="3"
       />
 
-      {data.answers.map(
-        (answer, index) =>
-          !answer.delete && (
-            <div key={answer.id} className="d-flex align-items-center mb-2">
-              <div className="me-2 text-muted">
-                <FaGripVertical />
-              </div>
-              <div className="me-2 fw-bold">{String.fromCharCode(65 + index)}</div>
-              <input
-                type="text"
-                className="form-control me-2"
-                value={answer.text}
-                onChange={(e) => handleAnswerChange(answer.id, e.target.value)}
-              />
-              <button
-                className={`btn btn-sm me-1 ${answer.correct ? "btn-success" : "btn-outline-success"}`}
-                onClick={() => toggleCorrect(answer.id)}
-              >
-                <FaCheck />
-              </button>
-              <button
-                className="btn btn-sm btn-outline-danger"
-                onClick={() => deleteAnswer(answer.id)}
-              >
-                <FaTimes />
-              </button>
-            </div>
-          )
-      )}
+      {filteredAnswers.map((answer, index) => (
+        <div key={answer.id} className="d-flex align-items-center mb-2">
+          <div className="me-2 text-muted">
+            <FaGripVertical />
+          </div>
+          <div className="me-2 fw-bold">{String.fromCharCode(65 + index)}</div>
+          <input
+            type="text"
+            className="form-control me-2"
+            value={answer.text}
+            onChange={(e) => handleAnswerChange(answer.qid, e.target.value)}
+          />
+          <button
+            className={`btn btn-sm me-1 ${answer.correct ? "btn-success" : "btn-outline-success"}`}
+            onClick={() => toggleCorrect(answer.id)}
+          >
+            <FaCheck />
+          </button>
+          <button
+            className="btn btn-sm btn-outline-danger"
+            onClick={() => deleteAnswer(answer.qid)}
+          >
+            <FaTimes />
+          </button>
+        </div>
+      ))}
+
       <div className="w-100 d-flex justify-content-center mt-5">
+        <select
+          className="form-select me-3"
+          value={data.module || ""}
+          onChange={(e) => onChange({ ...data, module: e.target.value })}
+        >
+          <option value="">Select module</option>
+          {modules.map((module) => (
+            <option key={module.id} value={module.id}>
+              {module.title}
+            </option>
+          ))}
+          {modules.length === 0 && <option value="">No modules available</option>}
+        </select>
         <button className="addOptionBtn" onClick={addAnswer}>
           More Options +
         </button>

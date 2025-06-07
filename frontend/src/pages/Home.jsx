@@ -12,7 +12,7 @@ const Home = () => {
   const showToast = (message, success = true) => {
     setToast(message);
     setIsSuccess(success);
-    console.log(isSuccess);
+
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   };
   const [formData, setFormData] = useState({
@@ -68,7 +68,6 @@ const Home = () => {
         showToast(data.error || "Something went wrong", false);
       }
     } catch (error) {
-      console.error("Error:", error);
       showToast("Server error, please try again later.", false);
     }
 
