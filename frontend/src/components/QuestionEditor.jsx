@@ -16,8 +16,9 @@ function QuestionEditor({ index, data, onChange, onDelete, onOptDelete, modules 
 
   const toggleCorrect = (answerId) => {
     const updatedAnswers = data.answers.map((a) =>
-      a.id === answerId ? { ...a, correct: !a.correct } : a
+      a.qid === answerId ? { ...a, correct: !a.correct } : a
     );
+    setAnswers(answers.map((a) => (a.qid === answerId ? { ...a, correct: !a.correct } : a)));
     onChange({ ...data, answers: updatedAnswers });
   };
 
@@ -71,7 +72,7 @@ function QuestionEditor({ index, data, onChange, onDelete, onOptDelete, modules 
           />
           <button
             className={`btn btn-sm me-1 ${answer.correct ? "btn-success" : "btn-outline-success"}`}
-            onClick={() => toggleCorrect(answer.id)}
+            onClick={() => toggleCorrect(answer.qid)}
           >
             <FaCheck />
           </button>
