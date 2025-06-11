@@ -24,10 +24,13 @@ const AdminLearnPath = () => {
     setTimeout(() => setToast(null), 5000); // Hide after 5s
   }, []);
   const [learningPath, setLearningPath] = useState(null);
+  const [acourses, setAcourses] = useState([]);
+  const [acourse, setAcourse] = useState(null);
 
   const { id } = useParams();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalAddOpen, setIsModalAddOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [courseFormData, setCourseFormData] = useState({
@@ -111,6 +114,33 @@ const AdminLearnPath = () => {
   useEffect(() => {
     fetchLearningPath();
   }, [id, token]); // Refetch when id or token changes
+
+  const fetchLearningPathCourses = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/learning-path-full/${id}/acourses`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch learning path courses");
+      }
+      const data = await response.json();
+
+      if (data.courses) {
+        setAcourses(data.courses);
+      }
+    } catch (err) {
+      showToast(err.message, false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchLearningPathCourses();
+  }, [id, token]);
 
   const handlePathChange = (e) => {
     const { name, value } = e.target;
@@ -256,6 +286,40 @@ const AdminLearnPath = () => {
     }
   };
 
+  const handleFormSubmitAdd = async (e) => {
+    e.preventDefault();
+    setIsLoading2(true);
+    const formData = courseFormData;
+    formData["categoryIds"] = JSON.stringify(selectedCategories2);
+    formData["learningPathId"] = id;
+    formData["courseId"] = acourse.value;
+    try {
+      const response = await fetch(`${API_URL}/api/admin/learningpath/course/add`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        showToast(errorData.error || "Failed to create learning path", false);
+        return;
+      }
+
+      const result = await response.json();
+      showToast("Learning path created successfully!", true);
+      setIsModalOpen(false);
+      window.location.reload();
+    } catch (error) {
+      showToast("Internal Server Error", false);
+    } finally {
+      setIsLoading2(false);
+    }
+  };
+
   return (
     <div>
       <div className="navHeader">
@@ -271,15 +335,17 @@ const AdminLearnPath = () => {
           <div className="sub-body">
             <div className="courseHeader">
               <div className="headerContent">
-                {learningPath.image && (
-                  <div className="headerImageCon">
-                    <img
-                      src={`${IMAGE_HOST}${learningPath.image}`}
-                      alt="course-image"
-                      className="headerImage"
-                    />
-                  </div>
-                )}
+                <div className="headerImageCon">
+                  <img
+                    src={
+                      learningPath.image
+                        ? `${IMAGE_HOST}${learningPath.image}`
+                        : "/images/sample_image.png"
+                    }
+                    alt="course-image"
+                    className="headerImage"
+                  />
+                </div>
 
                 <div className="headerContent">
                   <div className="headerTitle">
@@ -334,9 +400,14 @@ const AdminLearnPath = () => {
                 <button className="btn btn-danger" onClick={() => setIsDeleteModalOpen(true)}>
                   Delete Learning Path
                 </button>
-                <button className="btn btn-theme" onClick={() => setIsModalOpen(true)}>
-                  Create Course
-                </button>
+                <div className="d-flex gap-1">
+                  <button className="btn btn-theme" onClick={() => setIsModalAddOpen(true)}>
+                    Add Course
+                  </button>
+                  <button className="btn btn-theme" onClick={() => setIsModalOpen(true)}>
+                    Create Course
+                  </button>
+                </div>
               </div>
 
               {!learningPath ? (
@@ -653,6 +724,57 @@ const AdminLearnPath = () => {
                   className="btn btn-secondary"
                   onClick={() => {
                     setIsModalOpen(false);
+                  }}
+                  disabled={isLoading2}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isModalAddOpen && (
+        <div className="modal">
+          <div className="modal-content">
+            <form id="courseForm mt-1" onSubmit={handleFormSubmitAdd}>
+              <div className="mheader">
+                <span>Add Course</span>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="course-category">Select Course</label>
+                <Select
+                  isSearchable
+                  value={acourse ? acourse : ""}
+                  onChange={(selectedOption) => setAcourse(selectedOption)}
+                  options={acourses.map((acourse) => ({
+                    value: acourse.id,
+                    label: acourse.title
+                  }))}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  id="course-category"
+                  styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                />
+              </div>
+
+              <div className="modal-buttons">
+                <button type="submit" className="btn btn-theme">
+                  {isLoading2 ? (
+                    <div className="spinner-border text-light btnspinner" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  ) : (
+                    "Submit"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setIsModalAddOpen(false);
                   }}
                   disabled={isLoading2}
                 >

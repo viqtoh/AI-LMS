@@ -431,7 +431,6 @@ app.post("/api/set/active/module", authenticateToken, async (req, res) => {
           progressPercentage
         );
         if (updateProgress !== "success") {
-          console.log(updateProgress);
           return res.status(500).json({ error: "Failed to update user progress" });
         }
       }
@@ -802,7 +801,8 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
               as: "Categories"
             }
           ],
-          as: "Courses"
+          as: "Courses",
+          through: { attributes: ["orderIndex"] }
         }
       ]
     });
@@ -817,6 +817,13 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
         learningPathId: learningPath.id
       }
     });
+
+    // Sort courses by orderIndex from the join table
+    if (learningPath.Courses && learningPath.Courses.length > 0) {
+      learningPath.Courses.sort(
+        (a, b) => (a.LearningPathCourse?.orderIndex || 0) - (b.LearningPathCourse?.orderIndex || 0)
+      );
+    }
 
     // Format response
     const response = {
@@ -1305,8 +1312,6 @@ app.post("/api/assessment-attempt/resume", authenticateToken, async (req, res) =
     });
 
     const questionIds = attemptQuestions.map((aq) => aq.QuestionId);
-
-    console.log(attemptQuestions);
 
     // Step 2: Fetch all related questions + their options
     const questions = await Question.findAll({
@@ -1872,7 +1877,6 @@ const deleteModule = async (id) => {
 
 const deleteCourse = async (id) => {
   const course = await Course.findOne({ where: { id: id } });
-  console.log(course);
   const modules = Module.findAll({ where: { courseId: id } });
   for (let i = 0; i < modules.length; i++) {
     const module = modules[i];
@@ -2144,7 +2148,6 @@ app.post("/api/admin/learningpath/course/create", authenticateToken, async (req,
 app.post("/api/admin/learningpath/course/add", authenticateToken, async (req, res) => {
   try {
     const { learningPathId, courseId, orderIndex } = req.body;
-
     // Validate inputs
     if (!learningPathId || !courseId) {
       return res.status(400).json({ error: "Learning path ID and course ID are required." });
@@ -2204,7 +2207,6 @@ app.post("/api/admin/course/:courseId/module", authenticateToken, async (req, re
       (content_type === "video" && !content_url && !file) ||
       (content_type === "video" && !duration)
     ) {
-      console.log(content_type);
       return res.status(400).json({ error: "All fields are required." });
     }
 
@@ -2772,8 +2774,6 @@ app.get("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
           }))
       }));
 
-    console.log(assessment);
-
     res.json({
       moduleName: module.title,
       assessmentId: assessment.id,
@@ -2911,11 +2911,7 @@ app.delete("/api/admin/assessment/module/:moduleId", authenticateToken, async (r
       return res.status(404).json({ message: "Question not found" });
     }
 
-    console.log(question);
-
     await question.destroy();
-
-    console.log("deleted");
 
     const module = await Module.findByPk(moduleId);
     if (!module) return res.status(404).json({ message: "Module not found" });
@@ -2971,8 +2967,6 @@ app.delete("/api/admin/assessment/module/option/:moduleId", authenticateToken, a
     }
 
     await option.destroy();
-
-    console.log("deleted");
 
     const module = await Module.findByPk(moduleId);
     if (!module) return res.status(404).json({ message: "Module not found" });
@@ -3224,6 +3218,52 @@ app.get("/api/admin/learning-path-full/:id", authenticateToken, async (req, res)
   }
 });
 
+app.get("/api/admin/learning-path-full/:id/acourses", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch learning path
+    const learningPath = await LearningPath.findOne({
+      where: { id }
+    });
+
+    if (!learningPath) {
+      return res.status(404).json({ error: "Learning path not found." });
+    }
+
+    const allCourses = await Course.findAll({
+      where: {
+        show_outside: true
+      },
+      include: [
+        {
+          model: LearningPath,
+          as: "LearningPaths",
+          through: { attributes: [] }
+        }
+      ]
+    });
+
+    // Filter out courses that already belong to this learning path
+    const coursesNotInLearningPath = allCourses.filter((course) => {
+      return !course.LearningPaths.some((lp) => lp.id === learningPath.id);
+    });
+
+    const response = {
+      courses: coursesNotInLearningPath.map((course) => ({
+        id: course.id,
+        title: course.title,
+        description: course.description,
+        is_published: course.is_published
+      }))
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching learning path:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 //region user management
 
 app.get("/api/admin/users", authenticateToken, async (req, res) => {
