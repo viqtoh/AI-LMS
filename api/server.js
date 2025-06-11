@@ -841,7 +841,10 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
       (learningPath.Courses || [])
         .filter((course) => course.is_published)
         .map(async (course) => {
-          const modules = await Module.findAll({ where: { courseId: course.id } });
+          const modules = await Module.findAll({
+            where: { courseId: course.id },
+            order: [["order", "ASC"]]
+          });
 
           const moduleIds = modules.map((m) => m.id);
           const progressRecords = await UserModuleProgress.findAll({
@@ -960,7 +963,7 @@ app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
     }
 
     // Fetch modules
-    const modules = await Module.findAll({ where: { courseId: id } });
+    const modules = await Module.findAll({ where: { courseId: id }, order: [["order", "ASC"]] });
 
     const moduleIds = modules.map((m) => m.id);
 
