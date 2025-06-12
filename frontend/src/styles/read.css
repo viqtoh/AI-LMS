@@ -557,3 +557,7 @@
   height: auto !important;
   min-height: 90vh !important;
 }
+.react-pdf__Page__textContent,
+.react-pdf__Page__annotations {
+  display: none !important;
+}

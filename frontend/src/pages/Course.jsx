@@ -101,7 +101,7 @@ const Course = () => {
                       <span>
                         {course.progress === 100
                           ? "Restart this course"
-                          : learningPath.progress === 0
+                          : course.progress === 0
                             ? "Start this course"
                             : "Continue this course"}
                       </span>
@@ -146,7 +146,7 @@ const Course = () => {
                       <span>
                         {course.progress === 100
                           ? "Restart this course"
-                          : learningPath.progress === 0
+                          : course.progress === 0
                             ? "Start this course"
                             : "Continue this course"}
                       </span>
