@@ -92,12 +92,13 @@ function QuestionEditor({ index, data, onChange, onDelete, onOptDelete, modules 
           onChange={(e) => onChange({ ...data, module: e.target.value })}
         >
           <option value="">Select module</option>
-          {modules.map((module) => (
-            <option key={module.id} value={module.id}>
-              {module.title}
-            </option>
-          ))}
-          {modules.length === 0 && <option value="">No modules available</option>}
+          {modules &&
+            modules.map((module) => (
+              <option key={module.id} value={module.id}>
+                {module.title}
+              </option>
+            ))}
+          {(!modules || modules.length === 0) && <option value="">No modules available</option>}
         </select>
         <button className="addOptionBtn" onClick={addAnswer}>
           More Options +
