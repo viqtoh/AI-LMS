@@ -995,8 +995,9 @@ app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
 
         // Add score if module is an assessment
         let score = null;
+        let assessment;
         if (mod.content_type === "assessment") {
-          const assessment = await Assessment.findOne({ where: { moduleId: mod.id } });
+          assessment = await Assessment.findOne({ where: { moduleId: mod.id } });
           if (assessment) {
             const attempt = await AssessmentAttempt.findOne({
               where: { UserId: userId, AssessmentId: assessment.id }
@@ -1010,13 +1011,15 @@ app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
           return {
             ...mod.toJSON(),
             userProgress,
-            score
+            score,
+            assessment: assessment
           };
         }
 
         return {
           ...mod.toJSON(),
-          userProgress
+          userProgress,
+          assessment: assessment
         };
       })
     );
@@ -1167,7 +1170,9 @@ app.get("/api/assessment-attempt/check/:assessmentId", authenticateToken, async 
     });
 
     if (!attempt) {
-      return res.status(200).json({ exists: false, hasTimeLeft: false });
+      const assessment = await Assessment.findByPk(assessmentId);
+      const duration = assessment ? assessment.duration : 0;
+      return res.status(200).json({ exists: false, hasTimeLeft: false, duration: duration });
     }
 
     const startTime = new Date(attempt.startTime);

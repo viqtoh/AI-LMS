@@ -35,11 +35,14 @@ const AssessmentHandler = ({ iniAssessment }) => {
 
   const checkAssessment = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/assessment-attempt/check/${iniAssessment.id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
+      const response = await fetch(
+        `${API_URL}/api/assessment-attempt/check/${iniAssessment.assessment.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
         }
-      });
+      );
       const data = await response.json();
       setAssessment((prevData) => ({ ...prevData, duration: data.duration }));
       if (data.score) {
@@ -118,7 +121,7 @@ const AssessmentHandler = ({ iniAssessment }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`
           },
-          body: JSON.stringify({ assessmentId: assessment.id })
+          body: JSON.stringify({ assessmentId: assessment.assessment.id })
         });
         data = await response.json();
         setAssessmentAttemptId(data.attemptId);
