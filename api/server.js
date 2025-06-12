@@ -2758,7 +2758,8 @@ app.get("/api/admin/assessment/module/:moduleId", authenticateToken, async (req,
       return res.json({
         moduleName: module.title,
         assessment: null,
-        questions: []
+        questions: [],
+        modules: modules
       });
     }
 
