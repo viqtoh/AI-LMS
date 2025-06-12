@@ -844,7 +844,10 @@ const CourseRead = () => {
                             navigate(`/content-library/course/${id}`);
                           }
                         }}
-                      ></button>
+                      >
+                        {" "}
+                        Back to {pathId ? "Learning Path" : "Course"}{" "}
+                      </button>
                     </div>
                   </div>
                 ) : (

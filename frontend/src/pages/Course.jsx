@@ -98,7 +98,13 @@ const Course = () => {
                         navigate(`/content-library/course/${course.id}/read`);
                       }}
                     >
-                      <span>Continue this course</span>
+                      <span>
+                        {course.progress === 100
+                          ? "Restart this course"
+                          : learningPath.progress === 0
+                            ? "Start this course"
+                            : "Continue this course"}
+                      </span>
                     </button>
                   </div>
                   <div className="circleProgress">
@@ -137,7 +143,13 @@ const Course = () => {
                         navigate(`/content-library/course/${course.id}/read`);
                       }}
                     >
-                      <span>Continue this course</span>
+                      <span>
+                        {course.progress === 100
+                          ? "Restart this course"
+                          : learningPath.progress === 0
+                            ? "Start this course"
+                            : "Continue this course"}
+                      </span>
                     </button>
                   </div>
 

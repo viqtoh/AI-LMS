@@ -96,7 +96,13 @@ const LearnPath = () => {
                         navigate(`/content-library/path/${learningPath.id}/read`);
                       }}
                     >
-                      <span>Continue this learning path</span>
+                      <span>
+                        {learningPath.progress === 100
+                          ? "Restart this learning path"
+                          : learningPath.progress === 0
+                            ? "Start this learning path"
+                            : "Continue this learning path"}
+                      </span>
                     </button>
                   </div>
 
@@ -136,7 +142,13 @@ const LearnPath = () => {
                         navigate(`/content-library/path/${learningPath.id}/read`);
                       }}
                     >
-                      <span>Continue this learning path</span>
+                      <span>
+                        {learningPath.progress === 100
+                          ? "Restart this learning path"
+                          : learningPath.progress === 0
+                            ? "Start this learning path"
+                            : "Continue this learning path"}
+                      </span>
                     </button>
                   </div>
 
