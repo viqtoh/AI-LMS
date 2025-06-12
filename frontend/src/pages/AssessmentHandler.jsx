@@ -36,11 +36,14 @@ const AssessmentHandler = ({ iniAssessment }) => {
 
   const checkAssessment = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/assessment-attempt/check/${iniAssessment.id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
+      const response = await fetch(
+        `${API_URL}/api/assessment-attempt/check/${iniAssessment.assessment.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
         }
-      });
+      );
       const data = await response.json();
       setAssessment((prevData) => ({ ...prevData, duration: data.duration }));
       if (data.score) {
