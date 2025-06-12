@@ -17,6 +17,7 @@ import { FaArrowRight } from "react-icons/fa";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 const AssessmentHandler = ({ iniAssessment }) => {
+  console.log(iniAssessment);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -118,7 +119,7 @@ const AssessmentHandler = ({ iniAssessment }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`
           },
-          body: JSON.stringify({ assessmentId: assessment.id })
+          body: JSON.stringify({ assessmentId: assessment.assessment.id })
         });
         data = await response.json();
         setAssessmentAttemptId(data.attemptId);
