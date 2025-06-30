@@ -1,7 +1,7 @@
 const User = require("./user");
 const Course = require("./course");
 const { DataTypes } = require("sequelize");
-const sequelize = require("../db");
+const { sequelize } = require("../db");
 const LearningPath = require("./learningpath");
 
 const UserProgress = sequelize.define(
