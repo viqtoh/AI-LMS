@@ -3,7 +3,7 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const authenticateToken = require("./middleware/auth");
-const pool = require("./db");
+const { pgPool } = require("./db");
 const { Sequelize } = require("sequelize");
 const {
   User,
@@ -633,8 +633,8 @@ app.put("/api/profile", authenticateToken, async (req, res) => {
 
 app.get("/api/users", authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM users");
-    res.json(result.rows);
+    const users = await User.findAll();
+    res.json(users);
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error");

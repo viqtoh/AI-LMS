@@ -1,40 +1,45 @@
 require("dotenv").config({ path: "../.env" });
-const { Pool } = require("pg");
-
-const pool = new Pool({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT
-});
-
-pool
-  .connect()
-  .then(() => console.log("✅ Connected to PostgreSQL"))
-  .catch((err) => console.error("Connection error", err));
-
-module.exports = pool;
 
 const { Sequelize } = require("sequelize");
+let pgPool = null;
 
-// Create a new Sequelize instance
-const sequelize = new Sequelize(
-  process.env.PG_DATABASE,
-  process.env.PG_USER,
-  process.env.PG_PASSWORD,
-  {
-    host: process.env.PG_HOST,
-    port: process.env.PG_PORT,
-    dialect: "postgres",
-    logging: false // Disable logging SQL queries (optional)
-  }
-);
+// Determine database dialect
+const DB_DIALECT = process.env.DB_DIALECT || "postgres";
 
-// Test the connection
+// Setup Sequelize
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  dialect: DB_DIALECT,
+  logging: false
+});
+
+// Test Sequelize connection
 sequelize
   .authenticate()
-  .then(() => console.log("✅ Tested PostgreSQL successfully!"))
-  .catch((err) => console.error("❌ PostgreSQL connection error:", err));
+  .then(() => console.log(`✅ Connected to ${DB_DIALECT.toUpperCase()} via Sequelize`))
+  .catch((err) => console.error(`❌ Sequelize ${DB_DIALECT.toUpperCase()} connection error:`, err));
 
-module.exports = sequelize;
+// If using PostgreSQL, setup native pg Pool as well
+if (DB_DIALECT === "postgres") {
+  const { Pool } = require("pg");
+
+  pgPool = new Pool({
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT
+  });
+
+  pgPool
+    .connect()
+    .then(() => console.log("✅ Connected to PostgreSQL via pg.Pool"))
+    .catch((err) => console.error("❌ pg.Pool connection error:", err));
+}
+
+// Export both
+module.exports = {
+  sequelize,
+  pgPool // will be null if using MySQL
+};
