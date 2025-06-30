@@ -5,6 +5,9 @@ const jwt = require("jsonwebtoken");
 const authenticateToken = require("./middleware/auth");
 const { pgPool } = require("./db");
 const { Sequelize } = require("sequelize");
+const db = require("./models"); // This will run models/index.js fully
+
+// Optionally destructure from it:
 const {
   User,
   LearningPath,
@@ -21,7 +24,8 @@ const {
   AssessmentAttempt,
   UserAnswer,
   LoginActivity
-} = require("./models");
+} = db;
+
 const { Op, fn, col } = require("sequelize");
 
 const { startOfDay, endOfDay, subDays, startOfWeek, endOfWeek } = require("date-fns");
