@@ -103,6 +103,7 @@ const db = {
 sequelize
   .sync({ alter: true })
   .then(() => {
+    console.log("Models:", Object.keys(db));
     console.log("✅ Database synchronized successfully.");
   })
   .catch((error) => {
