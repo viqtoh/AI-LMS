@@ -27,6 +27,6 @@ const Assessment = sequelize.define("Assessment", {
   }
 });
 
-Assessment.belongsTo(Module, { foreignKey: "ModuleId", onDelete: "CASCADE" });
+Assessment.belongsTo(Module, { foreignKey: "moduleId", onDelete: "CASCADE" });
 
 module.exports = Assessment;

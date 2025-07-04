@@ -77,7 +77,7 @@ AssessmentAttempt.hasMany(UserAnswer);
 AttemptQuestion.hasMany(UserAnswer);
 Option.hasMany(UserAnswer);
 
-Question.belongsToMany(AssessmentAttempt, { through: AttemptQuestion, foreignKey: "questionId" });
+Question.belongsToMany(AssessmentAttempt, { through: AttemptQuestion, foreignKey: "QuestionId" });
 AssessmentAttempt.belongsToMany(Question, { through: AttemptQuestion, foreignKey: "AttemptId" });
 
 AttemptQuestion.belongsTo(Question, { foreignKey: "QuestionId" });
