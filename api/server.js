@@ -5,9 +5,9 @@ const jwt = require("jsonwebtoken");
 const authenticateToken = require("./middleware/auth");
 const { pgPool } = require("./db");
 const { Sequelize } = require("sequelize");
-const db = require("./models"); // This will run models/index.js fully
+const db = require("./models");
+const { generateOTP, sendVerificationEmail } = require("./utils/helpers");
 
-// Optionally destructure from it:
 const {
   User,
   LearningPath,
@@ -91,24 +91,39 @@ app.post("/api/register", async (req, res) => {
   const { email, password, first_name, last_name } = req.body;
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ error: "Email is already registered" });
+      // To prevent user enumeration, you could send a generic message
+      // even if the user exists but is unverified.
+      return res.status(400).json({ error: "Email is already in use." });
     }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const otp = generateOTP();
+    const otp_expiry = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 minutes
 
     const newUser = await User.create({
       email,
       password: hashedPassword,
       first_name,
-      last_name
+      last_name,
+      otp,
+      otp_expiry,
+      last_sent: new Date() // Record the time the OTP was sent
     });
 
-    res.json({ ok: true, message: "User registered successfully", user: newUser });
+    // Send the verification email
+    await sendVerificationEmail(newUser.email, otp);
+
+    res.json({
+      ok: true,
+      message: "Registration successful. Please check your email for a verification code."
+      // Do NOT send the user object or a token yet
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server error during registration." });
   }
 });
 
@@ -119,18 +134,26 @@ app.post("/api/login", async (req, res) => {
     const user = await User.findOne({ where: { email } });
 
     if (user) {
-      // Compare hashed password
       const validPassword = await bcrypt.compare(password, user.password);
 
       if (validPassword) {
-        // Generate JWT token
+        // --- NEW VERIFICATION CHECK ---
+        if (!user.emailVerified) {
+          return res.status(401).json({
+            error: "Email not verified.",
+            verificationRequired: true // A flag for your frontend
+          });
+        }
+        // --- END OF CHECK ---
 
         if (user.isAdmin) {
-          return res.json({ error: "Access denied. Login with a User Account." });
+          return res.status(403).json({ error: "Access denied. Login with a User Account." });
         }
         if (!user.isActive) {
-          return res.json({ error: "User Account Disabled" });
+          return res.status(403).json({ error: "User Account Disabled" });
         }
+
+        // Generate JWT token
         const token = jwt.sign(
           { userId: user.id, email: user.email, iat: Math.floor(Date.now() / 1000) },
           process.env.JWT_SECRET,
@@ -156,6 +179,157 @@ app.post("/api/login", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+const BASE_COOLDOWN_MS = 60 * 1000; // 60 seconds
+const RESET_THRESHOLD_MS = 12 * 60 * 60 * 1000; // 12 hours
+const MAX_COOLDOWN_MS = 12 * 60 * 60 * 1000;
+
+const formatCooldownTime = (totalSeconds) => {
+  // Handle edge case of 0 or less
+  if (totalSeconds <= 0) {
+    return "0s";
+  }
+
+  // Calculate hours, minutes, and seconds
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  // Build the string parts
+  const parts = [];
+  if (hours > 0) {
+    parts.push(`${hours}h`);
+  }
+  if (minutes > 0) {
+    parts.push(`${minutes}m`);
+  }
+  // Always show seconds if the duration is less than a minute,
+  // or if there are leftover seconds with larger units.
+  if (seconds > 0 || totalSeconds < 60) {
+    parts.push(`${seconds}s`);
+  }
+
+  return parts.join(" ");
+};
+
+app.post("/api/send-verification", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    if (user.emailVerified) {
+      return res.status(400).json({ error: "Email is already verified." });
+    }
+
+    const now = new Date();
+    // Get the user's current cooldown, defaulting to the base cooldown.
+    const currentCooldown = user.otp_cooldown_duration || BASE_COOLDOWN_MS;
+
+    // --- Check if user is currently in a cooldown period ---
+    if (user.last_sent) {
+      const timeSinceLastSent = now - new Date(user.last_sent);
+
+      if (timeSinceLastSent < currentCooldown) {
+        const nextCooldown = Math.min(currentCooldown * 2, MAX_COOLDOWN_MS);
+
+        const timeLeft = Math.ceil((currentCooldown - timeSinceLastSent) / 1000);
+        return res.status(429).json({
+          message: `Please wait ${formatCooldownTime(timeLeft)} before requesting a new code.`,
+          timeLeft: timeLeft // Send the remaining time
+        });
+      }
+    }
+
+    // --- ALLOWED TO SEND ---
+    // At this point, the user is allowed to receive a new OTP.
+    // Now, we determine what their *next* cooldown period will be.
+
+    let newCooldownForDb = currentCooldown;
+    // Check if the cooldown period should be reset to the base value.
+    if (user.last_sent && now - new Date(user.last_sent) > RESET_THRESHOLD_MS) {
+      newCooldownForDb = BASE_COOLDOWN_MS;
+    }
+
+    // Generate and save new OTP
+    const otp = generateOTP();
+    const otp_expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    // Send the new verification email
+    await sendVerificationEmail(user.email, otp);
+
+    await user.update({ otp_cooldown_duration: newCooldownForDb });
+
+    await user.update({
+      otp,
+      otp_expiry,
+      last_sent: now,
+      otp_cooldown_duration: newCooldownForDb // Save the calculated next cooldown
+    });
+
+    // Respond with success, telling the frontend what the next cooldown is.
+    res.json({
+      ok: true,
+      message: "A new verification code has been sent to your email.",
+      timeLeft: newCooldownForDb / 1000 // Return next cooldown in seconds
+    });
+  } catch (err) {
+    console.error("OTP Send Error:", err);
+    res.status(500).json({ error: "Server error." });
+  }
+});
+
+app.post("/api/verify-otp", async (req, res) => {
+  const { email, otp } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    // Check if OTP is correct and not expired
+    if (user.otp !== otp || new Date() > new Date(user.otp_expiry)) {
+      return res.status(400).json({ error: "Invalid or expired OTP." });
+    }
+
+    // Mark user as verified and clear OTP fields
+    await user.update({
+      emailVerified: true,
+      otp: null,
+      otp_expiry: null,
+      last_sent: null
+    });
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, iat: Math.floor(Date.now() / 1000) },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    const lastLogin = new Date();
+    await User.update({ token, lastLogin }, { where: { id: user.id } });
+
+    await LoginActivity.create({
+      userId: user.id,
+      ipAddress: req.ip,
+      userAgent: req.headers["user-agent"]
+    });
+
+    res.json({
+      ok: true,
+      message: "Email verified successfully. You are now logged in.",
+      token
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error." });
+  }
+});
+
 app.get("/api/dashboard", authenticateToken, async (req, res) => {
   try {
     const chuser = await getUserByToken(req.headers["authorization"]?.split(" ")[1]);

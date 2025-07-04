@@ -21,6 +21,7 @@ import AdminProfile from "./adminPages/Profile";
 import AdminCourse from "./adminPages/Course";
 import AdminModuleCrud from "./adminPages/AdminModuleCrud";
 import AdminSetAssessment from "./adminPages/AdminSetAssessment";
+import VerifyOtp from "./pages/VerifyOtp";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/account/settings" element={<Profile />} />
         <Route path="/content-library/path/:pathId/read" element={<CourseRead />} />
         <Route path="/content-library/course/:id/read" element={<CourseRead />} />
+        <Route path="/verify-email" element={<VerifyOtp />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminHome />} />

@@ -27,6 +27,25 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false
     },
+    // --- NEW & MODIFIED FIELDS FOR VERIFICATION ---
+    emailVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false
+    },
+    otp: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    otp_expiry: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    last_sent: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    // --- END OF NEW FIELDS ---
     isAdmin: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
@@ -61,6 +80,11 @@ const User = sequelize.define(
     },
     tax_id: {
       type: DataTypes.STRING
+    },
+    otp_cooldown_duration: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 60000
     },
     lastLogin: {
       type: DataTypes.DATE,
