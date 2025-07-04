@@ -1,28 +1,51 @@
+const fs = require("fs");
+const path = require("path");
 const { Sequelize } = require("sequelize");
 const { sequelize } = require("../db");
 
-// Import models
-const User = require("./user");
-const Category = require("./category");
-const LearningPath = require("./learningpath");
-const Course = require("./course");
-const Module = require("./module");
-const UserProgress = require("./userProgress");
-const LearningPathCourse = require("./learningpathcourse");
-const UserModuleProgress = require("./usermoduleprogress");
-const Assessment = require("./Assessment");
-const AssessmentAttempt = require("./AssessmentAttempt");
-const Question = require("./Question");
-const Option = require("./Option");
-const UserAnswer = require("./UserAnswer");
-const AttemptQuestion = require("./AttemptQuestion");
-const LoginActivity = require("./loginActivity");
+// Create a container for models
+const db = {
+  sequelize,
+  Sequelize
+};
 
-// Define junction tables (before associations)
+// Dynamically import all models in the folder
+fs.readdirSync(__dirname)
+  .filter((file) => file !== "index.js" && file.endsWith(".js"))
+  .forEach((file) => {
+    const model = require(path.join(__dirname, file));
+    const name = model.name || path.basename(file, ".js");
+    db[name] = model;
+    sequelize.models[name] = model;
+  });
+
+// Define junction tables manually (if needed separately)
 const LearningPathCategory = sequelize.define("LearningPathCategory", {}, { timestamps: false });
 const CourseCategory = sequelize.define("CourseCategory", {}, { timestamps: false });
 
-// Define Many-to-Many associations (Only Once)
+db.LearningPathCategory = LearningPathCategory;
+db.CourseCategory = CourseCategory;
+
+// Associations
+const {
+  User,
+  Category,
+  LearningPath,
+  Course,
+  Module,
+  UserProgress,
+  LearningPathCourse,
+  UserModuleProgress,
+  Assessment,
+  Question,
+  Option,
+  AttemptQuestion,
+  AssessmentAttempt,
+  UserAnswer,
+  LoginActivity
+} = db;
+
+// Many-to-Many
 Category.belongsToMany(LearningPath, { through: LearningPathCategory, foreignKey: "categoryId" });
 LearningPath.belongsToMany(Category, {
   through: LearningPathCategory,
@@ -32,16 +55,10 @@ LearningPath.belongsToMany(Category, {
 Category.belongsToMany(Course, { through: CourseCategory, foreignKey: "categoryId" });
 Course.belongsToMany(Category, { through: CourseCategory, foreignKey: "courseId" });
 
-LearningPath.belongsToMany(Course, {
-  through: LearningPathCourse,
-  foreignKey: "learningPathId"
-});
+LearningPath.belongsToMany(Course, { through: LearningPathCourse, foreignKey: "learningPathId" });
+Course.belongsToMany(LearningPath, { through: LearningPathCourse, foreignKey: "courseId" });
 
-Course.belongsToMany(LearningPath, {
-  through: LearningPathCourse,
-  foreignKey: "courseId"
-});
-
+// One-to-Many, One-to-One
 UserModuleProgress.belongsTo(User, { foreignKey: "userId", onDelete: "CASCADE" });
 User.hasMany(UserModuleProgress, { foreignKey: "userId" });
 
@@ -60,15 +77,8 @@ AssessmentAttempt.hasMany(UserAnswer);
 AttemptQuestion.hasMany(UserAnswer);
 Option.hasMany(UserAnswer);
 
-Question.belongsToMany(AssessmentAttempt, {
-  through: AttemptQuestion,
-  foreignKey: "questionId"
-});
-
-AssessmentAttempt.belongsToMany(Question, {
-  through: AttemptQuestion,
-  foreignKey: "AttemptId"
-});
+Question.belongsToMany(AssessmentAttempt, { through: AttemptQuestion, foreignKey: "questionId" });
+AssessmentAttempt.belongsToMany(Question, { through: AttemptQuestion, foreignKey: "AttemptId" });
 
 AttemptQuestion.belongsTo(Question, { foreignKey: "QuestionId" });
 Question.hasMany(AttemptQuestion, { foreignKey: "QuestionId" });
@@ -76,35 +86,13 @@ Question.hasMany(AttemptQuestion, { foreignKey: "QuestionId" });
 LoginActivity.belongsTo(User, { foreignKey: "userId", onDelete: "CASCADE" });
 User.hasMany(LoginActivity, { foreignKey: "userId" });
 
-// Create an object to store models
-const db = {
-  sequelize,
-  Sequelize,
-  User,
-  LearningPath,
-  Course,
-  UserProgress,
-  Module,
-  Category,
-  LearningPathCategory,
-  CourseCategory,
-  LearningPathCourse,
-  UserModuleProgress,
-  Assessment,
-  AssessmentAttempt,
-  Question,
-  Option,
-  UserAnswer,
-  AttemptQuestion,
-  LoginActivity
-};
-
-// Sync database
+// Final sync
 sequelize
   .sync({ alter: true })
   .then(() => {
     console.log("Models:", Object.keys(db));
     console.log("✅ Database synchronized successfully.");
+    console.log("Models:", Object.keys(db));
   })
   .catch((error) => {
     console.log("❌ Database synchronization failed:", error);
