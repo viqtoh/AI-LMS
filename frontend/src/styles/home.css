@@ -2446,3 +2446,12 @@ iframe {
   flex-direction: column;
   margin-top: 50px;
 }
+.middle-flex {
+  display: flex;
+  flex-direction: column;
+}
+@media screen and (min-width: 768px) {
+  .middle-flex {
+    flex-direction: row;
+  }
+}

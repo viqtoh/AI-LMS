@@ -9,6 +9,7 @@ import Profile from "./pages/Profile";
 import LearnPath from "./pages/LearnPath";
 import Course from "./pages/Course";
 import CourseRead from "./pages/CourseRead";
+import AdminCourseRead from "./adminPages/AdminCourseRead";
 import AdminHome from "./adminPages/Home";
 import AdminDashboard from "./adminPages/Dashboard";
 import UserManagement from "./adminPages/UserManagement";
@@ -54,6 +55,8 @@ function App() {
           path="/admin/content-management/course/:id/module/edit/:moduleId"
           element={<AdminModuleCrud />}
         />
+        <Route path="/admin/content-management/path/:pathId/read" element={<AdminCourseRead />} />
+        <Route path="/admin/content-management/course/:id/read" element={<AdminCourseRead />} />
         <Route path="/admin/content-management/path/:id" element={<AdminLearnPath />} />
         <Route path="/admin/category-management" element={<CategoryManagement />} />
         <Route path="/admin/user-management" element={<UserManagement />} />

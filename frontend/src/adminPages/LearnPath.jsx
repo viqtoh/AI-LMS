@@ -356,9 +356,19 @@ const AdminLearnPath = () => {
                     <div className="headerDesc">
                       <span>{learningPath.description}</span>
                     </div>
-                    <button className="btn continueBtn" onClick={() => setIsEditModalOpen(true)}>
-                      <span>Edit learning path</span>
-                    </button>
+                    <div className="middle-flex gap-2">
+                      <button
+                        className="btn continueBtn"
+                        onClick={() => {
+                          navigate(`/admin/content-management/path/${learningPath.id}/read`);
+                        }}
+                      >
+                        <span>Preview Learning Path</span>
+                      </button>
+                      <button className="btn continueBtn" onClick={() => setIsEditModalOpen(true)}>
+                        <span>Edit learning path</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -387,9 +397,19 @@ const AdminLearnPath = () => {
                     <div className="headerDesc">
                       <span>{learningPath.description}</span>
                     </div>
-                    <button className="btn continueBtn" onClick={() => setIsEditModalOpen(true)}>
-                      <span>Edit learning path</span>
-                    </button>
+                    <div className="middle-flex gap-2">
+                      <button
+                        className="btn continueBtn"
+                        onClick={() => {
+                          navigate(`/admin/content-management/path/${learningPath.id}/read`);
+                        }}
+                      >
+                        <span>Preview Learning Path</span>
+                      </button>
+                      <button className="btn continueBtn" onClick={() => setIsEditModalOpen(true)}>
+                        <span>Edit learning path</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

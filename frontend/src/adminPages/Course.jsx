@@ -245,9 +245,19 @@ const AdminCourse = () => {
                     <div className="headerDesc">
                       <span>{course.description}</span>
                     </div>
-                    <button className="btn continueBtn" onClick={() => setIsModalOpen(true)}>
-                      <span>Edit course</span>
-                    </button>
+                    <div className="middle-flex gap-2">
+                      <button
+                        className="btn continueBtn"
+                        onClick={() => {
+                          navigate(`/admin/content-management/course/${course.id}/read`);
+                        }}
+                      >
+                        <span>Preview Course</span>
+                      </button>
+                      <button className="btn continueBtn" onClick={() => setIsModalOpen(true)}>
+                        <span>Edit course</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -274,9 +284,19 @@ const AdminCourse = () => {
                     <div className="headerDesc">
                       <span>{course.description}</span>
                     </div>
-                    <button className="btn continueBtn" onClick={() => setIsModalOpen(true)}>
-                      <span>Edit course</span>
-                    </button>
+                    <div className="middle-flex gap-2">
+                      <button
+                        className="btn continueBtn"
+                        onClick={() => {
+                          navigate(`/admin/content-management/course/${course.id}/read`);
+                        }}
+                      >
+                        <span>Preview Course</span>
+                      </button>
+                      <button className="btn continueBtn" onClick={() => setIsModalOpen(true)}>
+                        <span>Edit course</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
