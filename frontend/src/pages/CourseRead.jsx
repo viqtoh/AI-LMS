@@ -1,6 +1,5 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import "../styles/read.css";
-import { useState, useEffect } from "react";
 import { API_URL, IMAGE_HOST } from "../constants";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
@@ -34,7 +33,6 @@ import "@videojs/themes/dist/forest/index.css";
 import "@videojs/themes/dist/sea/index.css";
 import AssessmentHandler from "./AssessmentHandler";
 import BotpressChat from "../components/BotPressChat";
-import { useCallback } from "react";
 
 const CourseRead = () => {
   const token = localStorage.getItem("token");
@@ -102,7 +100,7 @@ const CourseRead = () => {
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [pathId, id, location.pathname, location.search]);
+  }, [pathId, id, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     if (videoRef.current && activeModule && activeModule.content_type === "video") {
@@ -110,6 +108,7 @@ const CourseRead = () => {
         if (videoRef.current) {
           if (playerRef.current) {
             playerRef.current.dispose();
+            playerRef.current = null;
           }
 
           playerRef.current = videojs(videoRef.current, {
@@ -223,7 +222,7 @@ const CourseRead = () => {
     };
 
     fetchUserDetails();
-  });
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -231,22 +230,39 @@ const CourseRead = () => {
 
     if (moduleId) {
       let foundModule = null;
+      let foundCourse = null;
 
       for (const course of courses) {
         const match = course.modules.find((m) => m.id === parseInt(moduleId));
 
         if (match) {
           foundModule = match;
-          setActiveCourse(course);
+          foundCourse = course;
           break;
         }
       }
 
       if (foundModule) {
-        activateModule(foundModule);
-        setCurrentTime(foundModule.userProgress.last_second | 0);
-
-        setCurrentProgress(foundModule.userProgress.progress);
+        if (!activeModule || activeModule.id !== foundModule.id) {
+          setActiveModule(foundModule);
+          setActiveCourse(foundCourse);
+          setCurrentTime(foundModule.userProgress?.last_second || 0);
+          setCurrentProgress(foundModule.userProgress?.progress || 0);
+        }
+      } else {
+        // If there's no moduleId in the URL, clear activeModule to show overview (if needed)
+        if (activeModule) {
+          setActiveModule(null);
+          // Optionally, reset activeCourse to the main course/first course in path
+          if (id && courses.length > 0) {
+            const currentCourseById = courses.find((c) => c.id === parseInt(id));
+            if (currentCourseById) {
+              setActiveCourse(currentCourseById);
+            }
+          } else if (pathId && courses.length > 0) {
+            setActiveCourse(courses[0]); // Default to first course in path
+          }
+        }
       }
     }
   }, [location.search, courses]);
@@ -422,6 +438,25 @@ const CourseRead = () => {
   };
 
   const activateModule = (module) => {
+    if (activeModule) {
+      setCourses((prevCourses) =>
+        prevCourses.map((course) => ({
+          ...course,
+          modules: course.modules.map((module) =>
+            module.id === activeModule.id
+              ? {
+                  ...module,
+                  userProgress: {
+                    ...module.userProgress,
+                    progress: 100
+                  }
+                }
+              : module
+          )
+        }))
+      );
+    }
+
     setActiveModule(module);
     navigate(`?module=${module.id}`);
   };
@@ -508,7 +543,11 @@ const CourseRead = () => {
     const courseIndex = courses.findIndex((course) => course.id === courseId);
     if (course && courseIndex !== -1) {
       const coursesAbove = courses.slice(0, courseIndex);
-      const allCompleted = coursesAbove.every((course) => course.progress === 100);
+      const allCompleted =
+        coursesAbove.every((course) => course.progress === 100) ||
+        coursesAbove.every((course) =>
+          course.modules.every((module) => module.userProgress?.progress === 100)
+        );
       return allCompleted;
     }
     return false;
