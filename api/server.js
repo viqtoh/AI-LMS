@@ -2804,6 +2804,60 @@ app.post("/api/admin/category", authenticateToken, async (req, res) => {
   }
 });
 
+app.post("/api/admin/category/:id/merge", authenticateToken, async (req, res) => {
+  const { mergedCategoryId } = req.body;
+  try {
+    const merged = await Category.findOne({
+      where: { id: mergedCategoryId },
+      include: [
+        { model: LearningPath, through: { attributes: [] }, as: "LearningPaths" },
+        { model: Course, through: { attributes: [] }, as: "Courses" }
+      ]
+    });
+
+    if (!merged) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    const category = await Category.findOne({ where: { id: req.params.id } });
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    for (var i = 0; i < merged.LearningPaths.length; i++) {
+      await merged.LearningPaths[i].addCategory(category);
+      await merged.LearningPaths[i].removeCategory(merged);
+    }
+
+    for (var i = 0; i < merged.Courses.length; i++) {
+      await merged.Courses[i].addCategory(category);
+      await merged.Courses[i].removeCategory(merged);
+    }
+    await merged.destroy();
+
+    res.status(200).json({ message: "Category merged successfully" });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.delete("/api/admin/category/:id", authenticateToken, async (req, res) => {
+  try {
+    const category = await Category.findOne({ where: { id: req.params.id } });
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    await category.destroy();
+
+    res.status(200).json({ message: "Category deleted successfully" });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 app.put("/api/admin/category/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;

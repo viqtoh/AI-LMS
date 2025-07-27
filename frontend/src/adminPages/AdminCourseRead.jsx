@@ -34,6 +34,10 @@ import "@videojs/themes/dist/sea/index.css";
 import AssessmentHandler from "../pages/AssessmentHandler";
 import BotpressChat from "../components/BotPressChat";
 
+const MemoizedDocRenderer = React.memo(({url}) => {
+  return <DocRenderer url={url} style={{width: "100%", maxWidth: "100vw"}} />;
+});
+
 const AdminCourseRead = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(true);
@@ -834,10 +838,7 @@ const AdminCourseRead = () => {
                       activeModule.content_type !== "video" &&
                       activeModule.content_type !== "assessment" && (
                         <div style={{ width: "100%", maxWidth: "100vw", overflowX: "auto" }}>
-                          <DocRenderer
-                            url={`${API_URL}${activeModule.file}`}
-                            style={{ width: "100%", maxWidth: "100vw" }}
-                          />
+                          <MemoizedDocRenderer url={`${API_URL}${activeModule.file}`} />
                         </div>
                       )}
 
