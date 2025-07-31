@@ -6,7 +6,12 @@ const authenticateToken = require("./middleware/auth");
 const { pgPool } = require("./db");
 const { Sequelize } = require("sequelize");
 const db = require("./models");
-const { generateOTP, sendVerificationEmail } = require("./utils/helpers");
+const {
+  generateOTP,
+  sendVerificationEmail,
+  generateRandomToken,
+  sendPasswordResetEmail
+} = require("./utils/helpers");
 
 const {
   User,
@@ -86,6 +91,83 @@ async function getUserByToken(token) {
     throw new Error("Server error");
   }
 }
+
+app.post("/api/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  const FRONTEND_HOST = process.env.FRONTEND_HOST;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email is required." });
+  }
+
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      // Important: Send a generic success message even if email isn't found
+      // to prevent user enumeration attacks.
+      return res.json({
+        message: "If an account with that email exists, a password reset link has been sent."
+      });
+    }
+
+    // Generate reset token and set expiry (e.g., 1 hour)
+    const resetToken = generateRandomToken();
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+    await user.update({
+      reset_token: resetToken,
+      reset_token_expiry: resetTokenExpiry
+    });
+
+    // Send the password reset email with the link
+    await sendPasswordResetEmail(user.email, resetToken, FRONTEND_HOST);
+
+    res.json({
+      message: "If an account with that email exists, a password reset link has been sent."
+    });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ error: "Server error. Please try again later." });
+  }
+});
+
+// 2. Reset Password (Using Token from Link)
+app.post("/api/reset-password", async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: "Token and new password are required." });
+  }
+
+  try {
+    const user = await User.findOne({
+      where: {
+        reset_token: token,
+        reset_token_expiry: { [Op.gt]: new Date() } // Token is not expired
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Invalid or expired password reset token." });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user's password and clear reset token fields
+    await user.update({
+      password: hashedPassword,
+      reset_token: null,
+      reset_token_expiry: null
+    });
+
+    res.json({ message: "Your password has been successfully reset." });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(500).json({ error: "Server error. Please try again later." });
+  }
+});
 
 app.post("/api/register", async (req, res) => {
   const { email, password, first_name, last_name } = req.body;

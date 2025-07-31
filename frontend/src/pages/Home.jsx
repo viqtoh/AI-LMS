@@ -131,7 +131,11 @@ const Home = () => {
               </button>
             </div>
 
-            <a onClick={() => navigate("/")} href="#" className="txt2">
+            <a
+              onClick={() => navigate("/forgot-password")}
+              className="txt2"
+              style={{ cursor: "pointer" }}
+            >
               Forgot Password?
             </a>
             <br />

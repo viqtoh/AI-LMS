@@ -8,7 +8,7 @@ import {
 } from '@botpress/webchat';
 import {useEffect} from 'react';
 
-const clientId = "e8ce95c2-045b-4bc3-9f49-23e4861ecfc4";
+const clientId = "2a553e9e-8f58-433b-a094-c8e1704ce71e";
 
 const configuration: Configuration = {
   color: '#000',
@@ -43,7 +43,7 @@ const BotPressChat = () => {
         type: 'custom_event',
         channel: 'web',
         payload: {
-          course_topic: "Digital Marketing Fundamentals",
+          course_topic: "",
         },
       };
 

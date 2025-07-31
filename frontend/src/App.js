@@ -23,6 +23,8 @@ import AdminCourse from "./adminPages/Course";
 import AdminModuleCrud from "./adminPages/AdminModuleCrud";
 import AdminSetAssessment from "./adminPages/AdminSetAssessment";
 import VerifyOtp from "./pages/VerifyOtp";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   return (
@@ -39,6 +41,8 @@ function App() {
         <Route path="/content-library/path/:pathId/read" element={<CourseRead />} />
         <Route path="/content-library/course/:id/read" element={<CourseRead />} />
         <Route path="/verify-email" element={<VerifyOtp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminHome />} />

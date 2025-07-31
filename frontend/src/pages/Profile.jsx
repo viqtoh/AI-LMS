@@ -7,6 +7,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Toast from "../components/Toast";
 import { faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const token = localStorage.getItem("token");
@@ -17,6 +18,7 @@ const Profile = () => {
   const [profileSrc, setProfileSrc] = useState("/images/default_profile.png");
 
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -143,6 +145,7 @@ const Profile = () => {
         setIsChangePasswordModalOpen(false);
         setPassError("");
         showToast("Password updated successfully", true);
+        navigate("/");
       }
     } catch (error) {
     } finally {
