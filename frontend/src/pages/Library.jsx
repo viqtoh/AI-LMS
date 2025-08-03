@@ -133,6 +133,7 @@ const Library = () => {
             Authorization: `Bearer ${token}`
           }
         });
+
         const data = await response.json();
         setContents(Array.isArray(data.contents) ? data.contents : []);
       } catch (err) {

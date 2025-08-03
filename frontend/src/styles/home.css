@@ -499,6 +499,7 @@ iframe {
   left: 250px !important;
   width: calc(100vw - 250px);
   overflow-y: scroll;
+  height: calc(100vh - 180px) !important;
 }
 
 .main-body4 {

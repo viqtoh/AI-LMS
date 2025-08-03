@@ -16,6 +16,7 @@ const LearnPath = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(true);
   const [learningPath, setLearningPath] = useState(null);
+  const [progress, setProgress] = useState(0);
 
   const [isSuccess, setIsSuccess] = React.useState(true);
   const [toast, setToast] = useState(null);
@@ -30,6 +31,19 @@ const LearnPath = () => {
 
   const { id } = useParams();
   useEffect(() => {
+    function calculateLearningPathProgress(response) {
+      const courses = response.courses;
+
+      if (!courses || courses.length === 0) return 0;
+
+      const totalCourseProgress = courses.reduce((sum, course) => {
+        const courseProgress = Number(course.progress) || 0;
+        return sum + courseProgress;
+      }, 0);
+
+      return Math.round(totalCourseProgress / courses.length);
+    }
+
     const fetchLearningPath = async () => {
       try {
         const response = await fetch(`${API_URL}/api/learning-path-full/${id}`, {
@@ -43,6 +57,7 @@ const LearnPath = () => {
           throw new Error("Failed to fetch learning path");
         }
         const data = await response.json();
+        setProgress(calculateLearningPathProgress(data));
         setLearningPath(data);
       } catch (err) {
         showToast(err.message, false);
@@ -97,9 +112,9 @@ const LearnPath = () => {
                       }}
                     >
                       <span>
-                        {learningPath.progress === 100
+                        {progress === 100
                           ? "Restart this learning path"
-                          : learningPath.progress === 0
+                          : progress === 0
                             ? "Start this learning path"
                             : "Continue this learning path"}
                       </span>
@@ -107,7 +122,7 @@ const LearnPath = () => {
                   </div>
 
                   <div className="circleProgress">
-                    <CircleProgress progress={learningPath.progress} />
+                    <CircleProgress progress={progress} />
                   </div>
                 </div>
               </div>
@@ -143,9 +158,9 @@ const LearnPath = () => {
                       }}
                     >
                       <span>
-                        {learningPath.progress === 100
+                        {progress === 100
                           ? "Restart this learning path"
-                          : learningPath.progress === 0
+                          : progress === 0
                             ? "Start this learning path"
                             : "Continue this learning path"}
                       </span>
@@ -153,7 +168,7 @@ const LearnPath = () => {
                   </div>
 
                   <div className="mcircleProgress">
-                    <SmallCircleProgress progress={learningPath.progress} />
+                    <SmallCircleProgress progress={progress} />
                   </div>
                 </div>
               </div>

@@ -43,7 +43,8 @@ app.use(
     origin: [
       "http://ailms.absoluteworlds.com",
       "https://ailms.absoluteworlds.com",
-      "http://localhost:3000"
+      "http://localhost:3000",
+      "http://192.168.18.7:3000"
     ]
   })
 );
@@ -1154,6 +1155,8 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
                   } else {
                     moduleData.score = null;
                   }
+                  moduleData.duration = assessment.duration;
+                  moduleData.assessment = assessment;
                 } else {
                   moduleData.score = null;
                 }
@@ -1505,13 +1508,15 @@ app.post("/api/assessment-attempt", authenticateToken, async (req, res) => {
     const questionIds = [...new Set(questionsWithCorrectOptions.map((q) => q.id))];
 
     // Step 2: Get random selection with all options
+    const isMySQL = process.env.DB_DIALECT === "mysql";
+
     const allQuestions = await Question.findAll({
       where: {
         AssessmentId: assessmentId,
         id: { [Sequelize.Op.in]: questionIds }
       },
-      include: [{ model: Option }], // Include ALL options for each question
-      order: Sequelize.literal("RANDOM()"),
+      include: [{ model: Option }],
+      order: Sequelize.literal(isMySQL ? "RAND()" : "RANDOM()"),
       limit: numberToSelect
     });
 

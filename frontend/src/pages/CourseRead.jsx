@@ -34,8 +34,8 @@ import "@videojs/themes/dist/sea/index.css";
 import AssessmentHandler from "./AssessmentHandler";
 import BotpressChat from "../components/BotPressChat";
 
-const MemoizedDocRenderer = React.memo(({url}) => {
-  return <DocRenderer url={url} style={{width: "100%", maxWidth: "100vw"}} />;
+const MemoizedDocRenderer = React.memo(({ url }) => {
+  return <DocRenderer url={url} style={{ width: "100%", maxWidth: "100vw" }} />;
 });
 
 const CourseRead = () => {
@@ -881,15 +881,10 @@ const CourseRead = () => {
                       <button
                         className="btn btn-primary mt-3"
                         onClick={() => {
-                          if (pathId) {
-                            navigate(`/content-library/path/${pathId}`);
-                          } else {
-                            navigate(`/content-library/course/${id}`);
-                          }
+                          navigate(`/content-library`);
                         }}
                       >
-                        {" "}
-                        Back to {pathId ? "Learning Path" : "Course"}{" "}
+                        Back to Library
                       </button>
                     </div>
                   </div>
@@ -998,7 +993,11 @@ const CourseRead = () => {
           >
             <div className="modal-content areyousure">
               <div className="modal-body">
-                <p>Are you sure you want to move to the next module?</p>
+                {checkLast() ? (
+                  <p>Are you sure you have finished this course?</p>
+                ) : (
+                  <p>Are you sure you want to move to the next module?</p>
+                )}
               </div>
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setShowNextModal(false)}>

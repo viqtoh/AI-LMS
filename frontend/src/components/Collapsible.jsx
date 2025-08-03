@@ -15,7 +15,8 @@ export const CourseCollapsible = ({
   percentage = 0,
   description = "",
   score = 0,
-  isLocked = false
+  isLocked = false,
+  progress = 0
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -49,7 +50,7 @@ export const CourseCollapsible = ({
             stroke="#eee"
             strokeWidth="2"
           />
-          {percentage > 0 && (
+          {progress > 0 && (
             <path
               className="circle"
               d="M18 2.0845
@@ -58,12 +59,12 @@ export const CourseCollapsible = ({
               fill="none"
               stroke="#4caf50"
               strokeWidth="2"
-              strokeDasharray={`${percentage}, 100`}
+              strokeDasharray={`${progress}, 100`}
             />
           )}
 
           <text x="17" y="20" textAnchor="middle" fontSize="8" fill="#000">
-            {percentage}%
+            {progress}%
           </text>
         </svg>
       </div>
@@ -79,7 +80,6 @@ export const CourseCollapsible = ({
           </div>
           <div className="collapseText">
             <p>{description}</p>
-            <span>{score}% My Score</span>
           </div>
         </div>
       </div>
