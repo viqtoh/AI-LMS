@@ -35,15 +35,17 @@ export const ModuleCollapsible = ({
           <span className="sectionTitle">{title}</span>
         </button>
 
-        <div className="d-flex gap-2 align-items-center">
+        <div
+          className={`d-flex gap-2 align-items-center ${content_type === "assessment" && "asspar"}`}
+        >
           {content_type === "assessment" && (
             <button
-              className="bg-danger text-white py-1 px-3 rounded"
+              className="bg-danger text-white py-1 px-3 rounded setassbtn"
               onClick={() => {
                 window.location.href = `/admin/content-management/course/module/${id}/assessment`;
               }}
             >
-              Set Assessment
+              <span className="setassbtn-text">Set Assessment</span>
             </button>
           )}
           <button

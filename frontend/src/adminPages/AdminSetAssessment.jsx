@@ -171,7 +171,8 @@ const AdminSetAssessment = () => {
     title: "",
     description: "",
     duration: "",
-    numberOfQuestions: ""
+    numberOfQuestions: "",
+    passMark: 50
   });
 
   const handleInputChange = (e) => {
@@ -299,6 +300,20 @@ const AdminSetAssessment = () => {
                   id="numberOfQuestions"
                   name="numberOfQuestions"
                   value={formData.numberOfQuestions}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="passMark">Pass Mark (%)</label>
+                <input
+                  type="number"
+                  id="numberOfQuestions"
+                  name="passMark"
+                  value={formData.passMark}
+                  min={0}
+                  max={100}
                   onChange={handleInputChange}
                   className="form-control"
                   required

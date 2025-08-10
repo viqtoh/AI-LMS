@@ -565,3 +565,61 @@
 .video-js {
   height: calc(100vh - 54px) !important;
 }
+
+.feedDiv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-self: center;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  width: 100%;
+  padding: 0px 20px;
+}
+
+.feedField {
+  background-color: transparent;
+  color: #aaa;
+  border: 1px solid #333;
+  border-radius: 5px;
+  padding: 5px;
+  width: 100%;
+  max-width: 500px;
+  max-lines: 5;
+}
+.feedField:focus {
+  outline: 1px solid #333;
+  box-shadow: none !important;
+  border: none;
+}
+.noncol {
+  box-shadow: none !important;
+}
+.asspar {
+  width: 265px;
+  max-width: calc(100% - 100px);
+}
+
+.setassbtn {
+  display: flex;
+  /* flex-basis and flex-shrink are important for flex items */
+  flex-basis: auto; /* Allow content to dictate initial size */
+  flex-shrink: 1; /* Allow the flex item to shrink if needed */
+  min-width: 0; /* Crucial: Allows the flex item to shrink below its content's intrinsic width */
+
+  /* These text-related properties should be on the inner element */
+  /* text-wrap: nowrap; (moved to inner-text) */
+  /* text-overflow: ellipsis; (moved to inner-text) */
+  /* overflow: hidden; (moved to inner-text) */
+  width: 153px;
+  max-width: calc(100% - 115px);
+}
+
+.setassbtn-text {
+  /* New class for the inner text element */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* If the parent .setassbtn has flex-shrink: 1 and min-width: 0, this child
+     will properly ellipsis when the parent shrinks */
+}

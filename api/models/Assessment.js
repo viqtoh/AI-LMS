@@ -24,6 +24,11 @@ const Assessment = sequelize.define("Assessment", {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0
+  },
+  passMark: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 50
   }
 });
 

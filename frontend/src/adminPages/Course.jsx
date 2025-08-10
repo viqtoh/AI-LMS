@@ -43,6 +43,17 @@ const AdminCourse = () => {
 
   const { id } = useParams();
 
+  // --- NEW STATES FOR FEEDBACK ---
+  const [feedbackData, setFeedbackData] = useState({
+    feedback: [], // Array to hold the fetched feedback items
+    totalItems: 0,
+    currentPage: 1,
+    totalPages: 1
+  });
+  const [feedbackPage, setFeedbackPage] = useState(1);
+  const [feedbackLimit, setFeedbackLimit] = useState(5); // Default limit per page for feedback
+  // --- END NEW STATES ---
+
   const deleteCourse = async () => {
     try {
       setIsLoading2(true);
@@ -151,6 +162,39 @@ const AdminCourse = () => {
     fetchCategories();
   }, [token, showToast]);
 
+  // --- NEW EFFECT HOOK FOR FETCHING FEEDBACK ---
+  useEffect(() => {
+    const fetchFeedbackForCourse = async () => {
+      if (!id || !token) return; // Ensure id and token are available
+
+      try {
+        // Use "course" as the type to target courseId in the backend
+        const feedbackType = "course";
+        const response = await fetch(
+          `${API_URL}/api/admin/feedback/${id}/${feedbackType}/${feedbackLimit}/${feedbackPage}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch feedback for course");
+        }
+
+        const data = await response.json();
+        setFeedbackData(data); // Assuming data structure: { totalItems, currentPage, totalPages, feedback: [...] }
+      } catch (err) {
+        console.error("Error fetching course feedback:", err);
+        showToast(`Error fetching course feedback: ${err.message}`, false);
+      }
+    };
+
+    fetchFeedbackForCourse();
+  }, [id, token, feedbackPage, feedbackLimit, showToast]); // Re-fetch when id, token, page, or limit changes
+  // --- END NEW EFFECT HOOK ---
+
   const handleCourseChange = (e) => {
     const { name, value, type, checked } = e.target;
     setCourseFormData((prevData) => ({
@@ -168,7 +212,12 @@ const AdminCourse = () => {
       });
 
       const data = await response.json();
-
+      if (data.error) {
+        showToast(data.error, false);
+      }
+      if (data.message) {
+        showToast(data.message, true);
+      }
       setIsLoading(false);
       fetchCourse();
     } catch (error) {
@@ -182,7 +231,8 @@ const AdminCourse = () => {
     setIsLoading2(true);
     const formData = courseFormData;
     formData["categoryIds"] = JSON.stringify(selectedCategories2);
-    formData["learningPathId"] = id;
+    // Remove learningPathId, as it's not relevant for updating a course directly
+    // formData["learningPathId"] = id; // This line should be removed or handled differently for course updates
 
     try {
       const response = await fetch(`${API_URL}/api/admin/course/${id}`, {
@@ -196,7 +246,7 @@ const AdminCourse = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        showToast(errorData.error || "Failed to create learning path", false);
+        showToast(errorData.error || "Failed to update course", false); // Changed message
         return;
       }
 
@@ -337,6 +387,7 @@ const AdminCourse = () => {
                   <div className="text-center w-100 d-flex flex-column justify-content-center align-items-center">
                     {modules.map((module) => (
                       <ModuleCollapsible
+                        key={module.id} // Added key prop for list rendering
                         {...module}
                         onMoveUp={moveUp}
                         onDelete={setDeleteModuleId}
@@ -349,6 +400,74 @@ const AdminCourse = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* --- NEW SECTION FOR DISPLAYING FEEDBACK --- */}
+                  <div className="mt-5 collapsible mx-auto noncol">
+                    <h3>Feedback for this Course ({feedbackData.totalItems} total)</h3>
+                    {feedbackData.feedback.length === 0 ? (
+                      <div className="noObjects mt-2">No feedback available for this course.</div>
+                    ) : (
+                      <div>
+                        {feedbackData.feedback.map((feedbackItem) => (
+                          <div key={feedbackItem.id} className="card p-3 my-2">
+                            <p>
+                              <strong>Comment:</strong>{" "}
+                              {feedbackItem.text || "No comment provided."}
+                            </p>
+                            <small>
+                              <div className="d-flex gap-1 align-items-center">
+                                {feedbackItem.User.image ? (
+                                  <div className="profileImage mx-2 s-35">
+                                    <img
+                                      src={`${IMAGE_HOST}${feedbackItem.User.image}`}
+                                      className="s-35"
+                                      alt="Profile"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="profileImage mx-2 s-35">
+                                    <img
+                                      src="/images/default_profile.png"
+                                      className="s-35"
+                                      alt="Profile"
+                                    />
+                                  </div>
+                                )}
+                                {feedbackItem.User.first_name} {feedbackItem.User.last_name}
+                                <br />
+                                Created: {new Date(feedbackItem.createdAt).toLocaleDateString()}
+                              </div>{" "}
+                            </small>
+                            {/* You might want to display user info (if included in the backend response) */}
+                            {/* <small>By: {feedbackItem.User ? feedbackItem.User.username : 'Anonymous'}</small> */}
+                          </div>
+                        ))}
+                        {/* Basic Pagination Controls */}
+                        <div className="d-flex justify-content-between align-items-center mt-3">
+                          <button
+                            className="btn btn-outline-primary"
+                            onClick={() => setFeedbackPage((prev) => Math.max(1, prev - 1))}
+                            disabled={feedbackPage === 1}
+                          >
+                            Previous
+                          </button>
+                          <span>
+                            Page {feedbackPage} of {feedbackData.totalPages}
+                          </span>
+                          <button
+                            className="btn btn-outline-primary"
+                            onClick={() =>
+                              setFeedbackPage((prev) => Math.min(feedbackData.totalPages, prev + 1))
+                            }
+                            disabled={feedbackPage === feedbackData.totalPages}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {/* --- END NEW SECTION --- */}
                 </div>
               )}
             </div>
@@ -550,7 +669,8 @@ const AdminCourse = () => {
             <div className="modal-body text-center">
               <h4>
                 Are you sure you want to delete Module:{" "}
-                {modules.find((module) => module.id === deleteModuleId).title}?
+                {modules.find((module) => module.id === deleteModuleId)?.title}?
+                {/* Added optional chaining (?) in case module is not found */}
               </h4>
             </div>
 

@@ -77,6 +77,11 @@ const CourseRead = () => {
   const [currentProgress, setCurrentProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [mode, setMode] = useState("");
+  const [feed, setFeed] = useState(false);
+  const [feedData, setFeedData] = useState("");
+  const [feedSent, setFeedSent] = useState(false);
+  const [feeding, setFeeding] = useState(false);
+  const [leavingFeed, setLeavingFeed] = useState(false);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -616,7 +621,7 @@ const CourseRead = () => {
     }
   };
 
-  const goNext = () => {
+  const goNext = async () => {
     const foundCourse = courses.find((course) =>
       course.modules.some((module) => module.id === activeModule.id)
     );
@@ -633,7 +638,66 @@ const CourseRead = () => {
         setActiveCourse(nextCourse);
       } else {
         setIsEnded(true);
+        try {
+          let url;
+          if (pathId) {
+            url = `${API_URL}/api/feedback/${pathId}/path`;
+          } else {
+            url = `${API_URL}/api/feedback/${id}/course`;
+          }
+          const response = await fetch(url, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json"
+            }
+          });
+          if (!response.ok) {
+            throw new Error("Failed to fetch object");
+          }
+          const data = await response.json();
+          setFeedData(data.text ? data.text : "");
+          setFeed(true);
+        } catch (err) {
+          showToast(err.message, false);
+        }
       }
+    }
+  };
+  const submitFeedback = async () => {
+    setFeeding(true);
+    try {
+      let body;
+      if (pathId) {
+        body = JSON.stringify({
+          LearningPathId: pathId,
+          text: feedData
+        });
+      } else {
+        body = JSON.stringify({
+          courseId: id,
+          text: feedData
+        });
+      }
+      const response = await fetch(`${API_URL}/api/feedback`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: body
+      });
+
+      if (!response.ok) {
+        showToast(response.message, false);
+      } else {
+        showToast(response.message, true);
+        setFeedSent(true);
+      }
+    } catch (err) {
+      showToast(err.message, false);
+    } finally {
+      setFeeding(false);
     }
   };
 
@@ -703,20 +767,24 @@ const CourseRead = () => {
                   <button className="nextbtn" onClick={() => setShowNextModal(true)}>
                     End
                   </button>
-                ) : activeModule.content_type === "video" ? (
+                ) : activeModule.content_type === "video" && !isEnded ? (
                   checkNext() ? (
                     <button className="nextbtn" onClick={nextModule}>
                       Next Module
                     </button>
                   ) : (
-                    <button className="nextbtn" disabled>
+                    !isEnded && (
+                      <button className="nextbtn" disabled>
+                        Next Module
+                      </button>
+                    )
+                  )
+                ) : (
+                  !isEnded && (
+                    <button className="nextbtn" onClick={() => setShowNextModal(true)}>
                       Next Module
                     </button>
                   )
-                ) : (
-                  <button className="nextbtn" onClick={() => setShowNextModal(true)}>
-                    Next Module
-                  </button>
                 ))}
             </div>
           </div>
@@ -877,6 +945,45 @@ const CourseRead = () => {
                         <p className="mb-0 text-info">
                           You have also completed this learning path.
                         </p>
+                      )}
+
+                      {!feed ? (
+                        <div className="loader-container">
+                          <div className="loader"></div>
+                        </div>
+                      ) : !feedSent && leavingFeed ? (
+                        <div className="feedDiv">
+                          <p>Please Leave a Feedback</p>
+                          <textarea
+                            className="feedField"
+                            value={feedData ? feedData : ""}
+                            onChange={(e) => setFeedData(e.target.value)}
+                          ></textarea>
+                          <button
+                            className="btn btn-primary mt-3"
+                            onClick={() => {
+                              submitFeedback();
+                            }}
+                            disabled={feeding}
+                          >
+                            {feeding ? "Submitting..." : "Submit"}
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <p>Thank you for your feedback</p>
+                        </div>
+                      )}
+
+                      {!leavingFeed && (
+                        <button
+                          className="btn btn-primary mt-3"
+                          onClick={() => {
+                            setLeavingFeed(true);
+                          }}
+                        >
+                          Leave a Feedback
+                        </button>
                       )}
                       <button
                         className="btn btn-primary mt-3"

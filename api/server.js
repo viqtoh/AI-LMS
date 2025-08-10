@@ -28,7 +28,8 @@ const {
   AttemptQuestion,
   AssessmentAttempt,
   UserAnswer,
-  LoginActivity
+  LoginActivity,
+  Feedback
 } = db;
 
 const { Op, fn, col } = require("sequelize");
@@ -1152,6 +1153,12 @@ app.get("/api/learning-path-full/:id", authenticateToken, async (req, res) => {
                   if (attempt) {
                     const score = await calculateScore(attempt.id);
                     moduleData.score = score;
+                    moduleData.userProgress = {
+                      status: "completed",
+                      progress: score >= assessment.passMark ? 100 : 0,
+                      last_accessed_at: attempt.updatedAt,
+                      last_second: null
+                    };
                   } else {
                     moduleData.score = null;
                   }
@@ -1253,7 +1260,7 @@ app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
 
     const enrichedModules = await Promise.all(
       modules.map(async (mod) => {
-        const userProgress = progressMap[mod.id] || {
+        let userProgress = progressMap[mod.id] || {
           status: "not_started",
           progress: 0,
           last_accessed_at: null,
@@ -1269,8 +1276,15 @@ app.get("/api/course-full/:id", authenticateToken, async (req, res) => {
             const attempt = await AssessmentAttempt.findOne({
               where: { UserId: userId, AssessmentId: assessment.id }
             });
+
             if (attempt) {
               score = await calculateScore(attempt.id);
+              userProgress = {
+                status: "completed",
+                progress: score >= assessment.passMark ? 100 : 0,
+                last_accessed_at: attempt.updatedAt,
+                last_second: null
+              };
             }
           }
         }
@@ -1905,67 +1919,162 @@ app.get("/api/achievements", authenticateToken, async (req, res) => {
       attributes: ["id", "first_name", "last_name", "email", "image"]
     });
 
-    // Get finished courses (progress 100, courseId not null)
-    const finishedCourses = await UserProgress.findAll({
-      where: { userId: user.id, progress: 100, courseId: { [Op.ne]: null } }
-    });
+    // Helper function to check if all assessments within a given course are passed
+    // This function expects the `course` object to already have `Modules` and `Assessments` included.
+    const checkCourseAssessments = async (course, userId) => {
+      // Filter for modules that are assessments and have an associated Assessment object
+      const assessmentModules = course.Modules.filter(
+        (m) => m.content_type === "assessment" && m.Assessment
+      );
 
-    // For each finished course, get the course details where show_outside is true
-    const finishedCoursesObj = await Promise.all(
-      finishedCourses.map(async (finishedCourse) => {
-        const course = await Course.findOne({
-          where: { id: finishedCourse.courseId, show_outside: true }
+      // If there are no assessments in this course, it's considered "passed" by assessment criteria
+      if (assessmentModules.length === 0) {
+        return true;
+      }
+
+      for (const module of assessmentModules) {
+        const assessment = module.Assessment;
+
+        const attempts = await AssessmentAttempt.findAll({
+          where: { UserId: userId, AssessmentId: assessment.id },
+          order: [["createdAt", "DESC"]] // Optional: order by newest first if you want to prioritize latest
         });
-        return course ? course.toJSON() : null;
-      })
-    );
 
-    // Filter out nulls (in case some courses are not show_outside)
-    const filteredFinishedCourses = finishedCoursesObj.filter(Boolean);
+        // If no attempts are found, the user has not completed this required assessment at all
+        if (attempts.length === 0) {
+          return false;
+        }
 
-    // Get finished learning paths (progress 100, learningPathId not null)
-    const finishedLearningPaths = await UserProgress.findAll({
-      where: { userId: user.id, progress: 100, learningPathId: { [Op.ne]: null } }
+        let passedThisAssessment = false; // Flag to track if *any* attempt for this assessment passed
+
+        for (const attempt of attempts) {
+          // Calculate the score for each attempt
+          const scoreResult = await calculateScore(attempt.id);
+          const userScore = parseFloat(scoreResult.scorePercent);
+          const passMark = parseFloat(assessment.passMark);
+          // Check if this specific attempt's score meets or exceeds the pass mark
+          if (!isNaN(userScore) && !isNaN(passMark) && userScore >= passMark) {
+            passedThisAssessment = true; // Found at least one successful attempt
+            break; // No need to check other attempts for this assessment if one passed
+          }
+        }
+
+        // If after checking all attempts for this assessment, none passed, then the course is not achieved
+        if (!passedThisAssessment) {
+          return false;
+        }
+      }
+      return true; // All assessments in this course passed
+    };
+
+    // 1. Get all finished courses that are `show_outside: true`,
+    //    including their modules and assessments, and the UserProgress update date.
+    const finishedCoursesProgress = await UserProgress.findAll({
+      where: { userId: user.id, progress: 100, courseId: { [Op.ne]: null } },
+      include: [
+        {
+          model: Course,
+          where: { show_outside: true }, // Filter courses here
+          include: [
+            {
+              model: Module,
+              include: [
+                {
+                  model: Assessment // Include Assessment if module is an assessment
+                }
+              ]
+            }
+          ]
+        }
+      ]
     });
 
-    // For each finished learning path, get the learning path details
-    const finishedLearningPathsObj = await Promise.all(
-      finishedLearningPaths.map(async (finishedPath) => {
-        const learningPath = await LearningPath.findByPk(finishedPath.learningPathId);
-        return learningPath ? learningPath.toJSON() : null;
-      })
-    );
-    // Filter out nulls
-    const filteredFinishedLearningPaths = finishedLearningPathsObj.filter(Boolean);
+    // Filter courses based on assessment pass marks
+    const qualifiedCourses = [];
+    for (const up of finishedCoursesProgress) {
+      const course = up.Course;
+      // Ensure the course object exists and contains modules/assessments if needed.
+      // `up.Course` will be null if the `where` condition `show_outside: true` was not met for that course.
+      if (course && (await checkCourseAssessments(course, user.id))) {
+        qualifiedCourses.push({
+          course: course.toJSON(), // Convert Sequelize instance to plain JSON object
+          progressUpdatedAt: up.updatedAt // Capture the `attained_on` date
+        });
+      }
+    }
+    const filteredFinishedCourses = qualifiedCourses;
 
+    // 2. Get all finished learning paths, including their courses, modules, and assessments,
+    //    and the UserProgress update date.
+    const finishedLearningPathsProgress = await UserProgress.findAll({
+      where: { userId: user.id, progress: 100, learningPathId: { [Op.ne]: null } },
+      include: [
+        {
+          model: LearningPath,
+          include: [
+            {
+              model: Course,
+              include: [
+                {
+                  model: Module,
+                  include: [
+                    {
+                      model: Assessment
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    // Filter learning paths based on assessment pass marks within their contained courses
+    const qualifiedLearningPaths = [];
+    for (const up of finishedLearningPathsProgress) {
+      const learningPath = up.LearningPath;
+      if (!learningPath) continue; // Skip if learning path itself is null
+
+      let allLPAssessmentsPassed = true;
+      // Check if the learning path has courses and iterate through them
+      if (learningPath.Courses && learningPath.Courses.length > 0) {
+        for (const course of learningPath.Courses) {
+          // If any course within the learning path fails its assessment check,
+          // the entire learning path is not considered an achievement.
+          if (!(await checkCourseAssessments(course, user.id))) {
+            allLPAssessmentsPassed = false;
+            break;
+          }
+        }
+      }
+
+      if (allLPAssessmentsPassed) {
+        qualifiedLearningPaths.push({
+          learningPath: learningPath.toJSON(), // Convert Sequelize instance to plain JSON object
+          progressUpdatedAt: up.updatedAt // Capture the `attained_on` date
+        });
+      }
+    }
+    const filteredFinishedLearningPaths = qualifiedLearningPaths;
+
+    // Construct the final achievements array using the filtered lists
     const achievements = [
-      ...filteredFinishedCourses.map(async (course) => {
-        // Find the UserProgress for this course
-        const progress = await UserProgress.findOne({
-          where: { userId: user.id, courseId: course.id, progress: 100 }
-        });
-        return {
-          ...course,
-          type: "Course",
-          attained_on: progress ? progress.updatedAt : null
-        };
-      }),
-      ...filteredFinishedLearningPaths.map(async (learningPath) => {
-        // Find the UserProgress for this learning path
-        const progress = await UserProgress.findOne({
-          where: { userId: user.id, learningPathId: learningPath.id, progress: 100 }
-        });
-        return {
-          ...learningPath,
-          type: "LearningPath",
-          attained_on: progress ? progress.updatedAt : null
-        };
-      })
+      ...filteredFinishedCourses.map((item) => ({
+        ...item.course,
+        type: "Course",
+        attained_on: item.progressUpdatedAt
+      })),
+      ...filteredFinishedLearningPaths.map((item) => ({
+        ...item.learningPath,
+        type: "LearningPath",
+        attained_on: item.progressUpdatedAt
+      }))
     ];
 
-    // Wait for all promises to resolve and sort by attained_on descending
-    const achievementsResolved = (await Promise.all(achievements))
-      .filter((a) => a.attained_on) // Only those with attained_on
+    // Sort achievements by attained_on date in descending order
+    const achievementsResolved = achievements
+      .filter((a) => a.attained_on) // Ensure we only include items with a valid attainment date
       .sort((a, b) => new Date(b.attained_on) - new Date(a.attained_on));
 
     res.json({
@@ -1975,7 +2084,7 @@ app.get("/api/achievements", authenticateToken, async (req, res) => {
       achievements: achievementsResolved
     });
   } catch (error) {
-    console.error("Error ending assessment:", error);
+    console.error("Error fetching achievements:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -3026,7 +3135,20 @@ app.put(
   async (req, res) => {
     const { moduleId } = req.params;
 
-    const { title, description, duration, numberOfQuestions } = req.body;
+    const { title, description, duration, numberOfQuestions, passMark } = req.body;
+
+    // Input validation for passMark
+    if (passMark !== undefined && passMark !== null) {
+      const parsedPassMark = Number(passMark);
+
+      if (isNaN(parsedPassMark)) {
+        return res.status(400).json({ message: "Pass mark must be a number." });
+      }
+
+      if (parsedPassMark < 0 || parsedPassMark > 100) {
+        return res.status(400).json({ message: "Pass mark must be between 0 and 100." });
+      }
+    }
 
     try {
       const module = await Module.findByPk(moduleId, {
@@ -3042,10 +3164,21 @@ app.put(
       const assessment = module.Assessment;
 
       if (!assessment) {
-        res.status(500).json({ message: "Assessment not found." });
+        return res.status(500).json({ message: "Assessment not found for the given module." });
       }
 
-      await assessment.update({ title, description, duration, numberOfQuestions });
+      const updateFields = {};
+      if (title !== undefined) updateFields.title = title;
+      if (description !== undefined) updateFields.description = description;
+      if (duration !== undefined) updateFields.duration = duration;
+      if (numberOfQuestions !== undefined) updateFields.numberOfQuestions = numberOfQuestions;
+      if (passMark !== undefined) updateFields.passMark = Number(passMark); // Ensure it's a number after validation
+
+      if (Object.keys(updateFields).length === 0) {
+        return res.status(400).json({ message: "No fields provided for update." });
+      }
+
+      await assessment.update(updateFields);
 
       res.status(200).json({ message: "Assessment updated successfully." });
     } catch (error) {
@@ -4199,5 +4332,196 @@ app.put("/api/admin/staff/:id/disable", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Error disabling user:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// POST /api/feedback
+app.post("/api/feedback", authenticateToken, async (req, res) => {
+  const { courseId, LearningPathId, text } = req.body;
+
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Token missing" });
+  }
+
+  const chuser = await getUserByToken(token);
+
+  const userId = chuser.id;
+
+  // Basic Input Validation
+  if ((!courseId && !LearningPathId) || !userId || !text) {
+    if (!text) {
+      return res.status(400).json({ message: "Please enter a feedback message." });
+    }
+    return res.status(400).json({ message: "Failed to send request" });
+  }
+
+  try {
+    let newFeedback = await Feedback.findOne({
+      where: {
+        userId: userId,
+        courseId: courseId || null,
+        LearningPathId: LearningPathId || null
+      }
+    });
+    if (newFeedback) {
+      await newFeedback.update({
+        text: text
+      });
+    } else {
+      newFeedback = await Feedback.create({
+        userId: userId,
+        courseId: courseId || null,
+        LearningPathId: LearningPathId || null,
+        text: text
+      });
+    }
+
+    res.status(201).json({ message: "Feedback sent successfully.", feedback: newFeedback });
+  } catch (error) {
+    console.error("Error creating feedback:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
+app.get("/api/admin/feedback/:id/:type/:limit/:page", authenticateToken, async (req, res) => {
+  const { id, type } = req.params;
+  let { limit, page } = req.params;
+
+  try {
+    limit = parseInt(limit, 10);
+    page = parseInt(page, 10);
+
+    // 1. Validate limit and page
+    if (isNaN(limit) || limit <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Invalid 'limit' parameter. Must be a positive integer." });
+    }
+    if (isNaN(page) || page <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Invalid 'page' parameter. Must be a positive integer." });
+    }
+
+    // 2. Calculate offset for pagination
+    const offset = (page - 1) * limit;
+
+    let feedbackQueryResult; // This will hold the result of the feedback query
+
+    // Define base query options for feedback, WITHOUT the 'include'
+    const feedbackQueryOptions = {
+      limit: limit,
+      offset: offset,
+      order: [["createdAt", "DESC"]] // Assuming 'createdAt' is a timestamp field
+      // Removed: include property
+    };
+
+    // 3. Fetch paginated feedback items
+    if (type === "course") {
+      feedbackQueryResult = await Feedback.findAndCountAll({
+        where: { courseId: id },
+        ...feedbackQueryOptions
+      });
+    } else if (type === "learningpath") {
+      feedbackQueryResult = await Feedback.findAndCountAll({
+        where: { LearningPathId: id },
+        ...feedbackQueryOptions
+      });
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Invalid 'type' parameter. Must be 'course' or 'learningpath'." });
+    }
+
+    const { count, rows: rawFeedbackList } = feedbackQueryResult;
+
+    // --- Start Manual User Fetching ---
+
+    // 4. Extract all unique userId's from the fetched feedback list
+    // Use Set to ensure uniqueness and filter out any null/undefined userId (if applicable)
+    const userIds = [
+      ...new Set(rawFeedbackList.map((feedback) => feedback.userId).filter(Boolean))
+    ];
+
+    let users = [];
+    if (userIds.length > 0) {
+      // 5. Fetch all users whose IDs are in the extracted list
+      users = await User.findAll({
+        where: {
+          id: {
+            [Op.in]: userIds // Use Op.in for a clean 'IN' clause
+          }
+        },
+        attributes: ["id", "first_name", "last_name", "image"] // Select only the necessary user attributes
+      });
+    }
+
+    // 6. Create a map for quick lookup of user data by ID
+    const userMap = new Map();
+    users.forEach((user) => userMap.set(user.id, user.toJSON())); // Convert to plain JSON object for consistency
+
+    // 7. Attach the user data to each feedback item
+    const feedbackListWithUsers = rawFeedbackList.map((feedback) => {
+      const feedbackJson = feedback.toJSON(); // Convert Sequelize instance to plain object
+      feedbackJson.User = userMap.get(feedbackJson.userId) || null; // Attach the user object, or null if user not found
+      return feedbackJson;
+    });
+
+    // --- End Manual User Fetching ---
+
+    // 8. Send back the paginated data along with total count and page info
+    res.status(200).json({
+      totalItems: count,
+      currentPage: page,
+      totalPages: Math.ceil(count / limit),
+      feedback: feedbackListWithUsers // Send the enriched feedback list
+    });
+  } catch (error) {
+    console.error("Error fetching feedback (manual user fetch):", error); // Changed message for clarity
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
+app.get("/api/feedback/:id/:type", authenticateToken, async (req, res) => {
+  const { id, type } = req.params;
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Token missing" });
+  }
+
+  const chuser = await getUserByToken(token);
+
+  const userId = chuser.id;
+  try {
+    let feedback;
+    if (type === "course") {
+      feedback = await Feedback.findOne({
+        where: {
+          userId: userId,
+          courseId: id
+        }
+      });
+    } else {
+      feedback = await Feedback.findOne({
+        where: {
+          userId: userId,
+          learningPathId: id
+        }
+      });
+    }
+
+    if (feedback) {
+      res.status(200).json({ text: feedback.text });
+    } else {
+      res.status(200).json({ text: "", message: "No feedback found" });
+    }
+  } catch (error) {
+    console.error("Error fetching all feedback:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });

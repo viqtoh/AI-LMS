@@ -29,6 +29,17 @@ const AdminLearnPath = () => {
 
   const { id } = useParams();
 
+  // --- NEW STATES FOR FEEDBACK ---
+  const [feedbackData, setFeedbackData] = useState({
+    feedback: [], // Array to hold the fetched feedback items
+    totalItems: 0,
+    currentPage: 1,
+    totalPages: 1
+  });
+  const [feedbackPage, setFeedbackPage] = useState(1);
+  const [feedbackLimit, setFeedbackLimit] = useState(5); // Default limit per page for feedback
+  // --- END NEW STATES ---
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalAddOpen, setIsModalAddOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -141,6 +152,39 @@ const AdminLearnPath = () => {
   useEffect(() => {
     fetchLearningPathCourses();
   }, [id, token]);
+
+  // --- NEW EFFECT HOOK FOR FETCHING FEEDBACK ---
+  useEffect(() => {
+    const fetchFeedbackForPath = async () => {
+      if (!id || !token) return; // Ensure id and token are available
+
+      try {
+        // Use "learningpath" as the type to target LearningPathId in the backend
+        const feedbackType = "learningpath";
+        const response = await fetch(
+          `${API_URL}/api/admin/feedback/${id}/${feedbackType}/${feedbackLimit}/${feedbackPage}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch feedback for learning path");
+        }
+
+        const data = await response.json();
+        setFeedbackData(data); // Assuming data structure: { totalItems, currentPage, totalPages, feedback: [...] }
+      } catch (err) {
+        console.error("Error fetching feedback:", err);
+        showToast(`Error fetching feedback: ${err.message}`, false);
+      }
+    };
+
+    fetchFeedbackForPath();
+  }, [id, token, feedbackPage, feedbackLimit, showToast]); // Re-fetch when id, token, page, or limit changes
+  // --- END NEW EFFECT HOOK ---
 
   const handlePathChange = (e) => {
     const { name, value } = e.target;
@@ -439,6 +483,73 @@ const AdminLearnPath = () => {
                   <CourseCollapsible key={index} {...section} learnPathId={id} onMoveUp={moveUp} />
                 ))
               )}
+
+              {/* --- NEW SECTION FOR DISPLAYING FEEDBACK (PLACEHOLDER) --- */}
+              <div className="mt-5 collapsible mx-auto noncol">
+                <h3>Feedback for this Learning Path ({feedbackData.totalItems} total)</h3>
+                {feedbackData.feedback.length === 0 ? (
+                  <div className="noObjects mt-2">No feedback available.</div>
+                ) : (
+                  <div>
+                    {feedbackData.feedback.map((feedbackItem) => (
+                      <div key={feedbackItem.id} className="card p-3 my-2">
+                        <p>
+                          <strong>Comment:</strong> {feedbackItem.text || "No comment provided."}
+                        </p>
+                        <small>
+                          <div className="d-flex gap-1 align-items-center">
+                            {feedbackItem.User.image ? (
+                              <div className="profileImage mx-2 s-35">
+                                <img
+                                  src={`${IMAGE_HOST}${feedbackItem.User.image}`}
+                                  className="s-35"
+                                  alt="Profile"
+                                />
+                              </div>
+                            ) : (
+                              <div className="profileImage mx-2 s-35">
+                                <img
+                                  src="/images/default_profile.png"
+                                  className="s-35"
+                                  alt="Profile"
+                                />
+                              </div>
+                            )}
+                            {feedbackItem.User.first_name} {feedbackItem.User.last_name}
+                            <br />
+                            Created: {new Date(feedbackItem.createdAt).toLocaleDateString()}
+                          </div>{" "}
+                        </small>
+                        {/* You might want to display user info (if included in the backend response) */}
+                        {/* <small>By: {feedbackItem.User ? feedbackItem.User.username : 'Anonymous'}</small> */}
+                      </div>
+                    ))}
+                    {/* Basic Pagination Controls (Optional - you'd build more robust ones) */}
+                    <div className="d-flex justify-content-between align-items-center mt-3">
+                      <button
+                        className="btn btn-outline-primary"
+                        onClick={() => setFeedbackPage((prev) => Math.max(1, prev - 1))}
+                        disabled={feedbackPage === 1}
+                      >
+                        Previous
+                      </button>
+                      <span>
+                        Page {feedbackPage} of {feedbackData.totalPages}
+                      </span>
+                      <button
+                        className="btn btn-outline-primary"
+                        onClick={() =>
+                          setFeedbackPage((prev) => Math.min(feedbackData.totalPages, prev + 1))
+                        }
+                        disabled={feedbackPage === feedbackData.totalPages}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* --- END NEW SECTION --- */}
             </div>
           </div>
         ) : (

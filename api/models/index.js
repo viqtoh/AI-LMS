@@ -42,7 +42,8 @@ const {
   AttemptQuestion,
   AssessmentAttempt,
   UserAnswer,
-  LoginActivity
+  LoginActivity,
+  Feedback
 } = db;
 
 // Many-to-Many
